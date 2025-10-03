@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { updatePassword } from "@/lib/auth-actions";
+import { updatePassword } from "@/src/presentation/actions/auth.actions";
 import { CheckCircle, Info } from "lucide-react";
 
 export function UpdatePasswordForm() {

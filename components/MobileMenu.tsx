@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
-import { createClient } from "@/utils/supabase/client";
+import { createClient } from "@/src/infrastructure/supabase/client";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import LoginButton from "./LoginLogoutButton";
 
@@ -16,6 +17,7 @@ export default function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const supabase = createClient();
@@ -27,17 +29,12 @@ export default function MobileMenu() {
 
       if (user) {
         setUser(user);
-        console.log('Mobile Menu - User data:', user);
 
-        // Obtener el perfil de la base de datos
-        const { data: profileData, error } = await supabase
-          .from('profiles')
-          .select('avatar_url, full_name, email')
-          .eq('id', user.id)
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("avatar_url, full_name, email")
+          .eq("id", user.id)
           .single();
-
-        console.log('Mobile Menu - Profile data:', profileData);
-        console.log('Mobile Menu - Profile error:', error);
 
         if (profileData) {
           setProfile(profileData);
@@ -46,7 +43,33 @@ export default function MobileMenu() {
     };
 
     fetchUserAndProfile();
-  }, []);
+
+    // Escuchar cambios en la autenticación
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("avatar_url, full_name, email")
+          .eq("id", session.user.id)
+          .single();
+
+        if (profileData) {
+          setProfile(profileData);
+        }
+
+        router.refresh();
+      } else {
+        setUser(null);
+        setProfile(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [router]);
 
   const closeMenu = () => setIsOpen(false);
 
@@ -64,13 +87,10 @@ export default function MobileMenu() {
   const displayName =
     profile?.full_name ||
     user?.user_metadata?.full_name ||
-    user?.email?.split('@')[0] ||
+    user?.email?.split("@")[0] ||
     null;
 
   const avatarUrl = profile?.avatar_url;
-
-  console.log('Mobile Menu - Display name:', displayName);
-  console.log('Mobile Menu - Avatar URL:', avatarUrl);
 
   return (
     <>
@@ -120,10 +140,6 @@ export default function MobileMenu() {
                       fill
                       className="object-cover"
                       sizes="40px"
-                      onError={(e) => {
-                        console.error('Mobile Menu - Error loading image:', e);
-                        console.error('Mobile Menu - Image URL was:', avatarUrl);
-                      }}
                       unoptimized
                     />
                   </div>

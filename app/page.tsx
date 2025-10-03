@@ -6,6 +6,8 @@ import Image from "next/image"
 import UserGreetText from "@/components/UserGreetText"
 import LoginButton from "@/components/LoginLogoutButton"
 import MobileMenu from "@/components/MobileMenu"
+import { createClient } from "@/src/infrastructure/supabase/server"
+import { redirect } from "next/navigation"
 
 function CodeEditorPreview() {
   const nombre = "Estudiante"
@@ -32,14 +34,21 @@ function CodeEditorPreview() {
   )
 }
 
-export default function Home() {
+export default async function Home() {
+  // Verificar si el usuario está autenticado
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (user) {
+    redirect("/dashboard")
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header mejorado */}
       <header className="border-b border-slate-200 bg-white sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            {/* Logo - Coloca tu imagen en /public/logo.png */}
             <Link href="/" className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity">
               <div className="relative w-8 h-8 sm:w-10 sm:h-10">
                 <Image
@@ -55,7 +64,6 @@ export default function Home() {
               </h1>
             </Link>
 
-            {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-6">
               <a href="#curso" className="text-sm text-slate-600 hover:text-slate-800 transition-colors font-medium">
                 El Curso
@@ -71,13 +79,17 @@ export default function Home() {
               </a>
             </nav>
 
-            {/* Desktop User Info & Buttons */}
             <div className="hidden lg:flex items-center gap-3">
               <UserGreetText />
-              <LoginButton />
+              {user ? (
+                <Link href="/dashboard">
+                  <Button>Ir al Dashboard</Button>
+                </Link>
+              ) : (
+                <LoginButton />
+              )}
             </div>
 
-            {/* Mobile Menu */}
             <MobileMenu />
           </div>
         </div>
@@ -97,12 +109,21 @@ export default function Home() {
             principiantes.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center max-w-md sm:max-w-none mx-auto">
-            <Link href="/signup" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full sm:w-auto bg-sky-600 text-white hover:bg-sky-700 shadow-lg hover:shadow-xl transition-all">
-                <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                Comenzar Curso Gratis
-              </Button>
-            </Link>
+            {user ? (
+              <Link href="/dashboard" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full sm:w-auto bg-sky-600 text-white hover:bg-sky-700 shadow-lg hover:shadow-xl transition-all">
+                  <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                  Continuar Aprendiendo
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/signup" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full sm:w-auto bg-sky-600 text-white hover:bg-sky-700 shadow-lg hover:shadow-xl transition-all">
+                  <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                  Comenzar Curso Gratis
+                </Button>
+              </Link>
+            )}
             <Button
               size="lg"
               variant="outline"
@@ -167,7 +188,6 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 sm:gap-8 max-w-5xl mx-auto">
-            {/* Para Profesores */}
             <Card className="p-6 sm:p-8 hover:shadow-xl transition-all duration-300 border-2 hover:border-sky-200">
               <CardHeader className="text-center pb-6">
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
@@ -204,13 +224,18 @@ export default function Home() {
                     </p>
                   </div>
                 </div>
-                <Link href="/signup" className="block mt-6">
-                  <Button className="w-full">Comenzar como Profesor</Button>
-                </Link>
+                {user ? (
+                  <Link href="/dashboard" className="block mt-6">
+                    <Button className="w-full">Ir al Dashboard</Button>
+                  </Link>
+                ) : (
+                  <Link href="/signup" className="block mt-6">
+                    <Button className="w-full">Comenzar como Profesor</Button>
+                  </Link>
+                )}
               </CardContent>
             </Card>
 
-            {/* Para Estudiantes */}
             <Card className="p-6 sm:p-8 hover:shadow-xl transition-all duration-300 border-2 hover:border-sky-200" id="estudiantes">
               <CardHeader className="text-center pb-6">
                 <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
@@ -249,9 +274,15 @@ export default function Home() {
                     </p>
                   </div>
                 </div>
-                <Link href="/signup" className="block mt-6">
-                  <Button className="w-full">Comenzar como Estudiante</Button>
-                </Link>
+                {user ? (
+                  <Link href="/dashboard" className="block mt-6">
+                    <Button className="w-full">Ir al Dashboard</Button>
+                  </Link>
+                ) : (
+                  <Link href="/signup" className="block mt-6">
+                    <Button className="w-full">Comenzar como Estudiante</Button>
+                  </Link>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -319,11 +350,19 @@ export default function Home() {
             Introducción a Python.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center max-w-md sm:max-w-none mx-auto">
-            <Link href="/signup">
-              <Button size="lg" className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90">
-                Inscribirse Gratis al Curso
-              </Button>
-            </Link>
+            {user ? (
+              <Link href="/dashboard">
+                <Button size="lg" className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90">
+                  Ir a mi Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/signup">
+                <Button size="lg" className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90">
+                  Inscribirse Gratis al Curso
+                </Button>
+              </Link>
+            )}
             <Button
               size="lg"
               variant="outline"
