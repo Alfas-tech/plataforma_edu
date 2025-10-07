@@ -22,7 +22,7 @@ export function SignUpForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form action="">
+        <form>
           <div className="grid gap-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
