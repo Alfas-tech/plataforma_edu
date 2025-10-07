@@ -53,7 +53,7 @@ export class SupabaseAuthRepository implements IAuthRepository {
     }
   }
 
-  async getCurrentUser(): Promise<any> {
+  async getCurrentUser(): Promise<UserEntity | null> {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
