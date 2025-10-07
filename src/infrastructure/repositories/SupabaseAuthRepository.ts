@@ -44,7 +44,7 @@ export class SupabaseAuthRepository implements IAuthRepository {
     return { user, needsConfirmation };
   }
 
-  async signOut(): Promise<any> {
+  async signOut(): Promise<void> {
     const supabase = createClient();
     const { error } = await supabase.auth.signOut();
 
