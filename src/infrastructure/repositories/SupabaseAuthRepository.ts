@@ -93,7 +93,7 @@ export class SupabaseAuthRepository implements IAuthRepository {
     }
   }
 
-  async updatePassword(password: string): Promise<any> {
+  async updatePassword(password: string): Promise<void> {
     const supabase = createClient();
 
     const { error } = await supabase.auth.updateUser({
