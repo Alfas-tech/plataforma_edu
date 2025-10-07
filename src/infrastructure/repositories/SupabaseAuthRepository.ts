@@ -81,7 +81,7 @@ export class SupabaseAuthRepository implements IAuthRepository {
     return data.url;
   }
 
-  async resetPassword(email: string): Promise<any> {
+  async resetPassword(email: string): Promise<void> {
     const supabase = createClient();
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
