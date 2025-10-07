@@ -1,6 +1,6 @@
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { SignUpData, AuthResult } from '@/src/core/types/auth.types';
-import { UserEntity } from '@/src/core/entities/User.entity';
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { SignUpData, AuthResult } from "@/src/core/types/auth.types";
+import { UserEntity } from "@/src/core/entities/User.entity";
 
 interface SignUpResult extends AuthResult {
   user?: UserEntity;
@@ -21,7 +21,7 @@ export class SignUpUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al registrarse',
+        error: error instanceof Error ? error.message : "Error al registrarse",
       };
     }
   }

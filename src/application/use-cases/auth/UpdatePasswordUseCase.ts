@@ -1,5 +1,5 @@
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { AuthResult } from '@/src/core/types/auth.types';
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { AuthResult } from "@/src/core/types/auth.types";
 
 export class UpdatePasswordUseCase {
   constructor(private readonly authRepository: IAuthRepository) {}
@@ -8,7 +8,7 @@ export class UpdatePasswordUseCase {
     if (!password || password.length < 6) {
       return {
         success: false,
-        error: 'La contraseña debe tener al menos 6 caracteres',
+        error: "La contraseña debe tener al menos 6 caracteres",
       };
     }
 
@@ -18,7 +18,10 @@ export class UpdatePasswordUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al actualizar la contraseña',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Error al actualizar la contraseña",
       };
     }
   }

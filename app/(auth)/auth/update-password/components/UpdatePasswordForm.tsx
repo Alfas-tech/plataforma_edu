@@ -67,12 +67,12 @@ export function UpdatePasswordForm() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
             <div className="flex items-start gap-3">
-              <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
               <p className="text-sm text-blue-900">
-                Ahora puedes iniciar sesión con tu correo y contraseña,
-                o continuar usando Google.
+                Ahora puedes iniciar sesión con tu correo y contraseña, o
+                continuar usando Google.
               </p>
             </div>
           </div>
@@ -88,17 +88,15 @@ export function UpdatePasswordForm() {
     <Card className="mx-auto max-w-sm">
       <CardHeader>
         <CardTitle className="text-2xl">Establecer Contraseña</CardTitle>
-        <CardDescription>
-          Crea una contraseña para tu cuenta
-        </CardDescription>
+        <CardDescription>Crea una contraseña para tu cuenta</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 mb-4">
+        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
           <div className="flex items-start gap-3">
-            <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
             <p className="text-sm text-blue-900">
-              Después de establecer tu contraseña, podrás iniciar sesión
-              tanto con Google como con email y contraseña.
+              Después de establecer tu contraseña, podrás iniciar sesión tanto
+              con Google como con email y contraseña.
             </p>
           </div>
         </div>
@@ -132,7 +130,7 @@ export function UpdatePasswordForm() {
             </div>
 
             {error && (
-              <div className="rounded-lg bg-red-50 border border-red-200 p-3">
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3">
                 <p className="text-sm text-red-900">{error}</p>
               </div>
             )}

@@ -59,7 +59,7 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         {redirect && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
             <p className="text-sm text-blue-900">
               Debes iniciar sesión para acceder a esa página
             </p>
@@ -67,7 +67,7 @@ export function LoginForm() {
         )}
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3">
             <p className="text-sm text-red-900">{error}</p>
           </div>
         )}
