@@ -28,6 +28,9 @@ pnpm-debug.log*
 .gitignore
 .gitattributes
 
+# Prettier config itself
+.prettierignore
+
 # Package manager files
 package-lock.json
 pnpm-lock.yaml
@@ -51,4 +54,3 @@ next-env.d.ts
 
 # Coverage
 coverage
-
