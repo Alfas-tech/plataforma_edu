@@ -10,12 +10,13 @@ permissions:
 
 on:
   pull_request_target:
-    types: [labeled]
+    types: [opened, reopened, synchronize]
+    branches: [main]
 
 jobs:
   prettify:
     runs-on: ubuntu-latest
-    if: github.event.label.name == 'prettify'
+    if: "!contains(github.event.pull_request.labels.*.name, 'prettify')"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,7 +35,7 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
 
       - name: Install prettier
-        run: pnpm add -g prettier@2.8.8
+        run: pnpm add -g prettier@3.3.3
 
       - name: Get changed files
         id: get-changed-files
@@ -63,8 +64,3 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "prettier fix"
-
-      - name: Remove label
-        uses: actions-ecosystem/action-remove-labels@v1
-        with:
-          labels: prettify

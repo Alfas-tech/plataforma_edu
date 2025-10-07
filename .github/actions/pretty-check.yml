@@ -36,7 +36,7 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
 
       - name: Install prettier
-        run: pnpm add -g prettier@2.8.8
+        run: pnpm add -g prettier@3.3.3
 
       - name: Get changed files
         id: get-changed-files
@@ -59,4 +59,3 @@ jobs:
           if [ -n "$CHANGED_FILES" ]; then
             pnpm prettier --check $CHANGED_FILES
           fi
-      
