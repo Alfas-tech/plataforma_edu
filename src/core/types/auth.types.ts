@@ -20,7 +20,7 @@ export interface UserData {
   email: string;
   full_name?: string;
   avatar_url?: string;
-  user_metadata?: Record<any, any>;
+  user_metadata?: Record<string, unknown>;
   created_at?: string;
 }
 
