@@ -10,7 +10,7 @@ interface SignUpResult extends AuthResult {
 export class SignUpUseCase {
   constructor(private readonly authRepository: IAuthRepository) {}
 
-  async execute(data: SignUpData): Promise<any> {
+  async execute(data: SignUpData): Promise<SignUpResult> {
     try {
       const result = await this.authRepository.signUp(data);
       return {
