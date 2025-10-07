@@ -35,7 +35,7 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
 
       - name: Install prettier
-        run: pnpm add -g prettier@3.3.3
+        run: pnpm add -g prettier@3.3.3 prettier-plugin-tailwindcss
 
       - name: Get changed files
         id: get-changed-files
