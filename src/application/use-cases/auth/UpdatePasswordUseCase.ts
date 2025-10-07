@@ -4,7 +4,7 @@ import { AuthResult } from '@/src/core/types/auth.types';
 export class UpdatePasswordUseCase {
   constructor(private readonly authRepository: IAuthRepository) {}
 
-  async execute(password: string): Promise<any> {
+  async execute(password: string): Promise<AuthResult> {
     if (!password || password.length < 6) {
       return {
         success: false,
