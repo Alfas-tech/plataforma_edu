@@ -1,4 +1,4 @@
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
 
 interface GoogleSignInResult {
   success: boolean;
@@ -16,7 +16,10 @@ export class SignInWithGoogleUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al iniciar sesión con Google',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Error al iniciar sesión con Google",
       };
     }
   }

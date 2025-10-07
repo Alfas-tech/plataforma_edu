@@ -52,7 +52,6 @@ jobs:
             );
             return changedFiles.filter(file=> file.status !== "removed").map(file => file.filename).join(' ');
 
-
       - name: Run Prettier fix
         run: |
           CHANGED_FILES=$(echo ${{ steps.get-changed-files.outputs.result }})

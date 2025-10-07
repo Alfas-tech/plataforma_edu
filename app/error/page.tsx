@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
 
@@ -18,14 +24,13 @@ export default function ErrorPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-center text-sm text-muted-foreground">
-            Por favor, intenta de nuevo. Si el problema persiste, contacta con soporte.
+            Por favor, intenta de nuevo. Si el problema persiste, contacta con
+            soporte.
           </p>
-          
+
           <div className="flex flex-col gap-2">
             <Link href="/login">
-              <Button className="w-full">
-                Ir al inicio de sesión
-              </Button>
+              <Button className="w-full">Ir al inicio de sesión</Button>
             </Link>
             <Link href="/">
               <Button variant="outline" className="w-full">

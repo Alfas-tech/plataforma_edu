@@ -1,5 +1,5 @@
-import { LoginCredentials, SignUpData } from '../../types/auth.types';
-import { UserEntity } from '../../entities/User.entity';
+import { LoginCredentials, SignUpData } from "../../types/auth.types";
+import { UserEntity } from "../../entities/User.entity";
 
 export interface IAuthRepository {
   login(credentials: LoginCredentials): Promise<any>;

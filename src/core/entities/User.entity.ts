@@ -1,4 +1,4 @@
-import { UserData } from '../types/auth.types';
+import { UserData } from "../types/auth.types";
 
 export class UserEntity {
   constructor(
@@ -24,6 +24,6 @@ export class UserEntity {
   getDisplayName(): string {
     if (this.fullName) return this.fullName;
     if (this.metadata?.full_name) return this.metadata.full_name;
-    return this.email.split('@')[0] || 'Usuario';
+    return this.email.split("@")[0] || "Usuario";
   }
 }

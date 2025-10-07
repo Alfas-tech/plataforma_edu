@@ -1,4 +1,4 @@
-import { ProfileData } from '../types/auth.types';
+import { ProfileData } from "../types/auth.types";
 
 export class ProfileEntity {
   constructor(
@@ -18,10 +18,10 @@ export class ProfileEntity {
   }
 
   getDisplayName(): string {
-    return this.fullName || this.email.split('@')[0] || 'Usuario';
+    return this.fullName || this.email.split("@")[0] || "Usuario";
   }
 
   hasAvatar(): boolean {
-    return this.avatarUrl !== null && this.avatarUrl !== '';
+    return this.avatarUrl !== null && this.avatarUrl !== "";
   }
 }

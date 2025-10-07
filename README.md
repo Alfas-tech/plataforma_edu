@@ -37,36 +37,37 @@ Este proyecto utiliza una **Arquitectura por Capas Limpia (Clean Architecture)**
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    PRESENTATION LAYER                    │
-│  (UI Components, Pages, Server Actions)                  │
-│  - app/ (Next.js App Router)                            │
-│  - components/ (React Components)                        │
-│  - src/presentation/actions/ (Server Actions)           │
+│ PRESENTATION LAYER │
+│ (UI Components, Pages, Server Actions) │
+│ - app/ (Next.js App Router) │
+│ - components/ (React Components) │
+│ - src/presentation/actions/ (Server Actions) │
 └────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
+│
+▼
 ┌─────────────────────────────────────────────────────────┐
-│                   APPLICATION LAYER                      │
-│  (Use Cases - Business Logic)                           │
-│  - src/application/use-cases/                           │
+│ APPLICATION LAYER │
+│ (Use Cases - Business Logic) │
+│ - src/application/use-cases/ │
 └────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
+│
+▼
 ┌─────────────────────────────────────────────────────────┐
-│                 INFRASTRUCTURE LAYER                     │
-│  (Implementations - Database, APIs, External Services)   │
-│  - src/infrastructure/repositories/                      │
-│  - src/infrastructure/supabase/                         │
+│ INFRASTRUCTURE LAYER │
+│ (Implementations - Database, APIs, External Services) │
+│ - src/infrastructure/repositories/ │
+│ - src/infrastructure/supabase/ │
 └────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
+│
+▼
 ┌─────────────────────────────────────────────────────────┐
-│                      CORE LAYER                          │
-│  (Domain - Entities, Interfaces, Types)                 │
-│  - src/core/entities/                                   │
-│  - src/core/interfaces/                                 │
-│  - src/core/types/                                      │
+│ CORE LAYER │
+│ (Domain - Entities, Interfaces, Types) │
+│ - src/core/entities/ │
+│ - src/core/interfaces/ │
+│ - src/core/types/ │
 └─────────────────────────────────────────────────────────┘
+
 ```
 
 ### Descripción de Capas
@@ -109,80 +110,82 @@ Este proyecto utiliza una **Arquitectura por Capas Limpia (Clean Architecture)**
 ## Estructura de Carpetas
 
 ```
+
 proyecto/
 │
-├── src/                                    # Código fuente organizado por capas
-│   │
-│   ├── core/                              # 🔵 CORE LAYER
-│   │   ├── entities/                      # Entidades del dominio
-│   │   │   ├── User.entity.ts
-│   │   │   └── Profile.entity.ts
-│   │   │
-│   │   ├── interfaces/                    # Contratos/Interfaces
-│   │   │   └── repositories/
-│   │   │       ├── IAuthRepository.ts
-│   │   │       └── IProfileRepository.ts
-│   │   │
-│   │   └── types/                         # Tipos compartidos
-│   │       └── auth.types.ts
-│   │
-│   ├── infrastructure/                    # 🟢 INFRASTRUCTURE LAYER
-│   │   ├── repositories/                  # Implementaciones de repositorios
-│   │   │   ├── SupabaseAuthRepository.ts
-│   │   │   └── SupabaseProfileRepository.ts
-│   │   │
-│   │   └── supabase/                      # Cliente de Supabase
-│   │       ├── client.ts                  # Cliente para navegador
-│   │       ├── server.ts                  # Cliente para servidor
-│   │       └── middleware.ts              # Middleware de sesión
-│   │
-│   ├── application/                       # 🟡 APPLICATION LAYER
-│   │   └── use-cases/                     # Casos de uso
-│   │       └── auth/
-│   │           ├── LoginUseCase.ts
-│   │           ├── SignUpUseCase.ts
-│   │           ├── SignOutUseCase.ts
-│   │           ├── SignInWithGoogleUseCase.ts
-│   │           ├── ResetPasswordUseCase.ts
-│   │           └── UpdatePasswordUseCase.ts
-│   │
-│   └── presentation/                      # 🔴 PRESENTATION LAYER
-│       └── actions/                       # Server Actions
-│           └── auth.actions.ts
+├── src/ # Código fuente organizado por capas
+│ │
+│ ├── core/ # 🔵 CORE LAYER
+│ │ ├── entities/ # Entidades del dominio
+│ │ │ ├── User.entity.ts
+│ │ │ └── Profile.entity.ts
+│ │ │
+│ │ ├── interfaces/ # Contratos/Interfaces
+│ │ │ └── repositories/
+│ │ │ ├── IAuthRepository.ts
+│ │ │ └── IProfileRepository.ts
+│ │ │
+│ │ └── types/ # Tipos compartidos
+│ │ └── auth.types.ts
+│ │
+│ ├── infrastructure/ # 🟢 INFRASTRUCTURE LAYER
+│ │ ├── repositories/ # Implementaciones de repositorios
+│ │ │ ├── SupabaseAuthRepository.ts
+│ │ │ └── SupabaseProfileRepository.ts
+│ │ │
+│ │ └── supabase/ # Cliente de Supabase
+│ │ ├── client.ts # Cliente para navegador
+│ │ ├── server.ts # Cliente para servidor
+│ │ └── middleware.ts # Middleware de sesión
+│ │
+│ ├── application/ # 🟡 APPLICATION LAYER
+│ │ └── use-cases/ # Casos de uso
+│ │ └── auth/
+│ │ ├── LoginUseCase.ts
+│ │ ├── SignUpUseCase.ts
+│ │ ├── SignOutUseCase.ts
+│ │ ├── SignInWithGoogleUseCase.ts
+│ │ ├── ResetPasswordUseCase.ts
+│ │ └── UpdatePasswordUseCase.ts
+│ │
+│ └── presentation/ # 🔴 PRESENTATION LAYER
+│ └── actions/ # Server Actions
+│ └── auth.actions.ts
 │
-├── app/                                   # Next.js App Router
-│   ├── (auth)/                           # Grupo de rutas de autenticación
-│   │   ├── login/
-│   │   ├── signup/
-│   │   ├── forgot-password/
-│   │   └── auth/
-│   ├── dashboard/
-│   ├── layout.tsx
-│   ├── page.tsx
-│   └── globals.css
+├── app/ # Next.js App Router
+│ ├── (auth)/ # Grupo de rutas de autenticación
+│ │ ├── login/
+│ │ ├── signup/
+│ │ ├── forgot-password/
+│ │ └── auth/
+│ ├── dashboard/
+│ ├── layout.tsx
+│ ├── page.tsx
+│ └── globals.css
 │
-├── components/                            # Componentes React reutilizables
-│   ├── ui/                               # Componentes de UI (shadcn/ui)
-│   │   ├── button.tsx
-│   │   ├── card.tsx
-│   │   ├── input.tsx
-│   │   └── label.tsx
-│   ├── LoginLogoutButton.tsx
-│   ├── MobileMenu.tsx
-│   └── UserGreetText.tsx
+├── components/ # Componentes React reutilizables
+│ ├── ui/ # Componentes de UI (shadcn/ui)
+│ │ ├── button.tsx
+│ │ ├── card.tsx
+│ │ ├── input.tsx
+│ │ └── label.tsx
+│ ├── LoginLogoutButton.tsx
+│ ├── MobileMenu.tsx
+│ └── UserGreetText.tsx
 │
-├── lib/                                   # Utilidades
-│   └── utils.ts                          # Funciones auxiliares (cn, etc.)
+├── lib/ # Utilidades
+│ └── utils.ts # Funciones auxiliares (cn, etc.)
 │
-├── public/                                # Archivos estáticos
-│   └── logo.png
+├── public/ # Archivos estáticos
+│ └── logo.png
 │
-├── middleware.ts                          # Middleware global de Next.js
-├── next.config.mjs                        # Configuración de Next.js
-├── tailwind.config.ts                     # Configuración de Tailwind
-├── tsconfig.json                          # Configuración de TypeScript
-└── package.json                           # Dependencias del proyecto
-```
+├── middleware.ts # Middleware global de Next.js
+├── next.config.mjs # Configuración de Next.js
+├── tailwind.config.ts # Configuración de Tailwind
+├── tsconfig.json # Configuración de TypeScript
+└── package.json # Dependencias del proyecto
+
+````
 
 ---
 
@@ -205,9 +208,10 @@ class UserEntity { ... }
 const datosUsuario = { ... }
 function obtenerPerfilUsuario() { ... }
 class EntidadUsuario { ... }
-```
+````
 
 #### Comentarios y Mensajes de Usuario
+
 - ✅ Comentarios en **INGLÉS**
 - ✅ Mensajes al usuario en **ESPAÑOL** (interfaz en español)
 
@@ -226,6 +230,7 @@ const message = "Email or password incorrect"; // UI debe estar en español
 ### 2. **Convenciones de Nombres**
 
 #### Variables y Funciones: camelCase
+
 ```typescript
 // ✅ CORRECTO
 const userName = "John";
@@ -237,6 +242,7 @@ function validateEmail(email: string) { ... }
 ```
 
 #### Clases y Tipos: PascalCase
+
 ```typescript
 // ✅ CORRECTO
 class UserEntity { ... }
@@ -246,6 +252,7 @@ type LoginCredentials = { ... }
 ```
 
 #### Constantes: UPPER_SNAKE_CASE
+
 ```typescript
 // ✅ CORRECTO
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -254,6 +261,7 @@ const DEFAULT_TIMEOUT = 3000;
 ```
 
 #### Archivos y Carpetas: kebab-case o PascalCase
+
 ```typescript
 // ✅ CORRECTO - Componentes
 LoginForm.tsx
@@ -272,6 +280,7 @@ update-password/
 ```
 
 #### Interfaces y Tipos
+
 ```typescript
 // ✅ CORRECTO - Interfaces empiezan con 'I'
 interface IAuthRepository { ... }
@@ -288,6 +297,7 @@ type credentials = { ... }        // No es PascalCase
 ```
 
 #### Entities (Entidades)
+
 ```typescript
 // ✅ CORRECTO - Terminan con '.entity.ts'
 User.entity.ts → class UserEntity { ... }
@@ -307,6 +317,7 @@ export class UserEntity {
 ### 3. **Convenciones de TypeScript**
 
 #### Tipos Explícitos
+
 ```typescript
 // ✅ CORRECTO - Siempre especificar tipos
 function login(credentials: LoginCredentials): Promise<UserEntity> {
@@ -324,6 +335,7 @@ function login(credentials: any): any {
 ```
 
 #### Interfaces vs Types
+
 ```typescript
 // ✅ CORRECTO - Usar interfaces para contratos/repositorios
 interface IAuthRepository {
@@ -343,6 +355,7 @@ type AuthResult = {
 ```
 
 #### Readonly cuando sea apropiado
+
 ```typescript
 // ✅ CORRECTO - Propiedades inmutables
 class UserEntity {
@@ -359,6 +372,7 @@ type Config = {
 ```
 
 #### Null vs Undefined
+
 ```typescript
 // ✅ CORRECTO - Usar null para "ausencia intencional"
 function getUser(id: string): UserEntity | null {
@@ -367,7 +381,7 @@ function getUser(id: string): UserEntity | null {
 
 // ✅ CORRECTO - Usar undefined para "no inicializado"
 type OptionalConfig = {
-  timeout?: number;  // undefined si no se proporciona
+  timeout?: number; // undefined si no se proporciona
 };
 ```
 
@@ -403,7 +417,7 @@ function login(credentials: LoginCredentials): Promise<UserEntity> {
 class AuthenticationError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'AuthenticationError';
+    this.name = "AuthenticationError";
   }
 }
 
@@ -413,9 +427,9 @@ async function login(credentials: LoginCredentials): Promise<UserEntity> {
     return user;
   } catch (error) {
     if (error instanceof AuthenticationError) {
-      throw new Error('Email o contraseña incorrectos');
+      throw new Error("Email o contraseña incorrectos");
     }
-    throw new Error('Error al iniciar sesión');
+    throw new Error("Error al iniciar sesión");
   }
 }
 
@@ -428,7 +442,7 @@ export class LoginUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error desconocido',
+        error: error instanceof Error ? error.message : "Error desconocido",
       };
     }
   }
@@ -442,21 +456,21 @@ export class LoginUseCase {
 ```typescript
 // ✅ CORRECTO - Orden de imports
 // 1. Librerías externas
-import { useState } from 'react';
-import { redirect } from 'next/navigation';
+import { useState } from "react";
+import { redirect } from "next/navigation";
 
 // 2. Aliases absolutos (@/)
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { UserEntity } from '@/src/core/entities/User.entity';
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { UserEntity } from "@/src/core/entities/User.entity";
 
 // 3. Imports relativos
-import { createClient } from '../supabase/server';
+import { createClient } from "../supabase/server";
 
 // ✅ CORRECTO - Usar aliases absolutos (@/)
-import { createClient } from '@/src/infrastructure/supabase/server';
+import { createClient } from "@/src/infrastructure/supabase/server";
 
 // ❌ INCORRECTO - Evitar imports relativos largos
-import { createClient } from '../../../infrastructure/supabase/server';
+import { createClient } from "../../../infrastructure/supabase/server";
 ```
 
 ---
@@ -492,6 +506,7 @@ const name = "John";
 ### 8. **React/Next.js Específico**
 
 #### Componentes
+
 ```typescript
 // ✅ CORRECTO - Componentes funcionales con TypeScript
 interface LoginFormProps {
@@ -504,30 +519,32 @@ export function LoginForm({ onSuccess, redirectUrl }: LoginFormProps) {
 }
 
 // ✅ CORRECTO - Usar 'use client' cuando sea necesario
-"use client";
+("use client");
 
-import { useState } from 'react';
+import { useState } from "react";
 
 export function LoginForm() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   // ...
 }
 ```
 
 #### Server Actions
+
 ```typescript
 // ✅ CORRECTO - Siempre usar "use server"
 "use server";
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath } from "next/cache";
 
 export async function login(formData: FormData) {
   // ...
-  revalidatePath('/dashboard');
+  revalidatePath("/dashboard");
 }
 ```
 
 #### Server Components
+
 ```typescript
 // ✅ CORRECTO - Async por defecto en Server Components
 export default async function DashboardPage() {
@@ -535,7 +552,9 @@ export default async function DashboardPage() {
   return <div>...</div>;
 }
 ```
+
 ---
+
 ## Guías de Desarrollo
 
 ### Cómo Agregar una Nueva Funcionalidad
@@ -543,6 +562,7 @@ export default async function DashboardPage() {
 #### Ejemplo: Agregar "Change Email"
 
 ##### 1. **Definir Tipos (Core)**
+
 ```typescript
 // src/core/types/auth.types.ts
 export interface ChangeEmailData {
@@ -552,6 +572,7 @@ export interface ChangeEmailData {
 ```
 
 ##### 2. **Actualizar Interface (Core)**
+
 ```typescript
 // src/core/interfaces/repositories/IAuthRepository.ts
 export interface IAuthRepository {
@@ -561,6 +582,7 @@ export interface IAuthRepository {
 ```
 
 ##### 3. **Implementar en Repository (Infrastructure)**
+
 ```typescript
 // src/infrastructure/repositories/SupabaseAuthRepository.ts
 async changeEmail(data: ChangeEmailData): Promise<void> {
@@ -573,6 +595,7 @@ async changeEmail(data: ChangeEmailData): Promise<void> {
 ```
 
 ##### 4. **Crear Use Case (Application)**
+
 ```typescript
 // src/application/use-cases/auth/ChangeEmailUseCase.ts
 export class ChangeEmailUseCase {
@@ -590,6 +613,7 @@ export class ChangeEmailUseCase {
 ```
 
 ##### 5. **Agregar Server Action (Presentation)**
+
 ```typescript
 // src/presentation/actions/auth.actions.ts
 export async function changeEmail(formData: FormData) {
@@ -603,12 +627,13 @@ export async function changeEmail(formData: FormData) {
     return { error: result.error };
   }
 
-  revalidatePath('/profile');
+  revalidatePath("/profile");
   return { success: true };
 }
 ```
 
 ##### 6. **Crear Componente UI (Presentation)**
+
 ```typescript
 // app/profile/components/ChangeEmailForm.tsx
 "use client";
@@ -657,11 +682,11 @@ src/
 
 ```typescript
 // src/application/__tests__/use-cases/auth/LoginUseCase.test.ts
-import { LoginUseCase } from '@/src/application/use-cases/auth/LoginUseCase';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { UserEntity } from '@/src/core/entities/User.entity';
+import { LoginUseCase } from "@/src/application/use-cases/auth/LoginUseCase";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { UserEntity } from "@/src/core/entities/User.entity";
 
-describe('LoginUseCase', () => {
+describe("LoginUseCase", () => {
   let mockAuthRepository: jest.Mocked<IAuthRepository>;
   let loginUseCase: LoginUseCase;
 
@@ -678,35 +703,35 @@ describe('LoginUseCase', () => {
     loginUseCase = new LoginUseCase(mockAuthRepository);
   });
 
-  it('should login successfully with valid credentials', async () => {
-    const mockUser = new UserEntity('123', 'test@example.com');
+  it("should login successfully with valid credentials", async () => {
+    const mockUser = new UserEntity("123", "test@example.com");
     mockAuthRepository.login.mockResolvedValue(mockUser);
 
     const result = await loginUseCase.execute({
-      email: 'test@example.com',
-      password: 'password123'
+      email: "test@example.com",
+      password: "password123",
     });
 
     expect(result.success).toBe(true);
     expect(result.user).toEqual(mockUser);
     expect(mockAuthRepository.login).toHaveBeenCalledWith({
-      email: 'test@example.com',
-      password: 'password123'
+      email: "test@example.com",
+      password: "password123",
     });
   });
 
-  it('should return error with invalid credentials', async () => {
+  it("should return error with invalid credentials", async () => {
     mockAuthRepository.login.mockRejectedValue(
-      new Error('Invalid credentials')
+      new Error("Invalid credentials")
     );
 
     const result = await loginUseCase.execute({
-      email: 'test@example.com',
-      password: 'wrongpassword'
+      email: "test@example.com",
+      password: "wrongpassword",
     });
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Invalid credentials');
+    expect(result.error).toBe("Invalid credentials");
   });
 });
 ```
@@ -716,28 +741,40 @@ describe('LoginUseCase', () => {
 ## Mejores Prácticas
 
 ### 1. **Single Responsibility Principle (SRP)**
+
 Cada clase/función debe tener una sola responsabilidad
 
 ```typescript
 // ✅ CORRECTO
 class LoginUseCase {
-  execute() { /* Solo maneja login */ }
+  execute() {
+    /* Solo maneja login */
+  }
 }
 
 class SignUpUseCase {
-  execute() { /* Solo maneja signup */ }
+  execute() {
+    /* Solo maneja signup */
+  }
 }
 
 // ❌ INCORRECTO
 class AuthUseCase {
-  login() { /* ... */ }
-  signUp() { /* ... */ }
-  resetPassword() { /* ... */ }
+  login() {
+    /* ... */
+  }
+  signUp() {
+    /* ... */
+  }
+  resetPassword() {
+    /* ... */
+  }
   // Too many responsibilities
 }
 ```
 
 ### 2. **Dependency Inversion Principle (DIP)**
+
 Depende de abstracciones, no de concreciones
 
 ```typescript
@@ -753,24 +790,35 @@ class LoginUseCase {
 ```
 
 ### 3. **Open/Closed Principle (OCP)**
+
 Abierto para extensión, cerrado para modificación
 
 ```typescript
 // ✅ CORRECTO - Fácil agregar nuevos providers
-interface IAuthRepository { /* ... */ }
-class SupabaseAuthRepository implements IAuthRepository { /* ... */ }
-class FirebaseAuthRepository implements IAuthRepository { /* ... */ }
+interface IAuthRepository {
+  /* ... */
+}
+class SupabaseAuthRepository implements IAuthRepository {
+  /* ... */
+}
+class FirebaseAuthRepository implements IAuthRepository {
+  /* ... */
+}
 
 // ❌ INCORRECTO - Modificar código existente
 class AuthService {
   login() {
-    if (provider === 'supabase') { /* ... */ }
-    else if (provider === 'firebase') { /* ... */ }
+    if (provider === "supabase") {
+      /* ... */
+    } else if (provider === "firebase") {
+      /* ... */
+    }
   }
 }
 ```
 
 ### 4. **Don't Repeat Yourself (DRY)**
+
 No repitas código
 
 ```typescript
@@ -778,25 +826,29 @@ No repitas código
 function handleAuthError(error: Error): AuthResult {
   return {
     success: false,
-    error: error instanceof Error ? error.message : 'Unknown error'
+    error: error instanceof Error ? error.message : "Unknown error",
   };
 }
 
 class LoginUseCase {
   async execute() {
-    try { /* ... */ }
-    catch (error) { return handleAuthError(error); }
+    try {
+      /* ... */
+    } catch (error) {
+      return handleAuthError(error);
+    }
   }
 }
 
 // ❌ INCORRECTO - Código duplicado
 class LoginUseCase {
   async execute() {
-    try { /* ... */ }
-    catch (error) {
+    try {
+      /* ... */
+    } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : "Unknown error",
       };
     }
   }
@@ -804,12 +856,13 @@ class LoginUseCase {
 
 class SignUpUseCase {
   async execute() {
-    try { /* ... */ }
-    catch (error) {
+    try {
+      /* ... */
+    } catch (error) {
       // Same code repeated
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : "Unknown error",
       };
     }
   }
@@ -817,28 +870,30 @@ class SignUpUseCase {
 ```
 
 ### 5. **Keep It Simple, Stupid (KISS)**
+
 Mantén el código simple
 
 ```typescript
 // ✅ CORRECTO - Simple y claro
 function getDisplayName(user: UserEntity): string {
-  return user.fullName || user.email.split('@')[0] || 'Usuario';
+  return user.fullName || user.email.split("@")[0] || "Usuario";
 }
 
 // ❌ INCORRECTO - Demasiado complejo
 function getDisplayName(user: UserEntity): string {
-  const name = user.fullName 
-    ? user.fullName.trim() 
-    : user.email 
-      ? user.email.includes('@') 
-        ? user.email.split('@')[0].trim() 
-        : user.email.trim() 
-      : 'Usuario';
-  return name.length > 0 ? name : 'Usuario';
+  const name = user.fullName
+    ? user.fullName.trim()
+    : user.email
+      ? user.email.includes("@")
+        ? user.email.split("@")[0].trim()
+        : user.email.trim()
+      : "Usuario";
+  return name.length > 0 ? name : "Usuario";
 }
 ```
 
 ### 6. **You Aren't Gonna Need It (YAGNI)**
+
 No agregues funcionalidad que no necesitas ahora
 
 ```typescript
@@ -859,15 +914,16 @@ interface IAuthRepository {
 ```
 
 ### 7. **Fail Fast**
+
 Valida y falla temprano
 
 ```typescript
 // ✅ CORRECTO - Validación temprana
 async function updatePassword(password: string): Promise<void> {
   if (!password || password.length < 6) {
-    throw new Error('Password must be at least 6 characters');
+    throw new Error("Password must be at least 6 characters");
   }
-  
+
   // Continue with logic
   await repository.updatePassword(password);
 }
@@ -877,15 +933,16 @@ async function updatePassword(password: string): Promise<void> {
   const user = await getCurrentUser();
   const hashedPassword = await hashPassword(password);
   const result = await repository.updatePassword(hashedPassword);
-  
+
   // Too late to validate
   if (!password || password.length < 6) {
-    throw new Error('Invalid password');
+    throw new Error("Invalid password");
   }
 }
 ```
 
 ### 8. **Immutability**
+
 Prefiere objetos inmutables
 
 ```typescript
@@ -906,7 +963,7 @@ function updateUser(user: UserEntity, newEmail: string): UserEntity {
 class UserEntity {
   id: string;
   email: string;
-  
+
   setEmail(email: string) {
     this.email = email; // Mutating state
   }
@@ -914,6 +971,7 @@ class UserEntity {
 ```
 
 ### 9. **Composition Over Inheritance**
+
 Prefiere composición sobre herencia
 
 ```typescript
@@ -936,22 +994,21 @@ class AuthService extends BaseService {
 ```
 
 ### 10. **Error Handling Consistency**
+
 Manejo de errores consistente en toda la aplicación
 
 ```typescript
 // ✅ CORRECTO - Patrón consistente
-type Result<T> = 
-  | { success: true; data: T }
-  | { success: false; error: string };
+type Result<T> = { success: true; data: T } | { success: false; error: string };
 
 async function login(): Promise<Result<UserEntity>> {
   try {
     const user = await repository.login();
     return { success: true, data: user };
   } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }
@@ -986,13 +1043,13 @@ const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
 ```typescript
 // ✅ CORRECTO
 async function updateProfile(formData: FormData) {
-  const email = formData.get('email') as string;
-  
+  const email = formData.get("email") as string;
+
   // Validate
-  if (!email || !email.includes('@')) {
-    return { error: 'Invalid email' };
+  if (!email || !email.includes("@")) {
+    return { error: "Invalid email" };
   }
-  
+
   // Process
   await repository.updateEmail(email);
 }
@@ -1006,7 +1063,7 @@ function sanitizeInput(input: string): string {
   return input.trim().toLowerCase();
 }
 
-const email = sanitizeInput(formData.get('email') as string);
+const email = sanitizeInput(formData.get("email") as string);
 ```
 
 ### 4. **Usar HTTPS en producción**
@@ -1017,16 +1074,16 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: "/(.*)",
         headers: [
           {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload'
-          }
-        ]
-      }
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+        ],
+      },
     ];
-  }
+  },
 };
 ```
 
@@ -1068,10 +1125,10 @@ const HeavyComponent = dynamic(() => import('./HeavyComponent'), {
 // ✅ CORRECTO
 import Image from 'next/image';
 
-<Image 
-  src="/logo.png" 
-  alt="Logo" 
-  width={100} 
+<Image
+  src="/logo.png"
+  alt="Logo"
+  width={100}
   height={100}
   priority // Para imágenes above the fold
 />
@@ -1087,7 +1144,7 @@ function ExpensiveComponent({ data }) {
   const processedData = useMemo(() => {
     return heavyCalculation(data);
   }, [data]);
-  
+
   return <div>{processedData}</div>;
 }
 ```
@@ -1103,14 +1160,14 @@ function ExpensiveComponent({ data }) {
 export default {
   theme: {
     screens: {
-      'sm': '640px',   // Mobile landscape
-      'md': '768px',   // Tablet
-      'lg': '1024px',  // Desktop
-      'xl': '1280px',  // Large desktop
-      '2xl': '1400px', // Extra large
-    }
-  }
-}
+      sm: "640px", // Mobile landscape
+      md: "768px", // Tablet
+      lg: "1024px", // Desktop
+      xl: "1280px", // Large desktop
+      "2xl": "1400px", // Extra large
+    },
+  },
+};
 ```
 
 ### Uso en componentes
@@ -1160,9 +1217,9 @@ import { cn } from '@/lib/utils';
 
 function CustomButton({ className, ...props }) {
   return (
-    <Button 
-      className={cn("my-custom-styles", className)} 
-      {...props} 
+    <Button
+      className={cn("my-custom-styles", className)}
+      {...props}
     />
   );
 }
@@ -1175,7 +1232,7 @@ import { cn } from '@/lib/utils';
 
 function MyComponent({ isActive, className }) {
   return (
-    <div 
+    <div
       className={cn(
         "base-classes",
         isActive && "active-classes",
@@ -1229,6 +1286,7 @@ chore(deps): update dependencies
 ```
 
 ### Tipos de Commit:
+
 - `feat`: Nueva funcionalidad
 - `fix`: Corrección de bug
 - `refactor`: Refactorización sin cambiar funcionalidad
@@ -1264,6 +1322,7 @@ chore(deps): update dependencies
 ## Troubleshooting Común
 
 ### Error: "Module not found"
+
 ```bash
 # Solución: Limpiar cache y reinstalar
 rm -rf .next node_modules
@@ -1272,12 +1331,14 @@ npm run dev
 ```
 
 ### Error: TypeScript no reconoce aliases
+
 ```bash
 # Solución: Reiniciar TypeScript server en VS Code
 Ctrl+Shift+P → "TypeScript: Restart TS Server"
 ```
 
 ### Error: "Cannot find module '@/src/...'"
+
 ```bash
 # Verificar tsconfig.json
 {
@@ -1290,6 +1351,7 @@ Ctrl+Shift+P → "TypeScript: Restart TS Server"
 ```
 
 ### Error: Supabase client not working
+
 ```bash
 # Verificar variables de entorno
 # .env.local debe tener:
@@ -1303,6 +1365,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ## Recursos Adicionales
 
 ### Documentación Oficial
+
 - [Next.js Documentation](https://nextjs.org/docs)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
 - [Supabase Documentation](https://supabase.com/docs)
@@ -1310,11 +1373,13 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 - [shadcn/ui](https://ui.shadcn.com/)
 
 ### Arquitectura y Patrones
+
 - [Clean Architecture - Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 - [SOLID Principles](https://en.wikipedia.org/wiki/SOLID)
 - [Design Patterns](https://refactoring.guru/design-patterns)
 
 ### TypeScript
+
 - [TypeScript Do's and Don'ts](https://www.typescriptlang.org/docs/handbook/declaration-files/do-s-and-don-ts.html)
 - [Effective TypeScript](https://effectivetypescript.com/)
 
