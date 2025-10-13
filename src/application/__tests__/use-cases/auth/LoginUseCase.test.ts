@@ -1,9 +1,9 @@
-import { LoginUseCase } from '@/src/application/use-cases/auth/LoginUseCase';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { UserEntity } from '@/src/core/entities/User.entity';
-import { LoginCredentials } from '@/src/core/types/auth.types';
+import { LoginUseCase } from "@/src/application/use-cases/auth/LoginUseCase";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { UserEntity } from "@/src/core/entities/User.entity";
+import { LoginCredentials } from "@/src/core/types/auth.types";
 
-describe('LoginUseCase', () => {
+describe("LoginUseCase", () => {
   let mockAuthRepository: jest.Mocked<any>;
   let loginUseCase: LoginUseCase;
 
@@ -24,14 +24,14 @@ describe('LoginUseCase', () => {
     jest.clearAllMocks();
   });
 
-  describe('execute', () => {
+  describe("execute", () => {
     const validCredentials: LoginCredentials = {
-      email: 'test@example.com',
-      password: 'password123',
+      email: "test@example.com",
+      password: "password123",
     };
 
-    it('should login successfully with valid credentials', async () => {
-      const mockUser = new UserEntity('123', 'test@example.com', 'John Doe');
+    it("should login successfully with valid credentials", async () => {
+      const mockUser = new UserEntity("123", "test@example.com", "John Doe");
       mockAuthRepository.login.mockResolvedValue(mockUser);
 
       const result = await loginUseCase.execute(validCredentials);
@@ -43,8 +43,8 @@ describe('LoginUseCase', () => {
       expect(mockAuthRepository.login).toHaveBeenCalledTimes(1);
     });
 
-    it('should return error when credentials are invalid', async () => {
-      const errorMessage = 'Email o contraseña incorrectos';
+    it("should return error when credentials are invalid", async () => {
+      const errorMessage = "Email o contraseña incorrectos";
       mockAuthRepository.login.mockRejectedValue(new Error(errorMessage));
 
       const result = await loginUseCase.execute(validCredentials);
@@ -55,24 +55,24 @@ describe('LoginUseCase', () => {
       expect(mockAuthRepository.login).toHaveBeenCalledWith(validCredentials);
     });
 
-    it('should handle unknown errors gracefully', async () => {
-      mockAuthRepository.login.mockRejectedValue('Unknown error');
+    it("should handle unknown errors gracefully", async () => {
+      mockAuthRepository.login.mockRejectedValue("Unknown error");
 
       const result = await loginUseCase.execute(validCredentials);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Error al iniciar sesión');
+      expect(result.error).toBe("Error al iniciar sesión");
     });
 
-    it('should handle network errors', async () => {
+    it("should handle network errors", async () => {
       mockAuthRepository.login.mockRejectedValue(
-        new Error('Network request failed')
+        new Error("Network request failed")
       );
 
       const result = await loginUseCase.execute(validCredentials);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Network request failed');
+      expect(result.error).toBe("Network request failed");
     });
   });
 });

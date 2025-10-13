@@ -1,13 +1,13 @@
-import { SupabaseProfileRepository } from '@/src/infrastructure/repositories/SupabaseProfileRepository';
-import { ProfileEntity } from '@/src/core/entities/Profile.entity';
+import { SupabaseProfileRepository } from "@/src/infrastructure/repositories/SupabaseProfileRepository";
+import { ProfileEntity } from "@/src/core/entities/Profile.entity";
 
-jest.mock('@/src/infrastructure/supabase/server', () => ({
+jest.mock("@/src/infrastructure/supabase/server", () => ({
   createClient: jest.fn(),
 }));
 
-import { createClient } from '@/src/infrastructure/supabase/server';
+import { createClient } from "@/src/infrastructure/supabase/server";
 
-describe('SupabaseProfileRepository', () => {
+describe("SupabaseProfileRepository", () => {
   let repository: SupabaseProfileRepository;
   let mockSupabaseClient: any;
 
@@ -28,13 +28,13 @@ describe('SupabaseProfileRepository', () => {
     jest.clearAllMocks();
   });
 
-  describe('getProfileByUserId', () => {
-    it('should return profile when found', async () => {
+  describe("getProfileByUserId", () => {
+    it("should return profile when found", async () => {
       const mockProfile = {
-        id: '123',
-        email: 'test@example.com',
-        full_name: 'John Doe',
-        avatar_url: 'https://avatar.com/avatar.jpg',
+        id: "123",
+        email: "test@example.com",
+        full_name: "John Doe",
+        avatar_url: "https://avatar.com/avatar.jpg",
       };
 
       mockSupabaseClient.single.mockResolvedValue({
@@ -42,37 +42,37 @@ describe('SupabaseProfileRepository', () => {
         error: null,
       });
 
-      const result = await repository.getProfileByUserId('123');
+      const result = await repository.getProfileByUserId("123");
 
       expect(result).toBeInstanceOf(ProfileEntity);
-      expect(result?.id).toBe('123');
-      expect(result?.email).toBe('test@example.com');
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('profiles');
+      expect(result?.id).toBe("123");
+      expect(result?.email).toBe("test@example.com");
+      expect(mockSupabaseClient.from).toHaveBeenCalledWith("profiles");
       expect(mockSupabaseClient.select).toHaveBeenCalledWith(
-        'id, email, full_name, avatar_url'
+        "id, email, full_name, avatar_url"
       );
-      expect(mockSupabaseClient.eq).toHaveBeenCalledWith('id', '123');
+      expect(mockSupabaseClient.eq).toHaveBeenCalledWith("id", "123");
     });
 
-    it('should return null when profile not found', async () => {
+    it("should return null when profile not found", async () => {
       mockSupabaseClient.single.mockResolvedValue({
         data: null,
-        error: { message: 'Not found' },
+        error: { message: "Not found" },
       });
 
-      const result = await repository.getProfileByUserId('123');
+      const result = await repository.getProfileByUserId("123");
 
       expect(result).toBeNull();
     });
   });
 
-  describe('updateProfile', () => {
-    it('should update profile successfully', async () => {
+  describe("updateProfile", () => {
+    it("should update profile successfully", async () => {
       const mockProfile = {
-        id: '123',
-        email: 'test@example.com',
-        full_name: 'Jane Doe',
-        avatar_url: 'https://avatar.com/new.jpg',
+        id: "123",
+        email: "test@example.com",
+        full_name: "Jane Doe",
+        avatar_url: "https://avatar.com/new.jpg",
       };
 
       mockSupabaseClient.single.mockResolvedValue({
@@ -80,28 +80,28 @@ describe('SupabaseProfileRepository', () => {
         error: null,
       });
 
-      const result = await repository.updateProfile('123', {
-        fullName: 'Jane Doe',
-        avatarUrl: 'https://avatar.com/new.jpg',
+      const result = await repository.updateProfile("123", {
+        fullName: "Jane Doe",
+        avatarUrl: "https://avatar.com/new.jpg",
       });
 
       expect(result).toBeInstanceOf(ProfileEntity);
-      expect(result.fullName).toBe('Jane Doe');
+      expect(result.fullName).toBe("Jane Doe");
       expect(mockSupabaseClient.update).toHaveBeenCalledWith({
-        full_name: 'Jane Doe',
-        avatar_url: 'https://avatar.com/new.jpg',
+        full_name: "Jane Doe",
+        avatar_url: "https://avatar.com/new.jpg",
       });
     });
 
-    it('should throw error when update fails', async () => {
+    it("should throw error when update fails", async () => {
       mockSupabaseClient.single.mockResolvedValue({
         data: null,
-        error: { message: 'Update failed' },
+        error: { message: "Update failed" },
       });
 
       await expect(
-        repository.updateProfile('123', { fullName: 'Jane Doe' })
-      ).rejects.toThrow('Error al actualizar el perfil');
+        repository.updateProfile("123", { fullName: "Jane Doe" })
+      ).rejects.toThrow("Error al actualizar el perfil");
     });
   });
 });
