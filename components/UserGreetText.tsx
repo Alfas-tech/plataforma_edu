@@ -83,9 +83,9 @@ const UserGreetText = () => {
     const avatarUrl = profile?.avatar_url;
 
     return (
-      <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 border border-slate-200">
+      <div className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 md:flex">
         {avatarUrl ? (
-          <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-slate-200">
+          <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-slate-200">
             <Image
               src={avatarUrl}
               alt={displayName}
@@ -96,7 +96,7 @@ const UserGreetText = () => {
             />
           </div>
         ) : (
-          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold text-sm flex-shrink-0">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-sm font-semibold text-white">
             {displayName.charAt(0).toUpperCase()}
           </div>
         )}

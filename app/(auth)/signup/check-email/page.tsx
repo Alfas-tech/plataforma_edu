@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Mail } from "lucide-react";
 
@@ -19,16 +25,16 @@ export default function CheckEmailPage() {
         <CardContent className="space-y-4">
           <div className="rounded-lg bg-blue-50 p-4">
             <p className="text-sm text-blue-900">
-              <strong>Importante:</strong> Para activar tu cuenta, haz clic en el enlace que te enviamos por correo electrónico.
+              <strong>Importante:</strong> Para activar tu cuenta, haz clic en
+              el enlace que te enviamos por correo electrónico.
             </p>
           </div>
 
           <div className="space-y-2 text-sm text-muted-foreground">
+            <p>Una vez que confirmes tu correo, podrás iniciar sesión.</p>
             <p>
-              Una vez que confirmes tu correo, podrás iniciar sesión.
-            </p>
-            <p>
-              Si no ves el correo, revisa tu carpeta de spam o correo no deseado.
+              Si no ves el correo, revisa tu carpeta de spam o correo no
+              deseado.
             </p>
           </div>
 

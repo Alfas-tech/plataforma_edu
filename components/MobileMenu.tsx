@@ -101,39 +101,39 @@ export default function MobileMenu() {
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Toggle menu"
       >
-        {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
 
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           onClick={closeMenu}
         />
       )}
 
       <div
-        className={`fixed top-0 right-0 h-full w-64 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out lg:hidden ${
+        className={`fixed right-0 top-0 z-50 h-full w-64 transform bg-white shadow-xl transition-transform duration-300 ease-in-out lg:hidden ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between p-4 border-b">
-            <h2 className="font-semibold text-lg">Menú</h2>
+        <div className="flex h-full flex-col">
+          <div className="flex items-center justify-between border-b p-4">
+            <h2 className="text-lg font-semibold">Menú</h2>
             <Button
               variant="ghost"
               size="sm"
               onClick={closeMenu}
               aria-label="Close menu"
             >
-              <X className="w-5 h-5" />
+              <X className="h-5 w-5" />
             </Button>
           </div>
 
           {user && displayName && (
-            <div className="p-4 border-b bg-slate-50">
+            <div className="border-b bg-slate-50 p-4">
               <div className="flex items-center gap-3">
                 {avatarUrl ? (
-                  <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-slate-200">
+                  <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-slate-200">
                     <Image
                       src={avatarUrl}
                       alt={displayName}
@@ -144,15 +144,15 @@ export default function MobileMenu() {
                     />
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 font-semibold text-white">
                     {displayName.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-900 truncate">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-slate-900">
                     {displayName}
                   </p>
-                  <p className="text-xs text-slate-500 truncate">
+                  <p className="truncate text-xs text-slate-500">
                     {user.email}
                   </p>
                 </div>
@@ -163,35 +163,35 @@ export default function MobileMenu() {
           <nav className="flex-1 overflow-y-auto py-4">
             <a
               href="#curso"
-              className="block px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+              className="block px-4 py-3 text-sm text-slate-700 transition-colors hover:bg-slate-50"
               onClick={closeMenu}
             >
               El Curso
             </a>
             <a
               href="#profesores"
-              className="block px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+              className="block px-4 py-3 text-sm text-slate-700 transition-colors hover:bg-slate-50"
               onClick={closeMenu}
             >
               Para Profesores
             </a>
             <a
               href="#estudiantes"
-              className="block px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+              className="block px-4 py-3 text-sm text-slate-700 transition-colors hover:bg-slate-50"
               onClick={closeMenu}
             >
               Para Estudiantes
             </a>
             <a
               href="#recursos"
-              className="block px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+              className="block px-4 py-3 text-sm text-slate-700 transition-colors hover:bg-slate-50"
               onClick={closeMenu}
             >
               Recursos
             </a>
           </nav>
 
-          <div className="p-4 border-t">
+          <div className="border-t p-4">
             <LoginButton />
           </div>
         </div>

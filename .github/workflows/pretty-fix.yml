@@ -34,8 +34,8 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - name: Install prettier
-        run: pnpm add -g prettier@3.3.3 prettier-plugin-tailwindcss
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Get changed files
         id: get-changed-files
@@ -51,7 +51,6 @@ jobs:
               }
             );
             return changedFiles.filter(file=> file.status !== "removed").map(file => file.filename).join(' ');
-
 
       - name: Run Prettier fix
         run: |
