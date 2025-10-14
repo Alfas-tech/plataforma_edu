@@ -1,10 +1,10 @@
-import { DeleteUserUseCase } from '@/src/application/use-cases/profile/DeleteUserUseCase';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { UserEntity } from '@/src/core/entities/User.entity';
-import { ProfileEntity } from '@/src/core/entities/Profile.entity';
+import { DeleteUserUseCase } from "@/src/application/use-cases/profile/DeleteUserUseCase";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { UserEntity } from "@/src/core/entities/User.entity";
+import { ProfileEntity } from "@/src/core/entities/Profile.entity";
 
-describe('DeleteUserUseCase', () => {
+describe("DeleteUserUseCase", () => {
   let mockAuthRepository: jest.Mocked<IAuthRepository>;
   let mockProfileRepository: jest.Mocked<IProfileRepository>;
   let deleteUserUseCase: DeleteUserUseCase;
@@ -42,82 +42,97 @@ describe('DeleteUserUseCase', () => {
     jest.clearAllMocks();
   });
 
-  describe('execute', () => {
-    const userId = 'user-123';
-    const mockUser = new UserEntity('admin-123', 'admin@example.com', 'Admin User');
+  describe("execute", () => {
+    const userId = "user-123";
+    const mockUser = new UserEntity(
+      "admin-123",
+      "admin@example.com",
+      "Admin User"
+    );
     const mockAdminProfile = new ProfileEntity(
-      'admin-123',
-      'admin@example.com',
-      'Admin User',
+      "admin-123",
+      "admin@example.com",
+      "Admin User",
       null,
-      'admin',
+      "admin",
       new Date(),
       new Date()
     );
 
     const mockUserProfile = new ProfileEntity(
       userId,
-      'user@example.com',
-      'User',
+      "user@example.com",
+      "User",
       null,
-      'student',
+      "student",
       new Date(),
       new Date()
     );
 
-    it('should validate admin permissions and user existence', async () => {
+    it("should validate admin permissions and user existence", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockProfileRepository.getProfileByUserId
         .mockResolvedValueOnce(mockAdminProfile)
         .mockResolvedValueOnce(mockUserProfile);
-      mockProfileRepository.getAllProfiles.mockResolvedValue([mockAdminProfile, mockUserProfile]);
+      mockProfileRepository.getAllProfiles.mockResolvedValue([
+        mockAdminProfile,
+        mockUserProfile,
+      ]);
 
       const result = await deleteUserUseCase.execute(userId);
 
       expect(result.success).toBe(true);
-      expect(result.error).toBe('Esta funcionalidad requiere configuración adicional en Supabase');
+      expect(result.error).toBe(
+        "Esta funcionalidad requiere configuración adicional en Supabase"
+      );
     });
 
-    it('should return error when no user is authenticated', async () => {
+    it("should return error when no user is authenticated", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(null);
 
       const result = await deleteUserUseCase.execute(userId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('No hay usuario autenticado');
+      expect(result.error).toBe("No hay usuario autenticado");
     });
 
-    it('should return error when user is not admin', async () => {
+    it("should return error when user is not admin", async () => {
       const teacherProfile = new ProfileEntity(
-        'user-123',
-        'teacher@example.com',
-        'Teacher User',
+        "user-123",
+        "teacher@example.com",
+        "Teacher User",
         null,
-        'teacher',
+        "teacher",
         new Date(),
         new Date()
       );
 
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(teacherProfile);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        teacherProfile
+      );
 
       const result = await deleteUserUseCase.execute(userId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Solo los administradores pueden eliminar usuarios');
+      expect(result.error).toBe(
+        "Solo los administradores pueden eliminar usuarios"
+      );
     });
 
-    it('should return error when trying to delete self', async () => {
+    it("should return error when trying to delete self", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(mockAdminProfile);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
 
-      const result = await deleteUserUseCase.execute('admin-123');
+      const result = await deleteUserUseCase.execute("admin-123");
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('No puedes eliminar tu propia cuenta');
+      expect(result.error).toBe("No puedes eliminar tu propia cuenta");
     });
 
-    it('should return error when user not found', async () => {
+    it("should return error when user not found", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockProfileRepository.getProfileByUserId
         .mockResolvedValueOnce(mockAdminProfile)
@@ -126,16 +141,16 @@ describe('DeleteUserUseCase', () => {
       const result = await deleteUserUseCase.execute(userId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Usuario no encontrado');
+      expect(result.error).toBe("Usuario no encontrado");
     });
 
-    it('should return error when trying to delete last admin', async () => {
+    it("should return error when trying to delete last admin", async () => {
       const adminToDelete = new ProfileEntity(
         userId,
-        'admin2@example.com',
-        'Admin 2',
+        "admin2@example.com",
+        "Admin 2",
         null,
-        'admin',
+        "admin",
         new Date(),
         new Date()
       );
@@ -149,26 +164,26 @@ describe('DeleteUserUseCase', () => {
       const result = await deleteUserUseCase.execute(userId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('No se puede eliminar al último administrador');
+      expect(result.error).toBe("No se puede eliminar al último administrador");
     });
 
-    it('should allow deleting admin when multiple admins exist', async () => {
+    it("should allow deleting admin when multiple admins exist", async () => {
       const adminToDelete = new ProfileEntity(
         userId,
-        'admin2@example.com',
-        'Admin 2',
+        "admin2@example.com",
+        "Admin 2",
         null,
-        'admin',
+        "admin",
         new Date(),
         new Date()
       );
 
       const anotherAdmin = new ProfileEntity(
-        'admin-456',
-        'admin3@example.com',
-        'Admin 3',
+        "admin-456",
+        "admin3@example.com",
+        "Admin 3",
         null,
-        'admin',
+        "admin",
         new Date(),
         new Date()
       );
@@ -177,33 +192,38 @@ describe('DeleteUserUseCase', () => {
       mockProfileRepository.getProfileByUserId
         .mockResolvedValueOnce(mockAdminProfile)
         .mockResolvedValueOnce(adminToDelete);
-      mockProfileRepository.getAllProfiles.mockResolvedValue([mockAdminProfile, adminToDelete, anotherAdmin]);
+      mockProfileRepository.getAllProfiles.mockResolvedValue([
+        mockAdminProfile,
+        adminToDelete,
+        anotherAdmin,
+      ]);
 
       const result = await deleteUserUseCase.execute(userId);
 
       expect(result.success).toBe(true);
-      expect(result.error).toBe('Esta funcionalidad requiere configuración adicional en Supabase');
+      expect(result.error).toBe(
+        "Esta funcionalidad requiere configuración adicional en Supabase"
+      );
     });
 
-    it('should handle repository errors gracefully', async () => {
+    it("should handle repository errors gracefully", async () => {
       mockAuthRepository.getCurrentUser.mockRejectedValue(
-        new Error('Database error')
+        new Error("Database error")
       );
 
       const result = await deleteUserUseCase.execute(userId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Database error');
+      expect(result.error).toBe("Database error");
     });
 
-    it('should handle unknown errors', async () => {
-      mockAuthRepository.getCurrentUser.mockRejectedValue('Unknown error');
+    it("should handle unknown errors", async () => {
+      mockAuthRepository.getCurrentUser.mockRejectedValue("Unknown error");
 
       const result = await deleteUserUseCase.execute(userId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Error al eliminar usuario');
+      expect(result.error).toBe("Error al eliminar usuario");
     });
   });
 });
-

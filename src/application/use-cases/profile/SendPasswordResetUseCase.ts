@@ -1,5 +1,5 @@
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
 
 export interface SendPasswordResetResult {
   success: boolean;
@@ -19,38 +19,42 @@ export class SendPasswordResetUseCase {
       if (!currentUser) {
         return {
           success: false,
-          error: 'No hay usuario autenticado',
+          error: "No hay usuario autenticado",
         };
       }
 
-      const currentProfile = await this.profileRepository.getProfileByUserId(currentUser.id);
+      const currentProfile = await this.profileRepository.getProfileByUserId(
+        currentUser.id
+      );
       if (!currentProfile || !currentProfile.isAdmin()) {
         return {
           success: false,
-          error: 'Solo los administradores pueden enviar emails de restablecimiento',
+          error:
+            "Solo los administradores pueden enviar emails de restablecimiento",
         };
       }
 
       // Get user profile to get email
-      const userProfile = await this.profileRepository.getProfileByUserId(userId);
+      const userProfile =
+        await this.profileRepository.getProfileByUserId(userId);
       if (!userProfile) {
         return {
           success: false,
-          error: 'Usuario no encontrado',
+          error: "Usuario no encontrado",
         };
       }
 
       // Send password reset email - This will be handled by Supabase
       return {
         success: true,
-        error: 'Esta funcionalidad requiere configuración adicional en Supabase',
+        error:
+          "Esta funcionalidad requiere configuración adicional en Supabase",
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al enviar email',
+        error: error instanceof Error ? error.message : "Error al enviar email",
       };
     }
   }
 }
-

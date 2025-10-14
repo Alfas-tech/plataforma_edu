@@ -1,10 +1,10 @@
-import { SendPasswordResetUseCase } from '@/src/application/use-cases/profile/SendPasswordResetUseCase';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { UserEntity } from '@/src/core/entities/User.entity';
-import { ProfileEntity } from '@/src/core/entities/Profile.entity';
+import { SendPasswordResetUseCase } from "@/src/application/use-cases/profile/SendPasswordResetUseCase";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { UserEntity } from "@/src/core/entities/User.entity";
+import { ProfileEntity } from "@/src/core/entities/Profile.entity";
 
-describe('SendPasswordResetUseCase', () => {
+describe("SendPasswordResetUseCase", () => {
   let mockAuthRepository: jest.Mocked<IAuthRepository>;
   let mockProfileRepository: jest.Mocked<IProfileRepository>;
   let sendPasswordResetUseCase: SendPasswordResetUseCase;
@@ -42,30 +42,34 @@ describe('SendPasswordResetUseCase', () => {
     jest.clearAllMocks();
   });
 
-  describe('execute', () => {
-    const userId = 'user-123';
-    const mockUser = new UserEntity('admin-123', 'admin@example.com', 'Admin User');
+  describe("execute", () => {
+    const userId = "user-123";
+    const mockUser = new UserEntity(
+      "admin-123",
+      "admin@example.com",
+      "Admin User"
+    );
     const mockAdminProfile = new ProfileEntity(
-      'admin-123',
-      'admin@example.com',
-      'Admin User',
+      "admin-123",
+      "admin@example.com",
+      "Admin User",
       null,
-      'admin',
+      "admin",
       new Date(),
       new Date()
     );
 
     const mockUserProfile = new ProfileEntity(
       userId,
-      'user@example.com',
-      'User',
+      "user@example.com",
+      "User",
       null,
-      'student',
+      "student",
       new Date(),
       new Date()
     );
 
-    it('should validate admin permissions and user existence', async () => {
+    it("should validate admin permissions and user existence", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockProfileRepository.getProfileByUserId
         .mockResolvedValueOnce(mockAdminProfile)
@@ -74,39 +78,45 @@ describe('SendPasswordResetUseCase', () => {
       const result = await sendPasswordResetUseCase.execute(userId);
 
       expect(result.success).toBe(true);
-      expect(result.error).toBe('Esta funcionalidad requiere configuración adicional en Supabase');
+      expect(result.error).toBe(
+        "Esta funcionalidad requiere configuración adicional en Supabase"
+      );
     });
 
-    it('should return error when no user is authenticated', async () => {
+    it("should return error when no user is authenticated", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(null);
 
       const result = await sendPasswordResetUseCase.execute(userId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('No hay usuario autenticado');
+      expect(result.error).toBe("No hay usuario autenticado");
     });
 
-    it('should return error when user is not admin', async () => {
+    it("should return error when user is not admin", async () => {
       const teacherProfile = new ProfileEntity(
-        'user-123',
-        'teacher@example.com',
-        'Teacher User',
+        "user-123",
+        "teacher@example.com",
+        "Teacher User",
         null,
-        'teacher',
+        "teacher",
         new Date(),
         new Date()
       );
 
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(teacherProfile);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        teacherProfile
+      );
 
       const result = await sendPasswordResetUseCase.execute(userId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Solo los administradores pueden enviar emails de restablecimiento');
+      expect(result.error).toBe(
+        "Solo los administradores pueden enviar emails de restablecimiento"
+      );
     });
 
-    it('should return error when user not found', async () => {
+    it("should return error when user not found", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockProfileRepository.getProfileByUserId
         .mockResolvedValueOnce(mockAdminProfile)
@@ -115,28 +125,27 @@ describe('SendPasswordResetUseCase', () => {
       const result = await sendPasswordResetUseCase.execute(userId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Usuario no encontrado');
+      expect(result.error).toBe("Usuario no encontrado");
     });
 
-    it('should handle repository errors gracefully', async () => {
+    it("should handle repository errors gracefully", async () => {
       mockAuthRepository.getCurrentUser.mockRejectedValue(
-        new Error('Database error')
+        new Error("Database error")
       );
 
       const result = await sendPasswordResetUseCase.execute(userId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Database error');
+      expect(result.error).toBe("Database error");
     });
 
-    it('should handle unknown errors', async () => {
-      mockAuthRepository.getCurrentUser.mockRejectedValue('Unknown error');
+    it("should handle unknown errors", async () => {
+      mockAuthRepository.getCurrentUser.mockRejectedValue("Unknown error");
 
       const result = await sendPasswordResetUseCase.execute(userId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Error al enviar email');
+      expect(result.error).toBe("Error al enviar email");
     });
   });
 });
-

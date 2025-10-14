@@ -1,10 +1,13 @@
-import { CreateUserUseCase, CreateUserInput } from '@/src/application/use-cases/profile/CreateUserUseCase';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { UserEntity } from '@/src/core/entities/User.entity';
-import { ProfileEntity } from '@/src/core/entities/Profile.entity';
+import {
+  CreateUserUseCase,
+  CreateUserInput,
+} from "@/src/application/use-cases/profile/CreateUserUseCase";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { UserEntity } from "@/src/core/entities/User.entity";
+import { ProfileEntity } from "@/src/core/entities/Profile.entity";
 
-describe('CreateUserUseCase', () => {
+describe("CreateUserUseCase", () => {
   let mockAuthRepository: jest.Mocked<IAuthRepository>;
   let mockProfileRepository: jest.Mocked<IProfileRepository>;
   let createUserUseCase: CreateUserUseCase;
@@ -42,139 +45,162 @@ describe('CreateUserUseCase', () => {
     jest.clearAllMocks();
   });
 
-  describe('execute', () => {
-    const mockUser = new UserEntity('admin-123', 'admin@example.com', 'Admin User');
+  describe("execute", () => {
+    const mockUser = new UserEntity(
+      "admin-123",
+      "admin@example.com",
+      "Admin User"
+    );
     const mockAdminProfile = new ProfileEntity(
-      'admin-123',
-      'admin@example.com',
-      'Admin User',
+      "admin-123",
+      "admin@example.com",
+      "Admin User",
       null,
-      'admin',
+      "admin",
       new Date(),
       new Date()
     );
 
     const validInput: CreateUserInput = {
-      email: 'newuser@example.com',
-      password: 'password123',
-      fullName: 'New User',
-      role: 'student',
+      email: "newuser@example.com",
+      password: "password123",
+      fullName: "New User",
+      role: "student",
     };
 
-    it('should validate admin permissions', async () => {
+    it("should validate admin permissions", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(mockAdminProfile);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
       mockProfileRepository.getProfileByEmail.mockResolvedValue(null);
 
       const result = await createUserUseCase.execute(validInput);
 
       expect(result.success).toBe(true);
-      expect(result.error).toBe('Esta funcionalidad requiere configuración adicional en Supabase');
+      expect(result.error).toBe(
+        "Esta funcionalidad requiere configuración adicional en Supabase"
+      );
     });
 
-    it('should return error when no user is authenticated', async () => {
+    it("should return error when no user is authenticated", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(null);
 
       const result = await createUserUseCase.execute(validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('No hay usuario autenticado');
+      expect(result.error).toBe("No hay usuario autenticado");
     });
 
-    it('should return error when user is not admin', async () => {
+    it("should return error when user is not admin", async () => {
       const teacherProfile = new ProfileEntity(
-        'user-123',
-        'teacher@example.com',
-        'Teacher User',
+        "user-123",
+        "teacher@example.com",
+        "Teacher User",
         null,
-        'teacher',
+        "teacher",
         new Date(),
         new Date()
       );
 
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(teacherProfile);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        teacherProfile
+      );
 
       const result = await createUserUseCase.execute(validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Solo los administradores pueden crear usuarios');
+      expect(result.error).toBe(
+        "Solo los administradores pueden crear usuarios"
+      );
     });
 
-    it('should return error when email is missing', async () => {
+    it("should return error when email is missing", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(mockAdminProfile);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
 
       const invalidInput: CreateUserInput = {
-        email: '',
-        password: 'password123',
-        fullName: 'New User',
-        role: 'student',
+        email: "",
+        password: "password123",
+        fullName: "New User",
+        role: "student",
       };
 
       const result = await createUserUseCase.execute(invalidInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Email, contraseña y nombre completo son requeridos');
+      expect(result.error).toBe(
+        "Email, contraseña y nombre completo son requeridos"
+      );
     });
 
-    it('should return error when password is too short', async () => {
+    it("should return error when password is too short", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(mockAdminProfile);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
 
       const invalidInput: CreateUserInput = {
-        email: 'newuser@example.com',
-        password: '12345',
-        fullName: 'New User',
-        role: 'student',
+        email: "newuser@example.com",
+        password: "12345",
+        fullName: "New User",
+        role: "student",
       };
 
       const result = await createUserUseCase.execute(invalidInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('La contraseña debe tener al menos 6 caracteres');
+      expect(result.error).toBe(
+        "La contraseña debe tener al menos 6 caracteres"
+      );
     });
 
-    it('should return error when user already exists', async () => {
+    it("should return error when user already exists", async () => {
       const existingProfile = new ProfileEntity(
-        'existing-123',
-        'newuser@example.com',
-        'Existing User',
+        "existing-123",
+        "newuser@example.com",
+        "Existing User",
         null,
-        'student',
+        "student",
         new Date(),
         new Date()
       );
 
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(mockAdminProfile);
-      mockProfileRepository.getProfileByEmail.mockResolvedValue(existingProfile);
-
-      const result = await createUserUseCase.execute(validInput);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Ya existe un usuario con este email');
-    });
-
-    it('should handle repository errors gracefully', async () => {
-      mockAuthRepository.getCurrentUser.mockRejectedValue(
-        new Error('Database error')
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
+      mockProfileRepository.getProfileByEmail.mockResolvedValue(
+        existingProfile
       );
 
       const result = await createUserUseCase.execute(validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Database error');
+      expect(result.error).toBe("Ya existe un usuario con este email");
     });
 
-    it('should handle unknown errors', async () => {
-      mockAuthRepository.getCurrentUser.mockRejectedValue('Unknown error');
+    it("should handle repository errors gracefully", async () => {
+      mockAuthRepository.getCurrentUser.mockRejectedValue(
+        new Error("Database error")
+      );
 
       const result = await createUserUseCase.execute(validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Error al crear usuario');
+      expect(result.error).toBe("Database error");
+    });
+
+    it("should handle unknown errors", async () => {
+      mockAuthRepository.getCurrentUser.mockRejectedValue("Unknown error");
+
+      const result = await createUserUseCase.execute(validInput);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Error al crear usuario");
     });
   });
 });
-

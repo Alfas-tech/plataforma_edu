@@ -1,5 +1,8 @@
 import { redirect } from "next/navigation";
-import { getCurrentProfile, getAllUsers } from "@/src/presentation/actions/profile.actions";
+import {
+  getCurrentProfile,
+  getAllUsers,
+} from "@/src/presentation/actions/profile.actions";
 import { signout } from "@/src/presentation/actions/auth.actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +14,7 @@ import { UserManagementClient } from "./components/UserManagementClient";
 export default async function UsersManagementPage() {
   const profileResult = await getCurrentProfile();
 
-  if ('error' in profileResult) {
+  if ("error" in profileResult) {
     redirect("/login");
   }
 
@@ -25,7 +28,7 @@ export default async function UsersManagementPage() {
   // Obtener todos los usuarios
   const usersResult = await getAllUsers();
 
-  if ('error' in usersResult) {
+  if ("error" in usersResult) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
         <div className="container mx-auto px-4 py-8">
@@ -172,4 +175,3 @@ export default async function UsersManagementPage() {
     </div>
   );
 }
-
