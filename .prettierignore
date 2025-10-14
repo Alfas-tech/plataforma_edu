@@ -54,5 +54,6 @@ next-env.d.ts
 
 # Coverage
 coverage
+
 # Workflow files
 .github/workflows

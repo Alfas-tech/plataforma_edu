@@ -27,7 +27,6 @@ const LoginButton = () => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth event:", event);
       setUser(session?.user ?? null);
       setIsLoading(false);
       router.refresh();

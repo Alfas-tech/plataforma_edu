@@ -40,7 +40,7 @@ export async function signup(formData: FormData) {
   const password = formData.get("password") as string;
 
   if (!email || !password || !firstName || !lastName) {
-    redirect("/error");
+    return { error: "Todos los campos son requeridos" };
   }
 
   const result = await signUpUseCase.execute({
@@ -51,15 +51,17 @@ export async function signup(formData: FormData) {
   });
 
   if (!result.success) {
-    redirect("/error");
+    return { error: result.error || "Error al crear la cuenta" };
   }
 
   if (result.needsConfirmation) {
-    redirect("/signup/check-email");
+    return { success: true, needsConfirmation: true };
   }
 
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  revalidatePath("/dashboard");
+  
+  return { success: true };
 }
 
 export async function signout() {

@@ -1,4 +1,4 @@
-import { UserData } from "../types/auth.types";
+import { UserData, SupabaseUserData } from "../types/auth.types";
 
 export class UserEntity {
   constructor(
@@ -6,14 +6,14 @@ export class UserEntity {
     public readonly email: string,
     public readonly fullName?: string,
     public readonly avatarUrl?: string,
-    public readonly metadata?: Record<any, any>,
+    public readonly metadata?: Record<string, unknown>,
     public readonly createdAt?: Date
   ) {}
 
-  static fromSupabase(data: any): UserEntity {
+  static fromSupabase(data: SupabaseUserData): UserEntity {
     return new UserEntity(
       data.id,
-      data.email,
+      data.email || '',
       data.user_metadata?.full_name,
       data.user_metadata?.avatar_url,
       data.user_metadata,
@@ -23,7 +23,9 @@ export class UserEntity {
 
   getDisplayName(): string {
     if (this.fullName) return this.fullName;
-    if (this.metadata?.full_name) return this.metadata.full_name;
+    if (this.metadata?.full_name && typeof this.metadata.full_name === 'string') {
+      return this.metadata.full_name;
+    }
     return this.email.split("@")[0] || "Usuario";
   }
 }
