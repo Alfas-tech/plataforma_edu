@@ -1,9 +1,9 @@
-import { IModuleRepository } from '@/src/core/interfaces/repositories/IModuleRepository';
-import { ICourseRepository } from '@/src/core/interfaces/repositories/ICourseRepository';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { CourseModuleEntity } from '@/src/core/entities/CourseModule.entity';
-import { CourseModuleData } from '@/src/core/types/course.types';
+import { IModuleRepository } from "@/src/core/interfaces/repositories/IModuleRepository";
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { CourseModuleEntity } from "@/src/core/entities/CourseModule.entity";
+import { CourseModuleData } from "@/src/core/types/course.types";
 
 export interface UpdateModuleResult {
   success: boolean;
@@ -19,14 +19,17 @@ export class UpdateModuleUseCase {
     private readonly profileRepository: IProfileRepository
   ) {}
 
-  async execute(moduleId: string, data: Partial<CourseModuleData>): Promise<UpdateModuleResult> {
+  async execute(
+    moduleId: string,
+    data: Partial<CourseModuleData>
+  ): Promise<UpdateModuleResult> {
     try {
       // Verify module exists
       const moduleData = await this.moduleRepository.getModuleById(moduleId);
       if (!moduleData) {
         return {
           success: false,
-          error: 'Módulo no encontrado',
+          error: "Módulo no encontrado",
         };
       }
 
@@ -35,15 +38,17 @@ export class UpdateModuleUseCase {
       if (!currentUser) {
         return {
           success: false,
-          error: 'No hay usuario autenticado',
+          error: "No hay usuario autenticado",
         };
       }
 
-      const profile = await this.profileRepository.getProfileByUserId(currentUser.id);
+      const profile = await this.profileRepository.getProfileByUserId(
+        currentUser.id
+      );
       if (!profile) {
         return {
           success: false,
-          error: 'Perfil no encontrado',
+          error: "Perfil no encontrado",
         };
       }
 
@@ -51,24 +56,31 @@ export class UpdateModuleUseCase {
       if (!profile.isAdmin() && !profile.isTeacher()) {
         return {
           success: false,
-          error: 'No tienes permisos para editar módulos',
+          error: "No tienes permisos para editar módulos",
         };
       }
 
       // If teacher, check if assigned to the course
       if (profile.isTeacher()) {
-        const assignedTeachers = await this.courseRepository.getCourseTeachers(moduleData.courseId);
+        const assignedTeachers = await this.courseRepository.getCourseTeachers(
+          moduleData.courseId
+        );
         if (!assignedTeachers.includes(currentUser.id)) {
           return {
             success: false,
-            error: 'No estás asignado a este curso',
+            error: "No estás asignado a este curso",
           };
         }
       }
 
       // Handle order_index change with automatic reordering
-      if (data.order_index !== undefined && data.order_index !== moduleData.orderIndex) {
-        const allModules = await this.moduleRepository.getModulesByCourseId(moduleData.courseId);
+      if (
+        data.order_index !== undefined &&
+        data.order_index !== moduleData.orderIndex
+      ) {
+        const allModules = await this.moduleRepository.getModulesByCourseId(
+          moduleData.courseId
+        );
         const newOrder = data.order_index;
         const oldOrder = moduleData.orderIndex;
 
@@ -105,7 +117,10 @@ export class UpdateModuleUseCase {
       }
 
       // Update the module with all data
-      const updatedModule = await this.moduleRepository.updateModule(moduleId, data);
+      const updatedModule = await this.moduleRepository.updateModule(
+        moduleId,
+        data
+      );
 
       return {
         success: true,
@@ -114,7 +129,8 @@ export class UpdateModuleUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al actualizar módulo',
+        error:
+          error instanceof Error ? error.message : "Error al actualizar módulo",
       };
     }
   }

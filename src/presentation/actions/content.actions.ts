@@ -1,19 +1,25 @@
-'use server';
+"use server";
 
-import { revalidatePath } from 'next/cache';
-import { GetModulesByCourseUseCase } from '@/src/application/use-cases/module/GetModulesByCourseUseCase';
-import { CreateModuleUseCase, CreateModuleInput } from '@/src/application/use-cases/module/CreateModuleUseCase';
-import { UpdateModuleUseCase } from '@/src/application/use-cases/module/UpdateModuleUseCase';
-import { DeleteModuleUseCase } from '@/src/application/use-cases/module/DeleteModuleUseCase';
-import { GetLessonsByModuleUseCase } from '@/src/application/use-cases/lesson/GetLessonsByModuleUseCase';
-import { CreateLessonUseCase, CreateLessonInput } from '@/src/application/use-cases/lesson/CreateLessonUseCase';
-import { UpdateLessonUseCase } from '@/src/application/use-cases/lesson/UpdateLessonUseCase';
-import { DeleteLessonUseCase } from '@/src/application/use-cases/lesson/DeleteLessonUseCase';
-import { SupabaseModuleRepository } from '@/src/infrastructure/repositories/SupabaseModuleRepository';
-import { SupabaseLessonRepository } from '@/src/infrastructure/repositories/SupabaseLessonRepository';
-import { SupabaseCourseRepository } from '@/src/infrastructure/repositories/SupabaseCourseRepository';
-import { SupabaseAuthRepository } from '@/src/infrastructure/repositories/SupabaseAuthRepository';
-import { SupabaseProfileRepository } from '@/src/infrastructure/repositories/SupabaseProfileRepository';
+import { revalidatePath } from "next/cache";
+import { GetModulesByCourseUseCase } from "@/src/application/use-cases/module/GetModulesByCourseUseCase";
+import {
+  CreateModuleUseCase,
+  CreateModuleInput,
+} from "@/src/application/use-cases/module/CreateModuleUseCase";
+import { UpdateModuleUseCase } from "@/src/application/use-cases/module/UpdateModuleUseCase";
+import { DeleteModuleUseCase } from "@/src/application/use-cases/module/DeleteModuleUseCase";
+import { GetLessonsByModuleUseCase } from "@/src/application/use-cases/lesson/GetLessonsByModuleUseCase";
+import {
+  CreateLessonUseCase,
+  CreateLessonInput,
+} from "@/src/application/use-cases/lesson/CreateLessonUseCase";
+import { UpdateLessonUseCase } from "@/src/application/use-cases/lesson/UpdateLessonUseCase";
+import { DeleteLessonUseCase } from "@/src/application/use-cases/lesson/DeleteLessonUseCase";
+import { SupabaseModuleRepository } from "@/src/infrastructure/repositories/SupabaseModuleRepository";
+import { SupabaseLessonRepository } from "@/src/infrastructure/repositories/SupabaseLessonRepository";
+import { SupabaseCourseRepository } from "@/src/infrastructure/repositories/SupabaseCourseRepository";
+import { SupabaseAuthRepository } from "@/src/infrastructure/repositories/SupabaseAuthRepository";
+import { SupabaseProfileRepository } from "@/src/infrastructure/repositories/SupabaseProfileRepository";
 
 const moduleRepository = new SupabaseModuleRepository();
 const lessonRepository = new SupabaseLessonRepository();
@@ -36,10 +42,10 @@ export async function getModulesByCourse(courseId: string) {
   const result = await getModulesUseCase.execute(courseId);
 
   if (!result.success || !result.modules) {
-    return { error: result.error || 'Error al obtener módulos' };
+    return { error: result.error || "Error al obtener módulos" };
   }
 
-  const modules = result.modules.map(module => ({
+  const modules = result.modules.map((module) => ({
     id: module.id,
     courseId: module.courseId,
     title: module.title,
@@ -65,12 +71,12 @@ export async function createModule(input: CreateModuleInput) {
   const result = await createModuleUseCase.execute(input);
 
   if (!result.success) {
-    return { error: result.error || 'Error al crear módulo' };
+    return { error: result.error || "Error al crear módulo" };
   }
 
-  revalidatePath('/dashboard/admin');
-  revalidatePath('/dashboard/teacher');
-  revalidatePath('/dashboard/student');
+  revalidatePath("/dashboard/admin");
+  revalidatePath("/dashboard/teacher");
+  revalidatePath("/dashboard/student");
 
   return { success: true };
 }
@@ -86,12 +92,12 @@ export async function updateModule(moduleId: string, data: any) {
   const result = await updateModuleUseCase.execute(moduleId, data);
 
   if (!result.success) {
-    return { error: result.error || 'Error al actualizar módulo' };
+    return { error: result.error || "Error al actualizar módulo" };
   }
 
-  revalidatePath('/dashboard/admin');
-  revalidatePath('/dashboard/teacher');
-  revalidatePath('/dashboard/student');
+  revalidatePath("/dashboard/admin");
+  revalidatePath("/dashboard/teacher");
+  revalidatePath("/dashboard/student");
 
   return { success: true };
 }
@@ -107,12 +113,12 @@ export async function deleteModule(moduleId: string) {
   const result = await deleteModuleUseCase.execute(moduleId);
 
   if (!result.success) {
-    return { error: result.error || 'Error al eliminar módulo' };
+    return { error: result.error || "Error al eliminar módulo" };
   }
 
-  revalidatePath('/dashboard/admin');
-  revalidatePath('/dashboard/teacher');
-  revalidatePath('/dashboard/student');
+  revalidatePath("/dashboard/admin");
+  revalidatePath("/dashboard/teacher");
+  revalidatePath("/dashboard/student");
 
   return { success: true };
 }
@@ -132,10 +138,10 @@ export async function getLessonsByModule(moduleId: string) {
   const result = await getLessonsUseCase.execute(moduleId);
 
   if (!result.success || !result.lessons) {
-    return { error: result.error || 'Error al obtener lecciones' };
+    return { error: result.error || "Error al obtener lecciones" };
   }
 
-  const lessons = result.lessons.map(lesson => ({
+  const lessons = result.lessons.map((lesson) => ({
     id: lesson.id,
     moduleId: lesson.moduleId,
     title: lesson.title,
@@ -163,12 +169,12 @@ export async function createLesson(input: CreateLessonInput) {
   const result = await createLessonUseCase.execute(input);
 
   if (!result.success) {
-    return { error: result.error || 'Error al crear lección' };
+    return { error: result.error || "Error al crear lección" };
   }
 
-  revalidatePath('/dashboard/admin');
-  revalidatePath('/dashboard/teacher');
-  revalidatePath('/dashboard/student');
+  revalidatePath("/dashboard/admin");
+  revalidatePath("/dashboard/teacher");
+  revalidatePath("/dashboard/student");
 
   return { success: true };
 }
@@ -185,12 +191,12 @@ export async function updateLesson(lessonId: string, data: any) {
   const result = await updateLessonUseCase.execute(lessonId, data);
 
   if (!result.success) {
-    return { error: result.error || 'Error al actualizar lección' };
+    return { error: result.error || "Error al actualizar lección" };
   }
 
-  revalidatePath('/dashboard/admin');
-  revalidatePath('/dashboard/teacher');
-  revalidatePath('/dashboard/student');
+  revalidatePath("/dashboard/admin");
+  revalidatePath("/dashboard/teacher");
+  revalidatePath("/dashboard/student");
 
   return { success: true };
 }
@@ -207,13 +213,12 @@ export async function deleteLesson(lessonId: string) {
   const result = await deleteLessonUseCase.execute(lessonId);
 
   if (!result.success) {
-    return { error: result.error || 'Error al eliminar lección' };
+    return { error: result.error || "Error al eliminar lección" };
   }
 
-  revalidatePath('/dashboard/admin');
-  revalidatePath('/dashboard/teacher');
-  revalidatePath('/dashboard/student');
+  revalidatePath("/dashboard/admin");
+  revalidatePath("/dashboard/teacher");
+  revalidatePath("/dashboard/student");
 
   return { success: true };
 }
-

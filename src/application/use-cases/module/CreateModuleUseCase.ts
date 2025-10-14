@@ -1,8 +1,8 @@
-import { IModuleRepository } from '@/src/core/interfaces/repositories/IModuleRepository';
-import { ICourseRepository } from '@/src/core/interfaces/repositories/ICourseRepository';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { CourseModuleEntity } from '@/src/core/entities/CourseModule.entity';
+import { IModuleRepository } from "@/src/core/interfaces/repositories/IModuleRepository";
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { CourseModuleEntity } from "@/src/core/entities/CourseModule.entity";
 
 export interface CreateModuleInput {
   course_id: string;
@@ -34,15 +34,17 @@ export class CreateModuleUseCase {
       if (!currentUser) {
         return {
           success: false,
-          error: 'No hay usuario autenticado',
+          error: "No hay usuario autenticado",
         };
       }
 
-      const profile = await this.profileRepository.getProfileByUserId(currentUser.id);
+      const profile = await this.profileRepository.getProfileByUserId(
+        currentUser.id
+      );
       if (!profile) {
         return {
           success: false,
-          error: 'Perfil no encontrado',
+          error: "Perfil no encontrado",
         };
       }
 
@@ -50,17 +52,19 @@ export class CreateModuleUseCase {
       if (!profile.isAdmin() && !profile.isTeacher()) {
         return {
           success: false,
-          error: 'No tienes permisos para crear módulos',
+          error: "No tienes permisos para crear módulos",
         };
       }
 
       // If teacher, check if assigned to the course
       if (profile.isTeacher()) {
-        const assignedTeachers = await this.courseRepository.getCourseTeachers(input.course_id);
+        const assignedTeachers = await this.courseRepository.getCourseTeachers(
+          input.course_id
+        );
         if (!assignedTeachers.includes(currentUser.id)) {
           return {
             success: false,
-            error: 'No estás asignado a este curso',
+            error: "No estás asignado a este curso",
           };
         }
       }
@@ -75,7 +79,7 @@ export class CreateModuleUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al crear módulo',
+        error: error instanceof Error ? error.message : "Error al crear módulo",
       };
     }
   }

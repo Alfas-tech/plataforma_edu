@@ -1,7 +1,7 @@
-import { IModuleRepository } from '@/src/core/interfaces/repositories/IModuleRepository';
-import { ICourseRepository } from '@/src/core/interfaces/repositories/ICourseRepository';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
+import { IModuleRepository } from "@/src/core/interfaces/repositories/IModuleRepository";
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
 
 export interface DeleteModuleResult {
   success: boolean;
@@ -23,7 +23,7 @@ export class DeleteModuleUseCase {
       if (!moduleData) {
         return {
           success: false,
-          error: 'Módulo no encontrado',
+          error: "Módulo no encontrado",
         };
       }
 
@@ -32,15 +32,17 @@ export class DeleteModuleUseCase {
       if (!currentUser) {
         return {
           success: false,
-          error: 'No hay usuario autenticado',
+          error: "No hay usuario autenticado",
         };
       }
 
-      const profile = await this.profileRepository.getProfileByUserId(currentUser.id);
+      const profile = await this.profileRepository.getProfileByUserId(
+        currentUser.id
+      );
       if (!profile || !profile.isAdmin()) {
         return {
           success: false,
-          error: 'Solo los administradores pueden eliminar módulos',
+          error: "Solo los administradores pueden eliminar módulos",
         };
       }
 
@@ -53,7 +55,8 @@ export class DeleteModuleUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al eliminar módulo',
+        error:
+          error instanceof Error ? error.message : "Error al eliminar módulo",
       };
     }
   }
