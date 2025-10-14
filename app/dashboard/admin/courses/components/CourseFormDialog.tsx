@@ -17,7 +17,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { courseSchema, type CourseInput } from "@/lib/validations";
-import { createCourse, updateCourse } from "@/src/presentation/actions/course.actions";
+import {
+  createCourse,
+  updateCourse,
+} from "@/src/presentation/actions/course.actions";
 import { useRouter } from "next/navigation";
 
 interface CourseData {
@@ -32,11 +35,16 @@ interface CourseData {
 interface CourseFormDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
   course?: CourseData | null;
 }
 
-export function CourseFormDialog({ isOpen, onClose, mode, course }: CourseFormDialogProps) {
+export function CourseFormDialog({
+  isOpen,
+  onClose,
+  mode,
+  course,
+}: CourseFormDialogProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,36 +58,38 @@ export function CourseFormDialog({ isOpen, onClose, mode, course }: CourseFormDi
   } = useForm<CourseInput>({
     resolver: zodResolver(courseSchema),
     defaultValues: {
-      title: '',
-      description: '',
-      startDate: '',
-      endDate: '',
+      title: "",
+      description: "",
+      startDate: "",
+      endDate: "",
       isActive: true,
     },
   });
 
-  const isActive = watch('isActive');
+  const isActive = watch("isActive");
 
   useEffect(() => {
     if (isOpen) {
-      if (mode === 'edit' && course) {
+      if (mode === "edit" && course) {
         // Convert ISO dates to YYYY-MM-DD format for input
-        const startDate = new Date(course.startDate).toISOString().split('T')[0];
-        const endDate = new Date(course.endDate).toISOString().split('T')[0];
-        
+        const startDate = new Date(course.startDate)
+          .toISOString()
+          .split("T")[0];
+        const endDate = new Date(course.endDate).toISOString().split("T")[0];
+
         reset({
           title: course.title,
-          description: course.description || '',
+          description: course.description || "",
           startDate: startDate,
           endDate: endDate,
           isActive: course.isActive,
         });
       } else {
         reset({
-          title: '',
-          description: '',
-          startDate: '',
-          endDate: '',
+          title: "",
+          description: "",
+          startDate: "",
+          endDate: "",
           isActive: true,
         });
       }
@@ -93,7 +103,7 @@ export function CourseFormDialog({ isOpen, onClose, mode, course }: CourseFormDi
 
     try {
       let result;
-      if (mode === 'create') {
+      if (mode === "create") {
         result = await createCourse({
           title: data.title,
           description: data.description || null,
@@ -110,30 +120,33 @@ export function CourseFormDialog({ isOpen, onClose, mode, course }: CourseFormDi
         });
       }
 
-      if (result && 'error' in result) {
-        setError(result.error || 'Error al guardar el curso');
+      if (result && "error" in result) {
+        setError(result.error || "Error al guardar el curso");
       } else {
         onClose();
         router.refresh();
       }
     } catch (err) {
-      setError('Error inesperado al guardar el curso');
+      setError("Error inesperado al guardar el curso");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && !isSubmitting && onClose()}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => !open && !isSubmitting && onClose()}
+    >
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {mode === 'create' ? 'Crear Nuevo Curso' : 'Editar Curso'}
+            {mode === "create" ? "Crear Nuevo Curso" : "Editar Curso"}
           </DialogTitle>
           <DialogDescription>
-            {mode === 'create'
-              ? 'Completa la información del nuevo curso.'
-              : 'Modifica la información del curso.'}
+            {mode === "create"
+              ? "Completa la información del nuevo curso."
+              : "Modifica la información del curso."}
           </DialogDescription>
         </DialogHeader>
 
@@ -146,7 +159,7 @@ export function CourseFormDialog({ isOpen, onClose, mode, course }: CourseFormDi
             <Input
               id="title"
               placeholder="Ej: Introducción a Python"
-              {...register('title')}
+              {...register("title")}
               error={errors.title?.message}
               disabled={isSubmitting}
             />
@@ -158,7 +171,7 @@ export function CourseFormDialog({ isOpen, onClose, mode, course }: CourseFormDi
             <Textarea
               id="description"
               placeholder="Describe el contenido del curso..."
-              {...register('description')}
+              {...register("description")}
               error={errors.description?.message}
               disabled={isSubmitting}
               rows={4}
@@ -174,7 +187,7 @@ export function CourseFormDialog({ isOpen, onClose, mode, course }: CourseFormDi
               <Input
                 id="startDate"
                 type="date"
-                {...register('startDate')}
+                {...register("startDate")}
                 error={errors.startDate?.message}
                 disabled={isSubmitting}
               />
@@ -187,7 +200,7 @@ export function CourseFormDialog({ isOpen, onClose, mode, course }: CourseFormDi
               <Input
                 id="endDate"
                 type="date"
-                {...register('endDate')}
+                {...register("endDate")}
                 error={errors.endDate?.message}
                 disabled={isSubmitting}
               />
@@ -195,12 +208,12 @@ export function CourseFormDialog({ isOpen, onClose, mode, course }: CourseFormDi
           </div>
 
           {/* Active checkbox (only in edit mode) */}
-          {mode === 'edit' && (
+          {mode === "edit" && (
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
                 id="isActive"
-                {...register('isActive')}
+                {...register("isActive")}
                 disabled={isSubmitting}
                 className="h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
@@ -236,8 +249,10 @@ export function CourseFormDialog({ isOpen, onClose, mode, course }: CourseFormDi
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Guardando...
                 </>
+              ) : mode === "create" ? (
+                "Crear Curso"
               ) : (
-                mode === 'create' ? 'Crear Curso' : 'Guardar Cambios'
+                "Guardar Cambios"
               )}
             </Button>
           </DialogFooter>

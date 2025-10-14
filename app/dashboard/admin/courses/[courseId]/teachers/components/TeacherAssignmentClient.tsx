@@ -14,7 +14,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { GraduationCap, UserPlus, UserMinus, Mail } from "lucide-react";
 import Image from "next/image";
-import { assignTeacherToCourse, removeTeacherFromCourse } from "@/src/presentation/actions/course.actions";
+import {
+  assignTeacherToCourse,
+  removeTeacherFromCourse,
+} from "@/src/presentation/actions/course.actions";
 import { useRouter } from "next/navigation";
 
 interface TeacherData {
@@ -37,25 +40,28 @@ export function TeacherAssignmentClient({
   allTeachers,
 }: TeacherAssignmentClientProps) {
   const router = useRouter();
-  const [selectedTeacher, setSelectedTeacher] = useState<TeacherData | null>(null);
-  const [action, setAction] = useState<'assign' | 'remove' | null>(null);
+  const [selectedTeacher, setSelectedTeacher] = useState<TeacherData | null>(
+    null
+  );
+  const [action, setAction] = useState<"assign" | "remove" | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Filter available teachers (those not assigned yet)
   const availableTeachers = allTeachers.filter(
-    teacher => !assignedTeachers.some(assigned => assigned.id === teacher.id)
+    (teacher) =>
+      !assignedTeachers.some((assigned) => assigned.id === teacher.id)
   );
 
   const handleAssignClick = (teacher: TeacherData) => {
     setSelectedTeacher(teacher);
-    setAction('assign');
+    setAction("assign");
     setError(null);
   };
 
   const handleRemoveClick = (teacher: TeacherData) => {
     setSelectedTeacher(teacher);
-    setAction('remove');
+    setAction("remove");
     setError(null);
   };
 
@@ -67,21 +73,21 @@ export function TeacherAssignmentClient({
 
     try {
       let result;
-      if (action === 'assign') {
+      if (action === "assign") {
         result = await assignTeacherToCourse(courseId, selectedTeacher.id);
       } else {
         result = await removeTeacherFromCourse(courseId, selectedTeacher.id);
       }
 
-      if ('error' in result) {
-        setError(result.error || 'Error en la operación');
+      if ("error" in result) {
+        setError(result.error || "Error en la operación");
       } else {
         setSelectedTeacher(null);
         setAction(null);
         router.refresh();
       }
     } catch (err) {
-      setError('Error inesperado al realizar la acción');
+      setError("Error inesperado al realizar la acción");
     } finally {
       setIsLoading(false);
     }
@@ -140,7 +146,10 @@ export function TeacherAssignmentClient({
                           <p className="truncate font-semibold text-slate-800">
                             {teacher.displayName}
                           </p>
-                          <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
+                          <Badge
+                            variant="secondary"
+                            className="bg-emerald-100 text-emerald-700"
+                          >
                             Asignado
                           </Badge>
                         </div>
@@ -180,8 +189,8 @@ export function TeacherAssignmentClient({
                 <UserPlus className="mx-auto mb-3 h-12 w-12 text-slate-400" />
                 <p className="text-sm text-slate-600">
                   {allTeachers.length === 0
-                    ? 'No hay docentes registrados en la plataforma'
-                    : 'Todos los docentes están asignados a este curso'}
+                    ? "No hay docentes registrados en la plataforma"
+                    : "Todos los docentes están asignados a este curso"}
                 </p>
               </div>
             ) : (
@@ -238,12 +247,14 @@ export function TeacherAssignmentClient({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {action === 'assign' ? 'Asignar Docente al Curso' : 'Remover Docente del Curso'}
+              {action === "assign"
+                ? "Asignar Docente al Curso"
+                : "Remover Docente del Curso"}
             </DialogTitle>
             <DialogDescription>
-              {action === 'assign'
-                ? '¿Estás seguro de que deseas asignar este docente al curso? Podrá editar el contenido del curso.'
-                : '¿Estás seguro de que deseas remover este docente del curso? Perderá acceso para editar el contenido.'}
+              {action === "assign"
+                ? "¿Estás seguro de que deseas asignar este docente al curso? Podrá editar el contenido del curso."
+                : "¿Estás seguro de que deseas remover este docente del curso? Perderá acceso para editar el contenido."}
             </DialogDescription>
           </DialogHeader>
 
@@ -266,8 +277,12 @@ export function TeacherAssignmentClient({
                   </div>
                 )}
                 <div>
-                  <p className="font-semibold text-slate-800">{selectedTeacher.displayName}</p>
-                  <p className="text-sm text-slate-600">{selectedTeacher.email}</p>
+                  <p className="font-semibold text-slate-800">
+                    {selectedTeacher.displayName}
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    {selectedTeacher.email}
+                  </p>
                 </div>
               </div>
             </div>
@@ -280,19 +295,23 @@ export function TeacherAssignmentClient({
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={handleCancel} disabled={isLoading}>
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isLoading}
+            >
               Cancelar
             </Button>
             <Button
               onClick={handleConfirm}
               disabled={isLoading}
               className={
-                action === 'assign'
-                  ? 'bg-emerald-600 hover:bg-emerald-700'
-                  : 'bg-red-600 hover:bg-red-700'
+                action === "assign"
+                  ? "bg-emerald-600 hover:bg-emerald-700"
+                  : "bg-red-600 hover:bg-red-700"
               }
             >
-              {isLoading ? 'Procesando...' : 'Confirmar'}
+              {isLoading ? "Procesando..." : "Confirmar"}
             </Button>
           </DialogFooter>
         </DialogContent>

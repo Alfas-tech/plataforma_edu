@@ -21,7 +21,7 @@ export default async function CourseContentPage({ params }: PageProps) {
 
   const profileResult = await getCurrentProfile();
 
-  if ('error' in profileResult) {
+  if ("error" in profileResult) {
     redirect("/login");
   }
 
@@ -35,7 +35,7 @@ export default async function CourseContentPage({ params }: PageProps) {
   // Obtener curso
   const courseResult = await getCourseWithTeachers(courseId);
 
-  if ('error' in courseResult) {
+  if ("error" in courseResult) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
         <div className="container mx-auto px-4 py-8">
@@ -51,7 +51,7 @@ export default async function CourseContentPage({ params }: PageProps) {
 
   // Obtener módulos
   const modulesResult = await getModulesByCourse(courseId);
-  const modules = 'error' in modulesResult ? [] : modulesResult.modules || [];
+  const modules = "error" in modulesResult ? [] : modulesResult.modules || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
@@ -79,7 +79,7 @@ export default async function CourseContentPage({ params }: PageProps) {
 
             <div className="flex items-center gap-2 sm:gap-3">
               <span className="hidden text-xs font-medium text-purple-600 sm:inline sm:text-sm">
-                {profile.isAdmin ? '🛡️ Administrador' : '👨‍🏫 Docente'}
+                {profile.isAdmin ? "🛡️ Administrador" : "👨‍🏫 Docente"}
               </span>
               {profile.avatarUrl ? (
                 <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-full sm:h-10 sm:w-10">
@@ -119,7 +119,13 @@ export default async function CourseContentPage({ params }: PageProps) {
       <main className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8">
         {/* Header Section */}
         <div className="mb-6 flex items-center gap-4 sm:mb-8">
-          <Link href={profile.isAdmin ? "/dashboard/admin/courses" : "/dashboard/teacher"}>
+          <Link
+            href={
+              profile.isAdmin
+                ? "/dashboard/admin/courses"
+                : "/dashboard/teacher"
+            }
+          >
             <Button variant="outline" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Volver
@@ -160,15 +166,15 @@ export default async function CourseContentPage({ params }: PageProps) {
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-bold text-green-600">
-                {modules.filter(m => m.isPublished).length}
+                {modules.filter((m) => m.isPublished).length}
               </p>
             </CardContent>
           </Card>
         </div>
 
         {/* Module Management */}
-        <ModuleManagementClient 
-          courseId={courseId} 
+        <ModuleManagementClient
+          courseId={courseId}
           modules={modules}
           isAdmin={profile.isAdmin}
         />
@@ -176,4 +182,3 @@ export default async function CourseContentPage({ params }: PageProps) {
     </div>
   );
 }
-

@@ -26,7 +26,11 @@ interface DeleteCourseDialogProps {
   course: CourseData | null;
 }
 
-export function DeleteCourseDialog({ isOpen, onClose, course }: DeleteCourseDialogProps) {
+export function DeleteCourseDialog({
+  isOpen,
+  onClose,
+  course,
+}: DeleteCourseDialogProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,14 +44,14 @@ export function DeleteCourseDialog({ isOpen, onClose, course }: DeleteCourseDial
     try {
       const result = await deleteCourse(course.id);
 
-      if ('error' in result) {
-        setError(result.error || 'Error al eliminar el curso');
+      if ("error" in result) {
+        setError(result.error || "Error al eliminar el curso");
       } else {
         onClose();
         router.refresh();
       }
     } catch (err) {
-      setError('Error inesperado al eliminar el curso');
+      setError("Error inesperado al eliminar el curso");
     } finally {
       setIsLoading(false);
     }
@@ -64,8 +68,9 @@ export function DeleteCourseDialog({ isOpen, onClose, course }: DeleteCourseDial
             Eliminar Curso
           </DialogTitle>
           <DialogDescription>
-            Esta acción no se puede deshacer. Se eliminará el curso y todo su contenido asociado
-            (módulos, lecciones, progreso de estudiantes, etc.).
+            Esta acción no se puede deshacer. Se eliminará el curso y todo su
+            contenido asociado (módulos, lecciones, progreso de estudiantes,
+            etc.).
           </DialogDescription>
         </DialogHeader>
 
@@ -105,7 +110,7 @@ export function DeleteCourseDialog({ isOpen, onClose, course }: DeleteCourseDial
             disabled={isLoading}
             className="bg-red-600 hover:bg-red-700"
           >
-            {isLoading ? 'Eliminando...' : 'Eliminar Curso'}
+            {isLoading ? "Eliminando..." : "Eliminar Curso"}
           </Button>
         </DialogFooter>
       </DialogContent>

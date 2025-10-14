@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/src/presentation/actions/profile.actions";
 import { getCourseWithTeachers } from "@/src/presentation/actions/course.actions";
-import { getLessonsByModule, getModulesByCourse } from "@/src/presentation/actions/content.actions";
+import {
+  getLessonsByModule,
+  getModulesByCourse,
+} from "@/src/presentation/actions/content.actions";
 import { signout } from "@/src/presentation/actions/auth.actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +25,7 @@ export default async function ModuleLessonsPage({ params }: PageProps) {
 
   const profileResult = await getCurrentProfile();
 
-  if ('error' in profileResult) {
+  if ("error" in profileResult) {
     redirect("/login");
   }
 
@@ -35,7 +38,7 @@ export default async function ModuleLessonsPage({ params }: PageProps) {
 
   // Obtener curso
   const courseResult = await getCourseWithTeachers(courseId);
-  if ('error' in courseResult) {
+  if ("error" in courseResult) {
     redirect("/dashboard");
   }
 
@@ -43,8 +46,8 @@ export default async function ModuleLessonsPage({ params }: PageProps) {
 
   // Obtener módulo
   const modulesResult = await getModulesByCourse(courseId);
-  const modules = 'error' in modulesResult ? [] : modulesResult.modules || [];
-  const moduleData = modules.find(m => m.id === moduleId);
+  const modules = "error" in modulesResult ? [] : modulesResult.modules || [];
+  const moduleData = modules.find((m) => m.id === moduleId);
 
   if (!moduleData) {
     redirect(`/dashboard/admin/courses/${courseId}/content`);
@@ -52,7 +55,7 @@ export default async function ModuleLessonsPage({ params }: PageProps) {
 
   // Obtener lecciones
   const lessonsResult = await getLessonsByModule(moduleId);
-  const lessons = 'error' in lessonsResult ? [] : lessonsResult.lessons || [];
+  const lessons = "error" in lessonsResult ? [] : lessonsResult.lessons || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
@@ -80,7 +83,7 @@ export default async function ModuleLessonsPage({ params }: PageProps) {
 
             <div className="flex items-center gap-2 sm:gap-3">
               <span className="hidden text-xs font-medium text-purple-600 sm:inline sm:text-sm">
-                {profile.isAdmin ? '🛡️ Administrador' : '👨‍🏫 Docente'}
+                {profile.isAdmin ? "🛡️ Administrador" : "👨‍🏫 Docente"}
               </span>
               {profile.avatarUrl ? (
                 <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-full sm:h-10 sm:w-10">
@@ -161,14 +164,14 @@ export default async function ModuleLessonsPage({ params }: PageProps) {
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-bold text-green-600">
-                {lessons.filter(l => l.isPublished).length}
+                {lessons.filter((l) => l.isPublished).length}
               </p>
             </CardContent>
           </Card>
         </div>
 
         {/* Lesson Management */}
-        <LessonManagementClient 
+        <LessonManagementClient
           moduleId={moduleId}
           lessons={lessons}
           isAdmin={profile.isAdmin}

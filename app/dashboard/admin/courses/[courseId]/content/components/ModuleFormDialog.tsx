@@ -17,7 +17,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { moduleSchema, type ModuleInput } from "@/lib/validations";
-import { createModule, updateModule } from "@/src/presentation/actions/content.actions";
+import {
+  createModule,
+  updateModule,
+} from "@/src/presentation/actions/content.actions";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -33,13 +36,20 @@ interface ModuleData {
 interface ModuleFormDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
   courseId: string;
   module?: ModuleData | null;
   maxOrderIndex: number;
 }
 
-export function ModuleFormDialog({ isOpen, onClose, mode, courseId, module, maxOrderIndex }: ModuleFormDialogProps) {
+export function ModuleFormDialog({
+  isOpen,
+  onClose,
+  mode,
+  courseId,
+  module,
+  maxOrderIndex,
+}: ModuleFormDialogProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,32 +64,32 @@ export function ModuleFormDialog({ isOpen, onClose, mode, courseId, module, maxO
   } = useForm<ModuleInput>({
     resolver: zodResolver(moduleSchema),
     defaultValues: {
-      title: '',
-      description: '',
+      title: "",
+      description: "",
       orderIndex: maxOrderIndex + 1,
-      content: '',
+      content: "",
       isPublished: false,
     },
   });
 
-  const isPublished = watch('isPublished');
+  const isPublished = watch("isPublished");
 
   useEffect(() => {
     if (isOpen) {
-      if (mode === 'edit' && module) {
+      if (mode === "edit" && module) {
         reset({
           title: module.title,
-          description: module.description || '',
+          description: module.description || "",
           orderIndex: module.orderIndex,
-          content: module.content || '',
+          content: module.content || "",
           isPublished: module.isPublished,
         });
       } else {
         reset({
-          title: '',
-          description: '',
+          title: "",
+          description: "",
           orderIndex: maxOrderIndex + 1,
-          content: '',
+          content: "",
           isPublished: false,
         });
       }
@@ -93,7 +103,7 @@ export function ModuleFormDialog({ isOpen, onClose, mode, courseId, module, maxO
 
     try {
       let result;
-      if (mode === 'create') {
+      if (mode === "create") {
         result = await createModule({
           course_id: courseId,
           title: data.title,
@@ -112,30 +122,33 @@ export function ModuleFormDialog({ isOpen, onClose, mode, courseId, module, maxO
         });
       }
 
-      if (result && 'error' in result) {
-        setError(result.error || 'Error al guardar el módulo');
+      if (result && "error" in result) {
+        setError(result.error || "Error al guardar el módulo");
       } else {
         onClose();
         router.refresh();
       }
     } catch (err) {
-      setError('Error inesperado al guardar el módulo');
+      setError("Error inesperado al guardar el módulo");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && !isSubmitting && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => !open && !isSubmitting && onClose()}
+    >
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {mode === 'create' ? 'Crear Nuevo Módulo' : 'Editar Módulo'}
+            {mode === "create" ? "Crear Nuevo Módulo" : "Editar Módulo"}
           </DialogTitle>
           <DialogDescription>
-            {mode === 'create'
-              ? 'Completa la información del nuevo módulo del curso.'
-              : 'Modifica la información del módulo.'}
+            {mode === "create"
+              ? "Completa la información del nuevo módulo del curso."
+              : "Modifica la información del módulo."}
           </DialogDescription>
         </DialogHeader>
 
@@ -148,7 +161,7 @@ export function ModuleFormDialog({ isOpen, onClose, mode, courseId, module, maxO
             <Input
               id="title"
               placeholder="Ej: Fundamentos de Python"
-              {...register('title')}
+              {...register("title")}
               error={errors.title?.message}
               disabled={isSubmitting}
             />
@@ -160,7 +173,7 @@ export function ModuleFormDialog({ isOpen, onClose, mode, courseId, module, maxO
             <Textarea
               id="description"
               placeholder="Describe brevemente el contenido del módulo..."
-              {...register('description')}
+              {...register("description")}
               error={errors.description?.message}
               disabled={isSubmitting}
               rows={3}
@@ -176,12 +189,13 @@ export function ModuleFormDialog({ isOpen, onClose, mode, courseId, module, maxO
               id="orderIndex"
               type="number"
               placeholder="1"
-              {...register('orderIndex', { valueAsNumber: true })}
+              {...register("orderIndex", { valueAsNumber: true })}
               error={errors.orderIndex?.message}
               disabled={isSubmitting}
             />
             <p className="text-xs text-slate-500">
-              Los módulos se reorganizarán automáticamente si hay conflictos de orden.
+              Los módulos se reorganizarán automáticamente si hay conflictos de
+              orden.
             </p>
           </div>
 
@@ -191,7 +205,7 @@ export function ModuleFormDialog({ isOpen, onClose, mode, courseId, module, maxO
             <Textarea
               id="content"
               placeholder="Contenido del módulo en formato Markdown..."
-              {...register('content')}
+              {...register("content")}
               error={errors.content?.message}
               disabled={isSubmitting}
               rows={8}
@@ -204,7 +218,7 @@ export function ModuleFormDialog({ isOpen, onClose, mode, courseId, module, maxO
             <input
               type="checkbox"
               id="isPublished"
-              {...register('isPublished')}
+              {...register("isPublished")}
               disabled={isSubmitting}
               className="h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             />
@@ -239,8 +253,10 @@ export function ModuleFormDialog({ isOpen, onClose, mode, courseId, module, maxO
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Guardando...
                 </>
+              ) : mode === "create" ? (
+                "Crear Módulo"
               ) : (
-                mode === 'create' ? 'Crear Módulo' : 'Guardar Cambios'
+                "Guardar Cambios"
               )}
             </Button>
           </DialogFooter>

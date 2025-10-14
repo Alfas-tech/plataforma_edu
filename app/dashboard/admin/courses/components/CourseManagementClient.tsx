@@ -27,7 +27,7 @@ interface CourseData {
   startDate: string;
   endDate: string;
   isActive: boolean;
-  status: 'upcoming' | 'active' | 'ended';
+  status: "upcoming" | "active" | "ended";
   daysRemaining: number;
   isCurrentlyActive: boolean;
 }
@@ -36,7 +36,9 @@ interface CourseManagementClientProps {
   courses: CourseData[];
 }
 
-export function CourseManagementClient({ courses }: CourseManagementClientProps) {
+export function CourseManagementClient({
+  courses,
+}: CourseManagementClientProps) {
   const router = useRouter();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<CourseData | null>(null);
@@ -60,22 +62,22 @@ export function CourseManagementClient({ courses }: CourseManagementClientProps)
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return date.toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   const getStatusBadge = (course: CourseData) => {
-    if (course.status === 'active') {
+    if (course.status === "active") {
       return (
         <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
           <CheckCircle2 className="mr-1 h-3 w-3" />
           Activo
         </Badge>
       );
-    } else if (course.status === 'upcoming') {
+    } else if (course.status === "upcoming") {
       return (
         <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
           <Clock className="mr-1 h-3 w-3" />
@@ -96,7 +98,10 @@ export function CourseManagementClient({ courses }: CourseManagementClientProps)
     <>
       {/* Create Button */}
       <div className="mb-6">
-        <Button onClick={handleCreateClick} className="bg-purple-600 hover:bg-purple-700">
+        <Button
+          onClick={handleCreateClick}
+          className="bg-purple-600 hover:bg-purple-700"
+        >
           <PlusCircle className="mr-2 h-4 w-4" />
           Crear Nuevo Curso
         </Button>
@@ -124,7 +129,10 @@ export function CourseManagementClient({ courses }: CourseManagementClientProps)
       ) : (
         <div className="space-y-4">
           {courses.map((course) => (
-            <Card key={course.id} className="border-2 transition-shadow hover:shadow-lg">
+            <Card
+              key={course.id}
+              className="border-2 transition-shadow hover:shadow-lg"
+            >
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
@@ -132,13 +140,18 @@ export function CourseManagementClient({ courses }: CourseManagementClientProps)
                       <CardTitle className="text-xl">{course.title}</CardTitle>
                       {getStatusBadge(course)}
                       {!course.isActive && (
-                        <Badge variant="outline" className="border-orange-300 text-orange-600">
+                        <Badge
+                          variant="outline"
+                          className="border-orange-300 text-orange-600"
+                        >
                           Inactivo
                         </Badge>
                       )}
                     </div>
                     {course.description && (
-                      <p className="text-sm text-slate-600">{course.description}</p>
+                      <p className="text-sm text-slate-600">
+                        {course.description}
+                      </p>
                     )}
                   </div>
                   <div className="flex flex-shrink-0 gap-2">
@@ -163,11 +176,13 @@ export function CourseManagementClient({ courses }: CourseManagementClientProps)
                 </div>
               </CardHeader>
               <CardContent>
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   <div className="flex items-start gap-3 rounded-lg border bg-slate-50 p-3">
                     <Calendar className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
                     <div>
-                      <p className="text-xs font-medium text-slate-600">Fecha de Inicio</p>
+                      <p className="text-xs font-medium text-slate-600">
+                        Fecha de Inicio
+                      </p>
                       <p className="text-sm font-semibold text-slate-800">
                         {formatDate(course.startDate)}
                       </p>
@@ -176,7 +191,9 @@ export function CourseManagementClient({ courses }: CourseManagementClientProps)
                   <div className="flex items-start gap-3 rounded-lg border bg-slate-50 p-3">
                     <Calendar className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
                     <div>
-                      <p className="text-xs font-medium text-slate-600">Fecha de Fin</p>
+                      <p className="text-xs font-medium text-slate-600">
+                        Fecha de Fin
+                      </p>
                       <p className="text-sm font-semibold text-slate-800">
                         {formatDate(course.endDate)}
                       </p>
@@ -185,7 +202,9 @@ export function CourseManagementClient({ courses }: CourseManagementClientProps)
                   <div className="flex items-start gap-3 rounded-lg border bg-slate-50 p-3">
                     <Users className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" />
                     <div>
-                      <p className="text-xs font-medium text-slate-600">Docentes</p>
+                      <p className="text-xs font-medium text-slate-600">
+                        Docentes
+                      </p>
                       <Button
                         variant="link"
                         size="sm"
@@ -207,15 +226,17 @@ export function CourseManagementClient({ courses }: CourseManagementClientProps)
                   </Link>
                 </div>
 
-                {course.status === 'active' && course.daysRemaining > 0 && (
+                {course.status === "active" && course.daysRemaining > 0 && (
                   <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
-                    <strong>⏳ {course.daysRemaining} días restantes</strong> hasta finalizar el curso
+                    <strong>⏳ {course.daysRemaining} días restantes</strong>{" "}
+                    hasta finalizar el curso
                   </div>
                 )}
 
-                {course.status === 'upcoming' && (
+                {course.status === "upcoming" && (
                   <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-                    <strong>📅 Próximamente</strong> - El curso comenzará el {formatDate(course.startDate)}
+                    <strong>📅 Próximamente</strong> - El curso comenzará el{" "}
+                    {formatDate(course.startDate)}
                   </div>
                 )}
               </CardContent>
@@ -246,4 +267,3 @@ export function CourseManagementClient({ courses }: CourseManagementClientProps)
     </>
   );
 }
-

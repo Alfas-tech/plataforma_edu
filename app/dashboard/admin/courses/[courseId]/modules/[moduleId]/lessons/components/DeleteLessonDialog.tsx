@@ -25,7 +25,11 @@ interface DeleteLessonDialogProps {
   lesson: LessonData | null;
 }
 
-export function DeleteLessonDialog({ isOpen, onClose, lesson }: DeleteLessonDialogProps) {
+export function DeleteLessonDialog({
+  isOpen,
+  onClose,
+  lesson,
+}: DeleteLessonDialogProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,14 +43,14 @@ export function DeleteLessonDialog({ isOpen, onClose, lesson }: DeleteLessonDial
     try {
       const result = await deleteLesson(lesson.id);
 
-      if ('error' in result) {
-        setError(result.error || 'Error al eliminar la lección');
+      if ("error" in result) {
+        setError(result.error || "Error al eliminar la lección");
       } else {
         onClose();
         router.refresh();
       }
     } catch (err) {
-      setError('Error inesperado al eliminar la lección');
+      setError("Error inesperado al eliminar la lección");
     } finally {
       setIsLoading(false);
     }
@@ -63,14 +67,13 @@ export function DeleteLessonDialog({ isOpen, onClose, lesson }: DeleteLessonDial
             Eliminar Lección
           </DialogTitle>
           <DialogDescription>
-            Esta acción no se puede deshacer. Se eliminará la lección y el progreso de los estudiantes en esta lección.
+            Esta acción no se puede deshacer. Se eliminará la lección y el
+            progreso de los estudiantes en esta lección.
           </DialogDescription>
         </DialogHeader>
 
         <div className="my-4 rounded-lg border border-red-200 bg-red-50 p-4">
-          <p className="text-sm font-semibold text-red-900">
-            {lesson.title}
-          </p>
+          <p className="text-sm font-semibold text-red-900">{lesson.title}</p>
         </div>
 
         {error && (
@@ -86,7 +89,7 @@ export function DeleteLessonDialog({ isOpen, onClose, lesson }: DeleteLessonDial
           <Button
             onClick={handleConfirm}
             disabled={isLoading}
-            className="bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-red-600 hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? (
               <>
@@ -94,7 +97,7 @@ export function DeleteLessonDialog({ isOpen, onClose, lesson }: DeleteLessonDial
                 Eliminando...
               </>
             ) : (
-              'Eliminar Lección'
+              "Eliminar Lección"
             )}
           </Button>
         </DialogFooter>

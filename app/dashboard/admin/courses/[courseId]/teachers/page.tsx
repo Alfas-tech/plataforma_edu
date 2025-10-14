@@ -1,5 +1,8 @@
 import { redirect } from "next/navigation";
-import { getCurrentProfile, getAllUsers } from "@/src/presentation/actions/profile.actions";
+import {
+  getCurrentProfile,
+  getAllUsers,
+} from "@/src/presentation/actions/profile.actions";
 import { getCourseWithTeachers } from "@/src/presentation/actions/course.actions";
 import { signout } from "@/src/presentation/actions/auth.actions";
 import { Button } from "@/components/ui/button";
@@ -20,7 +23,7 @@ export default async function CourseTeachersPage({ params }: PageProps) {
 
   const profileResult = await getCurrentProfile();
 
-  if ('error' in profileResult) {
+  if ("error" in profileResult) {
     redirect("/login");
   }
 
@@ -34,7 +37,7 @@ export default async function CourseTeachersPage({ params }: PageProps) {
   // Obtener curso con docentes asignados
   const courseResult = await getCourseWithTeachers(courseId);
 
-  if ('error' in courseResult) {
+  if ("error" in courseResult) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
         <div className="container mx-auto px-4 py-8">
@@ -50,8 +53,8 @@ export default async function CourseTeachersPage({ params }: PageProps) {
 
   // Obtener todos los docentes disponibles
   const usersResult = await getAllUsers();
-  
-  if ('error' in usersResult) {
+
+  if ("error" in usersResult) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
         <div className="container mx-auto px-4 py-8">
@@ -188,4 +191,3 @@ export default async function CourseTeachersPage({ params }: PageProps) {
     </div>
   );
 }
-
