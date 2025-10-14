@@ -4,16 +4,32 @@ import { getAllCourses } from "@/src/presentation/actions/course.actions";
 import { getCourseWithModulesAndLessons } from "@/src/presentation/actions/student.actions";
 import { signout } from "@/src/presentation/actions/auth.actions";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, BookOpen, Clock, CheckCircle2, Calendar, PlayCircle, FileText, Trophy, TrendingUp } from "lucide-react";
+import {
+  LogOut,
+  BookOpen,
+  Clock,
+  CheckCircle2,
+  Calendar,
+  PlayCircle,
+  FileText,
+  Trophy,
+  TrendingUp,
+} from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
 export default async function StudentDashboardPage() {
   const profileResult = await getCurrentProfile();
 
-  if ('error' in profileResult) {
+  if ("error" in profileResult) {
     redirect("/login");
   }
 
@@ -25,22 +41,23 @@ export default async function StudentDashboardPage() {
 
   // Obtener todos los cursos
   const coursesResult = await getAllCourses();
-  const allCourses = 'error' in coursesResult ? [] : coursesResult.courses || [];
+  const allCourses =
+    "error" in coursesResult ? [] : coursesResult.courses || [];
 
   // Filtrar cursos activos
-  const activeCourses = allCourses.filter(c => c.status === 'active');
-  const upcomingCourses = allCourses.filter(c => c.status === 'upcoming');
+  const activeCourses = allCourses.filter((c) => c.status === "active");
+  const upcomingCourses = allCourses.filter((c) => c.status === "upcoming");
 
   // Obtener datos completos del primer curso activo
   let courseData: any = null;
   let totalLessons = 0;
   let completedLessons = 0;
-  
+
   if (activeCourses.length > 0) {
     const result = await getCourseWithModulesAndLessons(activeCourses[0].id);
-    if (!('error' in result)) {
+    if (!("error" in result)) {
       courseData = result;
-      
+
       // Calcular totales de forma segura
       if (courseData.modules && Array.isArray(courseData.modules)) {
         courseData.modules.forEach((module: any) => {
@@ -58,18 +75,22 @@ export default async function StudentDashboardPage() {
         });
       }
     } else {
-      console.error('Error loading course data:', result.error);
+      console.error("Error loading course data:", result.error);
     }
   }
 
-  const progressPercentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
-  const publishedModules = (courseData?.modules && Array.isArray(courseData.modules)) ? courseData.modules.length : 0;
+  const progressPercentage =
+    totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+  const publishedModules =
+    courseData?.modules && Array.isArray(courseData.modules)
+      ? courseData.modules.length
+      : 0;
 
   function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+    return new Date(dateString).toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   }
 
@@ -258,7 +279,8 @@ export default async function StudentDashboardPage() {
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
                         <span>
-                          {formatDate(activeCourses[0].startDate)} - {formatDate(activeCourses[0].endDate)}
+                          {formatDate(activeCourses[0].startDate)} -{" "}
+                          {formatDate(activeCourses[0].endDate)}
                         </span>
                       </div>
                     </div>
@@ -266,86 +288,105 @@ export default async function StudentDashboardPage() {
                 </Card>
 
                 {/* Modules & Lessons */}
-                {courseData && courseData.modules && Array.isArray(courseData.modules) && courseData.modules.length > 0 ? (
+                {courseData &&
+                courseData.modules &&
+                Array.isArray(courseData.modules) &&
+                courseData.modules.length > 0 ? (
                   <div className="space-y-4">
-                    {courseData.modules.map((module: any, moduleIndex: number) => (
-                      <Card key={module.id} className="border-2">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <CardTitle className="text-base sm:text-lg">
-                                Módulo {module.order_index}: {module.title}
-                              </CardTitle>
-                              {module.description && (
-                                <CardDescription className="mt-1">
-                                  {module.description}
-                                </CardDescription>
+                    {courseData.modules.map(
+                      (module: any, moduleIndex: number) => (
+                        <Card key={module.id} className="border-2">
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <CardTitle className="text-base sm:text-lg">
+                                  Módulo {module.order_index}: {module.title}
+                                </CardTitle>
+                                {module.description && (
+                                  <CardDescription className="mt-1">
+                                    {module.description}
+                                  </CardDescription>
+                                )}
+                              </div>
+                              {module.is_published && (
+                                <Badge variant="outline" className="ml-2">
+                                  {module.lessons &&
+                                  Array.isArray(module.lessons)
+                                    ? module.lessons.length
+                                    : 0}{" "}
+                                  lecciones
+                                </Badge>
                               )}
                             </div>
-                            {module.is_published && (
-                              <Badge variant="outline" className="ml-2">
-                                {(module.lessons && Array.isArray(module.lessons)) ? module.lessons.length : 0} lecciones
-                              </Badge>
-                            )}
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          {module.lessons && Array.isArray(module.lessons) && module.lessons.length > 0 ? (
-                            <div className="space-y-2">
-                              {module.lessons.map((lesson: any) => {
-                                const isCompleted = courseData.progress && Array.isArray(courseData.progress) && courseData.progress.some(
-                                  (p: any) => p.lesson_id === lesson.id && p.completed
-                                );
+                          </CardHeader>
+                          <CardContent>
+                            {module.lessons &&
+                            Array.isArray(module.lessons) &&
+                            module.lessons.length > 0 ? (
+                              <div className="space-y-2">
+                                {module.lessons.map((lesson: any) => {
+                                  const isCompleted =
+                                    courseData.progress &&
+                                    Array.isArray(courseData.progress) &&
+                                    courseData.progress.some(
+                                      (p: any) =>
+                                        p.lesson_id === lesson.id && p.completed
+                                    );
 
-                                return (
-                                  <Link
-                                    key={lesson.id}
-                                    href={`/courses/${activeCourses[0].id}/modules/${module.id}/lessons/${lesson.id}`}
-                                    className="block"
-                                  >
-                                    <div className="flex items-center justify-between rounded-lg border bg-white p-3 transition-all hover:border-blue-300 hover:shadow-md">
-                                      <div className="flex items-center gap-3">
-                                        <div
-                                          className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                                            isCompleted
-                                              ? 'bg-green-100 text-green-600'
-                                              : 'bg-slate-100 text-slate-400'
-                                          }`}
-                                        >
-                                          {isCompleted ? (
-                                            <CheckCircle2 className="h-5 w-5" />
-                                          ) : (
-                                            <PlayCircle className="h-5 w-5" />
-                                          )}
+                                  return (
+                                    <Link
+                                      key={lesson.id}
+                                      href={`/courses/${activeCourses[0].id}/modules/${module.id}/lessons/${lesson.id}`}
+                                      className="block"
+                                    >
+                                      <div className="flex items-center justify-between rounded-lg border bg-white p-3 transition-all hover:border-blue-300 hover:shadow-md">
+                                        <div className="flex items-center gap-3">
+                                          <div
+                                            className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                                              isCompleted
+                                                ? "bg-green-100 text-green-600"
+                                                : "bg-slate-100 text-slate-400"
+                                            }`}
+                                          >
+                                            {isCompleted ? (
+                                              <CheckCircle2 className="h-5 w-5" />
+                                            ) : (
+                                              <PlayCircle className="h-5 w-5" />
+                                            )}
+                                          </div>
+                                          <div>
+                                            <p className="font-medium text-slate-800">
+                                              {lesson.title}
+                                            </p>
+                                            {lesson.duration_minutes && (
+                                              <div className="mt-1 flex items-center gap-1 text-xs text-slate-500">
+                                                <Clock className="h-3 w-3" />
+                                                <span>
+                                                  {lesson.duration_minutes} min
+                                                </span>
+                                              </div>
+                                            )}
+                                          </div>
                                         </div>
-                                        <div>
-                                          <p className="font-medium text-slate-800">
-                                            {lesson.title}
-                                          </p>
-                                          {lesson.duration_minutes && (
-                                            <div className="mt-1 flex items-center gap-1 text-xs text-slate-500">
-                                              <Clock className="h-3 w-3" />
-                                              <span>{lesson.duration_minutes} min</span>
-                                            </div>
-                                          )}
-                                        </div>
+                                        {isCompleted && (
+                                          <Badge className="bg-green-600">
+                                            Completado
+                                          </Badge>
+                                        )}
                                       </div>
-                                      {isCompleted && (
-                                        <Badge className="bg-green-600">Completado</Badge>
-                                      )}
-                                    </div>
-                                  </Link>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            <p className="py-4 text-center text-sm text-slate-500">
-                              No hay lecciones publicadas aún
-                            </p>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
+                                    </Link>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <p className="py-4 text-center text-sm text-slate-500">
+                                No hay lecciones publicadas aún
+                              </p>
+                            )}
+                          </CardContent>
+                        </Card>
+                      )
+                    )}
                   </div>
                 ) : (
                   <Card className="border-2">
@@ -375,7 +416,9 @@ export default async function StudentDashboardPage() {
                   <div>
                     <div className="mb-2 flex justify-between text-xs sm:text-sm">
                       <span className="text-slate-600">Curso completo</span>
-                      <span className="font-semibold">{progressPercentage}%</span>
+                      <span className="font-semibold">
+                        {progressPercentage}%
+                      </span>
                     </div>
                     <div className="h-2 w-full rounded-full bg-slate-200">
                       <div
@@ -389,7 +432,8 @@ export default async function StudentDashboardPage() {
                     <div className="flex items-center gap-2 text-sm text-blue-800">
                       <Trophy className="h-4 w-4" />
                       <span>
-                        <strong>{completedLessons}</strong> de <strong>{totalLessons}</strong> lecciones completadas
+                        <strong>{completedLessons}</strong> de{" "}
+                        <strong>{totalLessons}</strong> lecciones completadas
                       </span>
                     </div>
                   </div>
@@ -411,17 +455,25 @@ export default async function StudentDashboardPage() {
                       key={course.id}
                       className="rounded-lg border bg-white p-3"
                     >
-                      <p className="mb-1 font-medium text-slate-800">{course.title}</p>
+                      <p className="mb-1 font-medium text-slate-800">
+                        {course.title}
+                      </p>
                       <div className="flex items-center gap-1 text-xs text-slate-500">
                         <Calendar className="h-3 w-3" />
                         <span>Inicia el {formatDate(course.startDate)}</span>
                       </div>
                       {(() => {
-                        const daysUntilStart = Math.ceil((new Date(course.startDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                        return daysUntilStart > 0 && (
-                          <Badge className="mt-2 bg-orange-600 text-xs">
-                            En {daysUntilStart} días
-                          </Badge>
+                        const daysUntilStart = Math.ceil(
+                          (new Date(course.startDate).getTime() -
+                            new Date().getTime()) /
+                            (1000 * 60 * 60 * 24)
+                        );
+                        return (
+                          daysUntilStart > 0 && (
+                            <Badge className="mt-2 bg-orange-600 text-xs">
+                              En {daysUntilStart} días
+                            </Badge>
+                          )
                         );
                       })()}
                     </div>

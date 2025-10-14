@@ -1,8 +1,8 @@
-import { ILessonRepository } from '@/src/core/interfaces/repositories/ILessonRepository';
-import { IModuleRepository } from '@/src/core/interfaces/repositories/IModuleRepository';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { LessonEntity } from '@/src/core/entities/Lesson.entity';
+import { ILessonRepository } from "@/src/core/interfaces/repositories/ILessonRepository";
+import { IModuleRepository } from "@/src/core/interfaces/repositories/IModuleRepository";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { LessonEntity } from "@/src/core/entities/Lesson.entity";
 
 export interface GetLessonsByModuleResult {
   success: boolean;
@@ -25,7 +25,7 @@ export class GetLessonsByModuleUseCase {
       if (!moduleData) {
         return {
           success: false,
-          error: 'Módulo no encontrado',
+          error: "Módulo no encontrado",
         };
       }
 
@@ -34,27 +34,30 @@ export class GetLessonsByModuleUseCase {
       if (!currentUser) {
         return {
           success: false,
-          error: 'No hay usuario autenticado',
+          error: "No hay usuario autenticado",
         };
       }
 
-      const profile = await this.profileRepository.getProfileByUserId(currentUser.id);
+      const profile = await this.profileRepository.getProfileByUserId(
+        currentUser.id
+      );
       if (!profile) {
         return {
           success: false,
-          error: 'Perfil no encontrado',
+          error: "Perfil no encontrado",
         };
       }
 
       // Get all lessons
-      const lessons = await this.lessonRepository.getLessonsByModuleId(moduleId);
+      const lessons =
+        await this.lessonRepository.getLessonsByModuleId(moduleId);
 
       // Filter based on user role
       if (profile.isStudent()) {
         // Students only see published lessons
         return {
           success: true,
-          lessons: lessons.filter(l => l.isPublished),
+          lessons: lessons.filter((l) => l.isPublished),
         };
       } else {
         // Admins and teachers see all lessons
@@ -66,7 +69,8 @@ export class GetLessonsByModuleUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al obtener lecciones',
+        error:
+          error instanceof Error ? error.message : "Error al obtener lecciones",
       };
     }
   }

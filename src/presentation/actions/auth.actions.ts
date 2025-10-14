@@ -60,7 +60,7 @@ export async function signup(formData: FormData) {
 
   revalidatePath("/", "layout");
   revalidatePath("/dashboard");
-  
+
   return { success: true };
 }
 

@@ -1,6 +1,6 @@
-import { ICourseRepository } from '@/src/core/interfaces/repositories/ICourseRepository';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
 
 export interface RemoveTeacherFromCourseResult {
   success: boolean;
@@ -14,22 +14,27 @@ export class RemoveTeacherFromCourseUseCase {
     private readonly profileRepository: IProfileRepository
   ) {}
 
-  async execute(courseId: string, teacherId: string): Promise<RemoveTeacherFromCourseResult> {
+  async execute(
+    courseId: string,
+    teacherId: string
+  ): Promise<RemoveTeacherFromCourseResult> {
     try {
       // Verify current user is admin
       const currentUser = await this.authRepository.getCurrentUser();
       if (!currentUser) {
         return {
           success: false,
-          error: 'No hay usuario autenticado',
+          error: "No hay usuario autenticado",
         };
       }
 
-      const currentProfile = await this.profileRepository.getProfileByUserId(currentUser.id);
+      const currentProfile = await this.profileRepository.getProfileByUserId(
+        currentUser.id
+      );
       if (!currentProfile || !currentProfile.isAdmin()) {
         return {
           success: false,
-          error: 'Solo los administradores pueden remover docentes',
+          error: "Solo los administradores pueden remover docentes",
         };
       }
 
@@ -38,7 +43,7 @@ export class RemoveTeacherFromCourseUseCase {
       if (!course) {
         return {
           success: false,
-          error: 'Curso no encontrado',
+          error: "Curso no encontrado",
         };
       }
 
@@ -51,9 +56,9 @@ export class RemoveTeacherFromCourseUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al remover docente',
+        error:
+          error instanceof Error ? error.message : "Error al remover docente",
       };
     }
   }
 }
-

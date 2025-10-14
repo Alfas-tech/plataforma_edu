@@ -1,20 +1,20 @@
-import { CourseModuleEntity } from '@/src/core/entities/CourseModule.entity';
+import { CourseModuleEntity } from "@/src/core/entities/CourseModule.entity";
 
-describe('CourseModuleEntity', () => {
+describe("CourseModuleEntity", () => {
   const mockModuleData = {
-    id: 'module-123',
-    courseId: 'course-123',
-    title: 'Test Module',
-    description: 'Test Description',
+    id: "module-123",
+    courseId: "course-123",
+    title: "Test Module",
+    description: "Test Description",
     orderIndex: 1,
-    content: 'Test Content',
+    content: "Test Content",
     isPublished: true,
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
+    createdAt: new Date("2024-01-01"),
+    updatedAt: new Date("2024-01-01"),
   };
 
-  describe('constructor', () => {
-    it('should create a module entity with all properties', () => {
+  describe("constructor", () => {
+    it("should create a module entity with all properties", () => {
       const courseModule = new CourseModuleEntity(
         mockModuleData.id,
         mockModuleData.courseId,
@@ -38,14 +38,14 @@ describe('CourseModuleEntity', () => {
       expect(courseModule.updatedAt).toBe(mockModuleData.updatedAt);
     });
 
-    it('should create a module with null description', () => {
+    it("should create a module with null description", () => {
       const courseModule = new CourseModuleEntity(
-        'module-1',
-        'course-1',
-        'Module Title',
+        "module-1",
+        "course-1",
+        "Module Title",
         null,
         1,
-        'Content',
+        "Content",
         false,
         new Date(),
         new Date()
@@ -54,12 +54,12 @@ describe('CourseModuleEntity', () => {
       expect(courseModule.description).toBeNull();
     });
 
-    it('should create a module with null content', () => {
+    it("should create a module with null content", () => {
       const courseModule = new CourseModuleEntity(
-        'module-1',
-        'course-1',
-        'Module Title',
-        'Description',
+        "module-1",
+        "course-1",
+        "Module Title",
+        "Description",
         1,
         null,
         false,
@@ -71,15 +71,15 @@ describe('CourseModuleEntity', () => {
     });
   });
 
-  describe('isPublished property', () => {
-    it('should correctly set isPublished to true', () => {
+  describe("isPublished property", () => {
+    it("should correctly set isPublished to true", () => {
       const courseModule = new CourseModuleEntity(
-        'module-1',
-        'course-1',
-        'Published Module',
-        'Description',
+        "module-1",
+        "course-1",
+        "Published Module",
+        "Description",
         1,
-        'Content',
+        "Content",
         true,
         new Date(),
         new Date()
@@ -88,14 +88,14 @@ describe('CourseModuleEntity', () => {
       expect(courseModule.isPublished).toBe(true);
     });
 
-    it('should correctly set isPublished to false', () => {
+    it("should correctly set isPublished to false", () => {
       const courseModule = new CourseModuleEntity(
-        'module-1',
-        'course-1',
-        'Unpublished Module',
-        'Description',
+        "module-1",
+        "course-1",
+        "Unpublished Module",
+        "Description",
         1,
-        'Content',
+        "Content",
         false,
         new Date(),
         new Date()
@@ -105,27 +105,27 @@ describe('CourseModuleEntity', () => {
     });
   });
 
-  describe('orderIndex property', () => {
-    it('should handle different order indices', () => {
+  describe("orderIndex property", () => {
+    it("should handle different order indices", () => {
       const module1 = new CourseModuleEntity(
-        'module-1',
-        'course-1',
-        'Module 1',
-        'Description',
+        "module-1",
+        "course-1",
+        "Module 1",
+        "Description",
         1,
-        'Content',
+        "Content",
         true,
         new Date(),
         new Date()
       );
 
       const module2 = new CourseModuleEntity(
-        'module-2',
-        'course-1',
-        'Module 2',
-        'Description',
+        "module-2",
+        "course-1",
+        "Module 2",
+        "Description",
         5,
-        'Content',
+        "Content",
         true,
         new Date(),
         new Date()

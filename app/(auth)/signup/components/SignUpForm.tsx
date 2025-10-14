@@ -32,10 +32,10 @@ export function SignUpForm() {
   } = useForm<SignupInput>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
-      email: '',
-      password: '',
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
     },
   });
 
@@ -45,16 +45,16 @@ export function SignUpForm() {
     setSuccess("");
 
     const formData = new FormData();
-    formData.append('first-name', data.firstName);
-    formData.append('last-name', data.lastName);
-    formData.append('email', data.email);
-    formData.append('password', data.password);
+    formData.append("first-name", data.firstName);
+    formData.append("last-name", data.lastName);
+    formData.append("email", data.email);
+    formData.append("password", data.password);
 
     try {
       const result = await signup(formData);
 
       if (result?.error) {
-        setError(result.error || 'Error al crear la cuenta');
+        setError(result.error || "Error al crear la cuenta");
       } else {
         setSuccess("¡Cuenta creada! Redirigiendo...");
         setTimeout(() => {
@@ -100,7 +100,7 @@ export function SignUpForm() {
               <Input
                 id="firstName"
                 placeholder="Juan"
-                {...register('firstName')}
+                {...register("firstName")}
                 error={errors.firstName?.message}
                 disabled={isSubmitting}
               />
@@ -112,7 +112,7 @@ export function SignUpForm() {
               <Input
                 id="lastName"
                 placeholder="García"
-                {...register('lastName')}
+                {...register("lastName")}
                 error={errors.lastName?.message}
                 disabled={isSubmitting}
               />
@@ -128,7 +128,7 @@ export function SignUpForm() {
               id="email"
               type="email"
               placeholder="correo@ejemplo.com"
-              {...register('email')}
+              {...register("email")}
               error={errors.email?.message}
               disabled={isSubmitting}
             />
@@ -142,12 +142,13 @@ export function SignUpForm() {
             <Input
               id="password"
               type="password"
-              {...register('password')}
+              {...register("password")}
               error={errors.password?.message}
               disabled={isSubmitting}
             />
             <p className="text-xs text-slate-500">
-              Debe tener al menos 6 caracteres, incluir mayúsculas, minúsculas y números
+              Debe tener al menos 6 caracteres, incluir mayúsculas, minúsculas y
+              números
             </p>
           </div>
 

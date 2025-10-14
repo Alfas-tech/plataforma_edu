@@ -40,7 +40,7 @@ export function UpdatePasswordForm() {
     try {
       const result = await updatePassword(formData);
       if (result.error) {
-        setError(result.error || 'Error al actualizar la contraseña');
+        setError(result.error || "Error al actualizar la contraseña");
       } else {
         setSuccess(true);
         setTimeout(() => {

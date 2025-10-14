@@ -1,8 +1,8 @@
-import { IModuleRepository } from '@/src/core/interfaces/repositories/IModuleRepository';
-import { ICourseRepository } from '@/src/core/interfaces/repositories/ICourseRepository';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { CourseModuleEntity } from '@/src/core/entities/CourseModule.entity';
+import { IModuleRepository } from "@/src/core/interfaces/repositories/IModuleRepository";
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { CourseModuleEntity } from "@/src/core/entities/CourseModule.entity";
 
 export interface GetModulesByCourseResult {
   success: boolean;
@@ -25,7 +25,7 @@ export class GetModulesByCourseUseCase {
       if (!course) {
         return {
           success: false,
-          error: 'Curso no encontrado',
+          error: "Curso no encontrado",
         };
       }
 
@@ -34,27 +34,30 @@ export class GetModulesByCourseUseCase {
       if (!currentUser) {
         return {
           success: false,
-          error: 'No hay usuario autenticado',
+          error: "No hay usuario autenticado",
         };
       }
 
-      const profile = await this.profileRepository.getProfileByUserId(currentUser.id);
+      const profile = await this.profileRepository.getProfileByUserId(
+        currentUser.id
+      );
       if (!profile) {
         return {
           success: false,
-          error: 'Perfil no encontrado',
+          error: "Perfil no encontrado",
         };
       }
 
       // Get all modules
-      const modules = await this.moduleRepository.getModulesByCourseId(courseId);
+      const modules =
+        await this.moduleRepository.getModulesByCourseId(courseId);
 
       // Filter based on user role
       if (profile.isStudent()) {
         // Students only see published modules
         return {
           success: true,
-          modules: modules.filter(m => m.isPublished),
+          modules: modules.filter((m) => m.isPublished),
         };
       } else {
         // Admins and teachers see all modules
@@ -66,9 +69,9 @@ export class GetModulesByCourseUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al obtener módulos',
+        error:
+          error instanceof Error ? error.message : "Error al obtener módulos",
       };
     }
   }
 }
-

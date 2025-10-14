@@ -12,10 +12,26 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Users, GraduationCap, UserPlus, UserMinus, Calendar, Trash2, KeyRound, Loader2, Mail } from "lucide-react";
+import {
+  Users,
+  GraduationCap,
+  UserPlus,
+  UserMinus,
+  Calendar,
+  Trash2,
+  KeyRound,
+  Loader2,
+  Mail,
+} from "lucide-react";
 import Image from "next/image";
-import { promoteToTeacher, demoteToStudent } from "@/src/presentation/actions/profile.actions";
-import { deleteUser, sendPasswordResetEmail } from "@/src/presentation/actions/user-management.actions";
+import {
+  promoteToTeacher,
+  demoteToStudent,
+} from "@/src/presentation/actions/profile.actions";
+import {
+  deleteUser,
+  sendPasswordResetEmail,
+} from "@/src/presentation/actions/user-management.actions";
 import { useRouter } from "next/navigation";
 import { CreateUserDialog } from "./CreateUserDialog";
 
@@ -34,10 +50,15 @@ interface UserManagementClientProps {
   teachers: UserData[];
 }
 
-export function UserManagementClient({ students, teachers }: UserManagementClientProps) {
+export function UserManagementClient({
+  students,
+  teachers,
+}: UserManagementClientProps) {
   const router = useRouter();
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
-  const [action, setAction] = useState<'promote' | 'demote' | 'delete' | 'reset-password' | null>(null);
+  const [action, setAction] = useState<
+    "promote" | "demote" | "delete" | "reset-password" | null
+  >(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -45,28 +66,28 @@ export function UserManagementClient({ students, teachers }: UserManagementClien
 
   const handlePromoteClick = (user: UserData) => {
     setSelectedUser(user);
-    setAction('promote');
+    setAction("promote");
     setError(null);
     setSuccess(null);
   };
 
   const handleDemoteClick = (user: UserData) => {
     setSelectedUser(user);
-    setAction('demote');
+    setAction("demote");
     setError(null);
     setSuccess(null);
   };
 
   const handleDeleteClick = (user: UserData) => {
     setSelectedUser(user);
-    setAction('delete');
+    setAction("delete");
     setError(null);
     setSuccess(null);
   };
 
   const handleResetPasswordClick = (user: UserData) => {
     setSelectedUser(user);
-    setAction('reset-password');
+    setAction("reset-password");
     setError(null);
     setSuccess(null);
   };
@@ -81,28 +102,35 @@ export function UserManagementClient({ students, teachers }: UserManagementClien
     try {
       let result;
 
-      if (action === 'promote') {
+      if (action === "promote") {
         result = await promoteToTeacher(selectedUser.id);
-      } else if (action === 'demote') {
+      } else if (action === "demote") {
         result = await demoteToStudent(selectedUser.id);
-      } else if (action === 'delete') {
+      } else if (action === "delete") {
         result = await deleteUser(selectedUser.id);
-      } else if (action === 'reset-password') {
+      } else if (action === "reset-password") {
         result = await sendPasswordResetEmail(selectedUser.id);
       }
 
-      if (result && 'error' in result) {
-        setError(result.error || 'Error en la operación');
+      if (result && "error" in result) {
+        setError(result.error || "Error en la operación");
       } else {
         // Success
-        if (result && 'message' in result && typeof result.message === 'string') {
+        if (
+          result &&
+          "message" in result &&
+          typeof result.message === "string"
+        ) {
           setSuccess(result.message);
         } else {
           setSuccess(
-            action === 'promote' ? 'Usuario promovido a docente' :
-            action === 'demote' ? 'Usuario degradado a estudiante' :
-            action === 'delete' ? 'Usuario eliminado exitosamente' :
-            'Acción completada'
+            action === "promote"
+              ? "Usuario promovido a docente"
+              : action === "demote"
+                ? "Usuario degradado a estudiante"
+                : action === "delete"
+                  ? "Usuario eliminado exitosamente"
+                  : "Acción completada"
           );
         }
 
@@ -115,7 +143,7 @@ export function UserManagementClient({ students, teachers }: UserManagementClien
         }, 1500);
       }
     } catch (err) {
-      setError('Error inesperado al realizar la acción');
+      setError("Error inesperado al realizar la acción");
     } finally {
       setIsLoading(false);
     }
@@ -130,10 +158,10 @@ export function UserManagementClient({ students, teachers }: UserManagementClien
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return date.toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -141,8 +169,8 @@ export function UserManagementClient({ students, teachers }: UserManagementClien
     <>
       {/* Create User Button */}
       <div className="mb-6">
-        <Button 
-          onClick={() => setIsCreateDialogOpen(true)} 
+        <Button
+          onClick={() => setIsCreateDialogOpen(true)}
           className="bg-purple-600 hover:bg-purple-700"
         >
           <UserPlus className="mr-2 h-4 w-4" />
@@ -191,7 +219,9 @@ export function UserManagementClient({ students, teachers }: UserManagementClien
                         <p className="font-medium text-slate-800">
                           {student.displayName}
                         </p>
-                        <p className="text-xs text-slate-500">{student.email}</p>
+                        <p className="text-xs text-slate-500">
+                          {student.email}
+                        </p>
                         <div className="mt-1 flex items-center gap-1 text-xs text-slate-400">
                           <Calendar className="h-3 w-3" />
                           {formatDate(student.createdAt)}
@@ -273,7 +303,9 @@ export function UserManagementClient({ students, teachers }: UserManagementClien
                         <p className="font-medium text-slate-800">
                           {teacher.displayName}
                         </p>
-                        <p className="text-xs text-slate-500">{teacher.email}</p>
+                        <p className="text-xs text-slate-500">
+                          {teacher.email}
+                        </p>
                         <div className="mt-1 flex items-center gap-1 text-xs text-slate-400">
                           <Calendar className="h-3 w-3" />
                           {formatDate(teacher.createdAt)}
@@ -317,23 +349,28 @@ export function UserManagementClient({ students, teachers }: UserManagementClien
       </div>
 
       {/* Create User Dialog */}
-      <CreateUserDialog 
-        open={isCreateDialogOpen} 
+      <CreateUserDialog
+        open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
       />
 
       {/* Promote/Demote Confirmation Dialog */}
-      <Dialog open={action === 'promote' || action === 'demote'} onOpenChange={handleCancel}>
+      <Dialog
+        open={action === "promote" || action === "demote"}
+        onOpenChange={handleCancel}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {action === 'promote' ? 'Promover a Docente' : 'Degradar a Estudiante'}
+              {action === "promote"
+                ? "Promover a Docente"
+                : "Degradar a Estudiante"}
             </DialogTitle>
             <DialogDescription>
               {selectedUser && (
                 <>
-                  ¿Estás seguro de que quieres{' '}
-                  {action === 'promote' ? 'promover' : 'degradar'} a{' '}
+                  ¿Estás seguro de que quieres{" "}
+                  {action === "promote" ? "promover" : "degradar"} a{" "}
                   <strong>{selectedUser.displayName}</strong>?
                 </>
               )}
@@ -353,7 +390,11 @@ export function UserManagementClient({ students, teachers }: UserManagementClien
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={handleCancel} disabled={isLoading}>
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isLoading}
+            >
               Cancelar
             </Button>
             <Button onClick={handleConfirm} disabled={isLoading}>
@@ -363,7 +404,7 @@ export function UserManagementClient({ students, teachers }: UserManagementClien
                   Procesando...
                 </>
               ) : (
-                'Confirmar'
+                "Confirmar"
               )}
             </Button>
           </DialogFooter>
@@ -371,15 +412,16 @@ export function UserManagementClient({ students, teachers }: UserManagementClien
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={action === 'delete'} onOpenChange={handleCancel}>
+      <Dialog open={action === "delete"} onOpenChange={handleCancel}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Eliminar Usuario</DialogTitle>
             <DialogDescription>
               {selectedUser && (
                 <>
-                  ¿Estás seguro de que quieres eliminar a{' '}
-                  <strong>{selectedUser.displayName}</strong>? Esta acción no se puede deshacer.
+                  ¿Estás seguro de que quieres eliminar a{" "}
+                  <strong>{selectedUser.displayName}</strong>? Esta acción no se
+                  puede deshacer.
                 </>
               )}
             </DialogDescription>
@@ -398,7 +440,11 @@ export function UserManagementClient({ students, teachers }: UserManagementClien
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={handleCancel} disabled={isLoading}>
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isLoading}
+            >
               Cancelar
             </Button>
             <Button
@@ -423,15 +469,15 @@ export function UserManagementClient({ students, teachers }: UserManagementClien
       </Dialog>
 
       {/* Reset Password Confirmation Dialog */}
-      <Dialog open={action === 'reset-password'} onOpenChange={handleCancel}>
+      <Dialog open={action === "reset-password"} onOpenChange={handleCancel}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Enviar Email de Restablecimiento</DialogTitle>
             <DialogDescription>
               {selectedUser && (
                 <>
-                  Se enviará un email a <strong>{selectedUser.email}</strong> para
-                  restablecer su contraseña.
+                  Se enviará un email a <strong>{selectedUser.email}</strong>{" "}
+                  para restablecer su contraseña.
                 </>
               )}
             </DialogDescription>
@@ -450,7 +496,11 @@ export function UserManagementClient({ students, teachers }: UserManagementClien
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={handleCancel} disabled={isLoading}>
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isLoading}
+            >
               Cancelar
             </Button>
             <Button onClick={handleConfirm} disabled={isLoading}>

@@ -12,7 +12,7 @@ import Image from "next/image";
 export default async function AdminDashboardPage() {
   const profileResult = await getCurrentProfile();
 
-  if ('error' in profileResult) {
+  if ("error" in profileResult) {
     redirect("/login");
   }
 
@@ -24,17 +24,17 @@ export default async function AdminDashboardPage() {
 
   // Obtener cursos
   const coursesResult = await getAllCourses();
-  const courses = 'error' in coursesResult ? [] : coursesResult.courses || [];
+  const courses = "error" in coursesResult ? [] : coursesResult.courses || [];
 
   // Obtener usuarios
   const usersResult = await getAllUsers();
-  const students = 'error' in usersResult ? [] : usersResult.students || [];
-  const teachers = 'error' in usersResult ? [] : usersResult.teachers || [];
+  const students = "error" in usersResult ? [] : usersResult.students || [];
+  const teachers = "error" in usersResult ? [] : usersResult.teachers || [];
 
   // Calcular estadísticas
-  const activeCourses = courses.filter(c => c.status === 'active').length;
-  const upcomingCourses = courses.filter(c => c.status === 'upcoming').length;
-  const completedCourses = courses.filter(c => c.status === 'ended').length;
+  const activeCourses = courses.filter((c) => c.status === "active").length;
+  const upcomingCourses = courses.filter((c) => c.status === "upcoming").length;
+  const completedCourses = courses.filter((c) => c.status === "ended").length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
@@ -134,11 +134,15 @@ export default async function AdminDashboardPage() {
               <div className="mt-4 grid grid-cols-2 gap-4">
                 <div className="rounded-lg border bg-slate-50 p-3">
                   <p className="mb-1 text-xs text-slate-600">Estudiantes</p>
-                  <p className="text-xl font-bold text-blue-600">{students.length}</p>
+                  <p className="text-xl font-bold text-blue-600">
+                    {students.length}
+                  </p>
                 </div>
                 <div className="rounded-lg border bg-slate-50 p-3">
                   <p className="mb-1 text-xs text-slate-600">Docentes</p>
-                  <p className="text-xl font-bold text-purple-600">{teachers.length}</p>
+                  <p className="text-xl font-bold text-purple-600">
+                    {teachers.length}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -166,15 +170,21 @@ export default async function AdminDashboardPage() {
               <div className="mt-4 grid grid-cols-3 gap-2">
                 <div className="rounded-lg border bg-slate-50 p-3">
                   <p className="mb-1 text-xs text-slate-600">Total</p>
-                  <p className="text-xl font-bold text-green-600">{courses.length}</p>
+                  <p className="text-xl font-bold text-green-600">
+                    {courses.length}
+                  </p>
                 </div>
                 <div className="rounded-lg border bg-slate-50 p-3">
                   <p className="mb-1 text-xs text-slate-600">Activos</p>
-                  <p className="text-xl font-bold text-orange-600">{activeCourses}</p>
+                  <p className="text-xl font-bold text-orange-600">
+                    {activeCourses}
+                  </p>
                 </div>
                 <div className="rounded-lg border bg-slate-50 p-3">
                   <p className="mb-1 text-xs text-slate-600">Próximos</p>
-                  <p className="text-xl font-bold text-blue-600">{upcomingCourses}</p>
+                  <p className="text-xl font-bold text-blue-600">
+                    {upcomingCourses}
+                  </p>
                 </div>
               </div>
             </CardContent>

@@ -1,6 +1,6 @@
-import { ICourseRepository } from '@/src/core/interfaces/repositories/ICourseRepository';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
 
 export interface DeleteCourseResult {
   success: boolean;
@@ -21,15 +21,17 @@ export class DeleteCourseUseCase {
       if (!currentUser) {
         return {
           success: false,
-          error: 'No hay usuario autenticado',
+          error: "No hay usuario autenticado",
         };
       }
 
-      const currentProfile = await this.profileRepository.getProfileByUserId(currentUser.id);
+      const currentProfile = await this.profileRepository.getProfileByUserId(
+        currentUser.id
+      );
       if (!currentProfile || !currentProfile.isAdmin()) {
         return {
           success: false,
-          error: 'Solo los administradores pueden eliminar cursos',
+          error: "Solo los administradores pueden eliminar cursos",
         };
       }
 
@@ -42,9 +44,9 @@ export class DeleteCourseUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al eliminar curso',
+        error:
+          error instanceof Error ? error.message : "Error al eliminar curso",
       };
     }
   }
 }
-

@@ -31,7 +31,10 @@ interface CreateUserDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) {
+export function CreateUserDialog({
+  open,
+  onOpenChange,
+}: CreateUserDialogProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,14 +50,14 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
   } = useForm<CreateUserInput>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
-      email: '',
-      password: '',
-      fullName: '',
-      role: 'student',
+      email: "",
+      password: "",
+      fullName: "",
+      role: "student",
     },
   });
 
-  const selectedRole = watch('role');
+  const selectedRole = watch("role");
 
   const onSubmit = async (data: CreateUserInput) => {
     setIsSubmitting(true);
@@ -64,12 +67,12 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
     try {
       const result = await createUser(data);
 
-      if ('error' in result) {
-        setError(result.error || 'Error al crear el usuario');
+      if ("error" in result) {
+        setError(result.error || "Error al crear el usuario");
       } else {
-        setSuccess('Usuario creado exitosamente');
+        setSuccess("Usuario creado exitosamente");
         reset();
-        
+
         // Wait a bit to show success message, then close and refresh
         setTimeout(() => {
           onOpenChange(false);
@@ -78,7 +81,7 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
         }, 1500);
       }
     } catch (err) {
-      setError('Error inesperado al crear usuario');
+      setError("Error inesperado al crear usuario");
     } finally {
       setIsSubmitting(false);
     }
@@ -110,7 +113,7 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
             <Input
               id="fullName"
               placeholder="Juan Pérez García"
-              {...register('fullName')}
+              {...register("fullName")}
               error={errors.fullName?.message}
               disabled={isSubmitting}
             />
@@ -125,7 +128,7 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
               id="email"
               type="email"
               placeholder="usuario@ejemplo.com"
-              {...register('email')}
+              {...register("email")}
               error={errors.email?.message}
               disabled={isSubmitting}
             />
@@ -140,7 +143,7 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
               id="password"
               type="password"
               placeholder="Mínimo 6 caracteres"
-              {...register('password')}
+              {...register("password")}
               error={errors.password?.message}
               disabled={isSubmitting}
             />
@@ -156,8 +159,8 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
             </Label>
             <Select
               value={selectedRole}
-              onValueChange={(value: 'student' | 'teacher' | 'admin') =>
-                setValue('role', value, { shouldValidate: true })
+              onValueChange={(value: "student" | "teacher" | "admin") =>
+                setValue("role", value, { shouldValidate: true })
               }
               disabled={isSubmitting}
             >
@@ -217,4 +220,3 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
     </Dialog>
   );
 }
-

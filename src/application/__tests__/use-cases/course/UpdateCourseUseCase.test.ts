@@ -1,13 +1,13 @@
-import { UpdateCourseUseCase } from '@/src/application/use-cases/course/UpdateCourseUseCase';
-import { ICourseRepository } from '@/src/core/interfaces/repositories/ICourseRepository';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { CourseEntity } from '@/src/core/entities/Course.entity';
-import { UserEntity } from '@/src/core/entities/User.entity';
-import { ProfileEntity } from '@/src/core/entities/Profile.entity';
-import { UpdateCourseInput } from '@/src/core/types/course.types';
+import { UpdateCourseUseCase } from "@/src/application/use-cases/course/UpdateCourseUseCase";
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { CourseEntity } from "@/src/core/entities/Course.entity";
+import { UserEntity } from "@/src/core/entities/User.entity";
+import { ProfileEntity } from "@/src/core/entities/Profile.entity";
+import { UpdateCourseInput } from "@/src/core/types/course.types";
 
-describe('UpdateCourseUseCase', () => {
+describe("UpdateCourseUseCase", () => {
   let mockCourseRepository: jest.Mocked<ICourseRepository>;
   let mockAuthRepository: jest.Mocked<IAuthRepository>;
   let mockProfileRepository: jest.Mocked<IProfileRepository>;
@@ -58,53 +58,59 @@ describe('UpdateCourseUseCase', () => {
     jest.clearAllMocks();
   });
 
-  describe('execute', () => {
-    const courseId = 'course-123';
+  describe("execute", () => {
+    const courseId = "course-123";
     const validInput: UpdateCourseInput = {
-      title: 'Updated Course',
-      description: 'Updated Description',
-      start_date: '2025-01-01',
-      end_date: '2025-12-31',
+      title: "Updated Course",
+      description: "Updated Description",
+      start_date: "2025-01-01",
+      end_date: "2025-12-31",
       is_active: true,
     };
 
-    const mockUser = new UserEntity('user-123', 'admin@example.com', 'Admin User');
+    const mockUser = new UserEntity(
+      "user-123",
+      "admin@example.com",
+      "Admin User"
+    );
     const mockAdminProfile = new ProfileEntity(
-      'profile-123',
-      'user-123',
-      'Admin',
-      'User',
-      'admin',
+      "profile-123",
+      "user-123",
+      "Admin",
+      "User",
+      "admin",
       new Date(),
       new Date()
     );
 
     const mockCourse = new CourseEntity(
       courseId,
-      'Test Course',
-      'Course Description',
-      new Date('2024-01-01'),
-      new Date('2024-12-31'),
+      "Test Course",
+      "Course Description",
+      new Date("2024-01-01"),
+      new Date("2024-12-31"),
       true,
-      'admin-123',
+      "admin-123",
       new Date(),
       new Date()
     );
 
-    it('should update course successfully when user is admin', async () => {
+    it("should update course successfully when user is admin", async () => {
       const mockUpdatedCourse = new CourseEntity(
         courseId,
-        'Updated Course',
-        'Updated Description',
-        new Date('2025-01-01'),
-        new Date('2025-12-31'),
+        "Updated Course",
+        "Updated Description",
+        new Date("2025-01-01"),
+        new Date("2025-12-31"),
         true,
         new Date(),
         new Date()
       );
 
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(mockAdminProfile);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
       mockCourseRepository.updateCourse.mockResolvedValue(mockUpdatedCourse);
 
       const result = await updateCourseUseCase.execute(courseId, validInput);
@@ -112,86 +118,99 @@ describe('UpdateCourseUseCase', () => {
       expect(result.success).toBe(true);
       expect(result.course).toEqual(mockUpdatedCourse);
       expect(result.error).toBeUndefined();
-      expect(mockCourseRepository.updateCourse).toHaveBeenCalledWith(courseId, validInput);
+      expect(mockCourseRepository.updateCourse).toHaveBeenCalledWith(
+        courseId,
+        validInput
+      );
       expect(mockCourseRepository.updateCourse).toHaveBeenCalledTimes(1);
     });
 
-    it('should return error when no user is authenticated', async () => {
+    it("should return error when no user is authenticated", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(null);
 
       const result = await updateCourseUseCase.execute(courseId, validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('No hay usuario autenticado');
+      expect(result.error).toBe("No hay usuario autenticado");
       expect(result.course).toBeUndefined();
       expect(mockCourseRepository.updateCourse).not.toHaveBeenCalled();
     });
 
-    it('should return error when user is student', async () => {
+    it("should return error when user is student", async () => {
       const studentProfile = new ProfileEntity(
-        'profile-123',
-        'user-123',
-        'Student',
-        'User',
-        'student',
+        "profile-123",
+        "user-123",
+        "Student",
+        "User",
+        "student",
         new Date(),
         new Date()
       );
 
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(studentProfile);
-
-      const result = await updateCourseUseCase.execute(courseId, validInput);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('No tienes permisos para editar cursos');
-      expect(result.course).toBeUndefined();
-      expect(mockCourseRepository.updateCourse).not.toHaveBeenCalled();
-    });
-
-    it('should return error when end date is before start date', async () => {
-      const invalidInput: UpdateCourseInput = {
-        ...validInput,
-        start_date: '2025-12-31',
-        end_date: '2025-01-01',
-      };
-
-      mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(mockAdminProfile);
-
-      const result = await updateCourseUseCase.execute(courseId, invalidInput);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('La fecha de fin debe ser posterior a la fecha de inicio');
-      expect(mockCourseRepository.updateCourse).not.toHaveBeenCalled();
-    });
-
-    it('should handle repository errors gracefully', async () => {
-      mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(mockAdminProfile);
-      mockCourseRepository.updateCourse.mockRejectedValue(
-        new Error('Course not found')
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        studentProfile
       );
 
       const result = await updateCourseUseCase.execute(courseId, validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Course not found');
+      expect(result.error).toBe("No tienes permisos para editar cursos");
       expect(result.course).toBeUndefined();
+      expect(mockCourseRepository.updateCourse).not.toHaveBeenCalled();
     });
 
-    it('should handle unknown errors', async () => {
+    it("should return error when end date is before start date", async () => {
+      const invalidInput: UpdateCourseInput = {
+        ...validInput,
+        start_date: "2025-12-31",
+        end_date: "2025-01-01",
+      };
+
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(mockAdminProfile);
-      mockCourseRepository.updateCourse.mockRejectedValue('Unknown error');
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
+
+      const result = await updateCourseUseCase.execute(courseId, invalidInput);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe(
+        "La fecha de fin debe ser posterior a la fecha de inicio"
+      );
+      expect(mockCourseRepository.updateCourse).not.toHaveBeenCalled();
+    });
+
+    it("should handle repository errors gracefully", async () => {
+      mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
+      mockCourseRepository.updateCourse.mockRejectedValue(
+        new Error("Course not found")
+      );
 
       const result = await updateCourseUseCase.execute(courseId, validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Error al actualizar curso');
+      expect(result.error).toBe("Course not found");
+      expect(result.course).toBeUndefined();
     });
 
-    it('should return error when profile not found', async () => {
+    it("should handle unknown errors", async () => {
+      mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
+      mockCourseRepository.updateCourse.mockRejectedValue("Unknown error");
+
+      const result = await updateCourseUseCase.execute(courseId, validInput);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Error al actualizar curso");
+    });
+
+    it("should return error when profile not found", async () => {
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockProfileRepository.getProfileByUserId.mockResolvedValue(null);
@@ -199,79 +218,87 @@ describe('UpdateCourseUseCase', () => {
       const result = await updateCourseUseCase.execute(courseId, validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Perfil no encontrado');
+      expect(result.error).toBe("Perfil no encontrado");
     });
 
-    it('should return error when user is student', async () => {
+    it("should return error when user is student", async () => {
       const studentProfile = new ProfileEntity(
-        'user-123',
-        'student@example.com',
-        'Student User',
+        "user-123",
+        "student@example.com",
+        "Student User",
         null,
-        'student',
+        "student",
         new Date(),
         new Date()
       );
 
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(studentProfile);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        studentProfile
+      );
 
       const result = await updateCourseUseCase.execute(courseId, validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('No tienes permisos para editar cursos');
+      expect(result.error).toBe("No tienes permisos para editar cursos");
     });
 
-    it('should return error when teacher is not assigned to course', async () => {
+    it("should return error when teacher is not assigned to course", async () => {
       const teacherProfile = new ProfileEntity(
-        'user-123',
-        'teacher@example.com',
-        'Teacher User',
+        "user-123",
+        "teacher@example.com",
+        "Teacher User",
         null,
-        'teacher',
+        "teacher",
         new Date(),
         new Date()
       );
 
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(teacherProfile);
-      mockCourseRepository.getCourseTeachers.mockResolvedValue(['other-teacher-id']);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        teacherProfile
+      );
+      mockCourseRepository.getCourseTeachers.mockResolvedValue([
+        "other-teacher-id",
+      ]);
 
       const result = await updateCourseUseCase.execute(courseId, validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('No estás asignado a este curso');
+      expect(result.error).toBe("No estás asignado a este curso");
     });
 
-    it('should update course successfully when teacher is assigned to course', async () => {
+    it("should update course successfully when teacher is assigned to course", async () => {
       const teacherProfile = new ProfileEntity(
-        'user-123',
-        'teacher@example.com',
-        'Teacher User',
+        "user-123",
+        "teacher@example.com",
+        "Teacher User",
         null,
-        'teacher',
+        "teacher",
         new Date(),
         new Date()
       );
 
       const mockUpdatedCourse = new CourseEntity(
         courseId,
-        'Updated Course',
-        'Updated Description',
-        new Date('2025-01-01'),
-        new Date('2025-12-31'),
+        "Updated Course",
+        "Updated Description",
+        new Date("2025-01-01"),
+        new Date("2025-12-31"),
         true,
-        'admin-123',
+        "admin-123",
         new Date(),
         new Date()
       );
 
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(teacherProfile);
-      mockCourseRepository.getCourseTeachers.mockResolvedValue(['user-123']);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        teacherProfile
+      );
+      mockCourseRepository.getCourseTeachers.mockResolvedValue(["user-123"]);
       mockCourseRepository.updateCourse.mockResolvedValue(mockUpdatedCourse);
 
       const result = await updateCourseUseCase.execute(courseId, validInput);
@@ -281,4 +308,3 @@ describe('UpdateCourseUseCase', () => {
     });
   });
 });
-

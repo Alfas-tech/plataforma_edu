@@ -1,4 +1,4 @@
-import { CourseData } from '../types/course.types';
+import { CourseData } from "../types/course.types";
 
 export class CourseEntity {
   constructor(
@@ -29,11 +29,7 @@ export class CourseEntity {
 
   isCurrentlyActive(): boolean {
     const now = new Date();
-    return (
-      this.isActive &&
-      this.startDate <= now &&
-      this.endDate >= now
-    );
+    return this.isActive && this.startDate <= now && this.endDate >= now;
   }
 
   hasStarted(): boolean {
@@ -56,9 +52,9 @@ export class CourseEntity {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
 
-  getStatus(): 'upcoming' | 'active' | 'ended' {
-    if (!this.hasStarted()) return 'upcoming';
-    if (this.hasEnded()) return 'ended';
-    return 'active';
+  getStatus(): "upcoming" | "active" | "ended" {
+    if (!this.hasStarted()) return "upcoming";
+    if (this.hasEnded()) return "ended";
+    return "active";
   }
 }

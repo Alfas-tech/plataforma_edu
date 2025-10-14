@@ -13,7 +13,7 @@ export class UserEntity {
   static fromSupabase(data: SupabaseUserData): UserEntity {
     return new UserEntity(
       data.id,
-      data.email || '',
+      data.email || "",
       data.user_metadata?.full_name,
       data.user_metadata?.avatar_url,
       data.user_metadata,
@@ -23,7 +23,10 @@ export class UserEntity {
 
   getDisplayName(): string {
     if (this.fullName) return this.fullName;
-    if (this.metadata?.full_name && typeof this.metadata.full_name === 'string') {
+    if (
+      this.metadata?.full_name &&
+      typeof this.metadata.full_name === "string"
+    ) {
       return this.metadata.full_name;
     }
     return this.email.split("@")[0] || "Usuario";

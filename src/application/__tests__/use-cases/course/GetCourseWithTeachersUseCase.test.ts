@@ -1,10 +1,10 @@
-import { GetCourseWithTeachersUseCase } from '@/src/application/use-cases/course/GetCourseWithTeachersUseCase';
-import { ICourseRepository } from '@/src/core/interfaces/repositories/ICourseRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { CourseEntity } from '@/src/core/entities/Course.entity';
-import { ProfileEntity } from '@/src/core/entities/Profile.entity';
+import { GetCourseWithTeachersUseCase } from "@/src/application/use-cases/course/GetCourseWithTeachersUseCase";
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { CourseEntity } from "@/src/core/entities/Course.entity";
+import { ProfileEntity } from "@/src/core/entities/Profile.entity";
 
-describe('GetCourseWithTeachersUseCase', () => {
+describe("GetCourseWithTeachersUseCase", () => {
   let mockCourseRepository: jest.Mocked<ICourseRepository>;
   let mockProfileRepository: jest.Mocked<IProfileRepository>;
   let getCourseWithTeachersUseCase: GetCourseWithTeachersUseCase;
@@ -46,43 +46,46 @@ describe('GetCourseWithTeachersUseCase', () => {
     jest.clearAllMocks();
   });
 
-  describe('execute', () => {
-    const courseId = 'course-123';
+  describe("execute", () => {
+    const courseId = "course-123";
     const mockCourse = new CourseEntity(
       courseId,
-      'Test Course',
-      'Course Description',
-      new Date('2024-01-01'),
-      new Date('2024-12-31'),
+      "Test Course",
+      "Course Description",
+      new Date("2024-01-01"),
+      new Date("2024-12-31"),
       true,
-      'admin-123',
+      "admin-123",
       new Date(),
       new Date()
     );
 
     const mockTeacher1 = new ProfileEntity(
-      'teacher-1',
-      'teacher1@example.com',
-      'Teacher One',
+      "teacher-1",
+      "teacher1@example.com",
+      "Teacher One",
       null,
-      'teacher',
+      "teacher",
       new Date(),
       new Date()
     );
 
     const mockTeacher2 = new ProfileEntity(
-      'teacher-2',
-      'teacher2@example.com',
-      'Teacher Two',
+      "teacher-2",
+      "teacher2@example.com",
+      "Teacher Two",
       null,
-      'teacher',
+      "teacher",
       new Date(),
       new Date()
     );
 
-    it('should return course with teachers successfully', async () => {
+    it("should return course with teachers successfully", async () => {
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
-      mockCourseRepository.getCourseTeachers.mockResolvedValue(['teacher-1', 'teacher-2']);
+      mockCourseRepository.getCourseTeachers.mockResolvedValue([
+        "teacher-1",
+        "teacher-2",
+      ]);
       mockProfileRepository.getProfileByUserId
         .mockResolvedValueOnce(mockTeacher1)
         .mockResolvedValueOnce(mockTeacher2);
@@ -96,7 +99,7 @@ describe('GetCourseWithTeachersUseCase', () => {
       expect(result.data?.teachers).toContain(mockTeacher2);
     });
 
-    it('should return course with empty teachers array when no teachers assigned', async () => {
+    it("should return course with empty teachers array when no teachers assigned", async () => {
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
       mockCourseRepository.getCourseTeachers.mockResolvedValue([]);
 
@@ -107,9 +110,13 @@ describe('GetCourseWithTeachersUseCase', () => {
       expect(result.data?.teachers).toHaveLength(0);
     });
 
-    it('should filter out teachers with no profile', async () => {
+    it("should filter out teachers with no profile", async () => {
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
-      mockCourseRepository.getCourseTeachers.mockResolvedValue(['teacher-1', 'teacher-2', 'teacher-3']);
+      mockCourseRepository.getCourseTeachers.mockResolvedValue([
+        "teacher-1",
+        "teacher-2",
+        "teacher-3",
+      ]);
       mockProfileRepository.getProfileByUserId
         .mockResolvedValueOnce(mockTeacher1)
         .mockResolvedValueOnce(null)
@@ -123,34 +130,33 @@ describe('GetCourseWithTeachersUseCase', () => {
       expect(result.data?.teachers).toContain(mockTeacher2);
     });
 
-    it('should return error when course not found', async () => {
+    it("should return error when course not found", async () => {
       mockCourseRepository.getCourseById.mockResolvedValue(null);
 
       const result = await getCourseWithTeachersUseCase.execute(courseId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Curso no encontrado');
+      expect(result.error).toBe("Curso no encontrado");
     });
 
-    it('should handle repository errors gracefully', async () => {
+    it("should handle repository errors gracefully", async () => {
       mockCourseRepository.getCourseById.mockRejectedValue(
-        new Error('Database error')
+        new Error("Database error")
       );
 
       const result = await getCourseWithTeachersUseCase.execute(courseId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Database error');
+      expect(result.error).toBe("Database error");
     });
 
-    it('should handle unknown errors', async () => {
-      mockCourseRepository.getCourseById.mockRejectedValue('Unknown error');
+    it("should handle unknown errors", async () => {
+      mockCourseRepository.getCourseById.mockRejectedValue("Unknown error");
 
       const result = await getCourseWithTeachersUseCase.execute(courseId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Error al obtener curso');
+      expect(result.error).toBe("Error al obtener curso");
     });
   });
 });
-

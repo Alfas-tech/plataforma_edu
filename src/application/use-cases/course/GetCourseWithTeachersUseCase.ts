@@ -1,7 +1,7 @@
-import { ICourseRepository } from '@/src/core/interfaces/repositories/ICourseRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { CourseEntity } from '@/src/core/entities/Course.entity';
-import { ProfileEntity } from '@/src/core/entities/Profile.entity';
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { CourseEntity } from "@/src/core/entities/Course.entity";
+import { ProfileEntity } from "@/src/core/entities/Profile.entity";
 
 export interface CourseWithTeachers {
   course: CourseEntity;
@@ -27,17 +27,19 @@ export class GetCourseWithTeachersUseCase {
       if (!course) {
         return {
           success: false,
-          error: 'Curso no encontrado',
+          error: "Curso no encontrado",
         };
       }
 
       // Get assigned teacher IDs
-      const teacherIds = await this.courseRepository.getCourseTeachers(courseId);
+      const teacherIds =
+        await this.courseRepository.getCourseTeachers(courseId);
 
       // Get teacher profiles
       const teachers: ProfileEntity[] = [];
       for (const teacherId of teacherIds) {
-        const teacher = await this.profileRepository.getProfileByUserId(teacherId);
+        const teacher =
+          await this.profileRepository.getProfileByUserId(teacherId);
         if (teacher) {
           teachers.push(teacher);
         }
@@ -53,9 +55,9 @@ export class GetCourseWithTeachersUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al obtener curso',
+        error:
+          error instanceof Error ? error.message : "Error al obtener curso",
       };
     }
   }
 }
-

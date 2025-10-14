@@ -1,5 +1,5 @@
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { ProfileEntity } from '@/src/core/entities/Profile.entity';
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { ProfileEntity } from "@/src/core/entities/Profile.entity";
 
 export interface GetAllUsersResult {
   success: boolean;
@@ -26,9 +26,9 @@ export class GetAllUsersUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al obtener usuarios',
+        error:
+          error instanceof Error ? error.message : "Error al obtener usuarios",
       };
     }
   }
 }
-

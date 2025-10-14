@@ -1,8 +1,8 @@
-import { ICourseRepository } from '@/src/core/interfaces/repositories/ICourseRepository';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { CourseEntity } from '@/src/core/entities/Course.entity';
-import { CreateCourseInput } from '@/src/core/types/course.types';
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { CourseEntity } from "@/src/core/entities/Course.entity";
+import { CreateCourseInput } from "@/src/core/types/course.types";
 
 export interface CreateCourseResult {
   success: boolean;
@@ -24,15 +24,17 @@ export class CreateCourseUseCase {
       if (!currentUser) {
         return {
           success: false,
-          error: 'No hay usuario autenticado',
+          error: "No hay usuario autenticado",
         };
       }
 
-      const currentProfile = await this.profileRepository.getProfileByUserId(currentUser.id);
+      const currentProfile = await this.profileRepository.getProfileByUserId(
+        currentUser.id
+      );
       if (!currentProfile || !currentProfile.isAdmin()) {
         return {
           success: false,
-          error: 'No tienes permisos para crear cursos',
+          error: "No tienes permisos para crear cursos",
         };
       }
 
@@ -43,7 +45,7 @@ export class CreateCourseUseCase {
       if (endDate <= startDate) {
         return {
           success: false,
-          error: 'La fecha de fin debe ser posterior a la fecha de inicio',
+          error: "La fecha de fin debe ser posterior a la fecha de inicio",
         };
       }
 
@@ -57,9 +59,8 @@ export class CreateCourseUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al crear curso',
+        error: error instanceof Error ? error.message : "Error al crear curso",
       };
     }
   }
 }
-

@@ -1,5 +1,5 @@
-import { ICourseRepository } from '@/src/core/interfaces/repositories/ICourseRepository';
-import { CourseEntity } from '@/src/core/entities/Course.entity';
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
+import { CourseEntity } from "@/src/core/entities/Course.entity";
 
 export interface GetAllCoursesResult {
   success: boolean;
@@ -21,9 +21,9 @@ export class GetAllCoursesUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al obtener cursos',
+        error:
+          error instanceof Error ? error.message : "Error al obtener cursos",
       };
     }
   }
 }
-

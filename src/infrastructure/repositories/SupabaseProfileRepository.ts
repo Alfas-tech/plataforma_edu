@@ -1,16 +1,16 @@
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { ProfileEntity } from '@/src/core/entities/Profile.entity';
-import { UserRole } from '@/src/core/types/roles.types';
-import { createClient } from '@/src/infrastructure/supabase/server';
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { ProfileEntity } from "@/src/core/entities/Profile.entity";
+import { UserRole } from "@/src/core/types/roles.types";
+import { createClient } from "@/src/infrastructure/supabase/server";
 
 export class SupabaseProfileRepository implements IProfileRepository {
   async getProfileByUserId(userId: string): Promise<ProfileEntity | null> {
     const supabase = createClient();
 
     const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
       .single();
 
     if (error || !data) {
@@ -20,25 +20,30 @@ export class SupabaseProfileRepository implements IProfileRepository {
     return ProfileEntity.fromDatabase(data);
   }
 
-  async updateProfile(userId: string, profileData: Partial<ProfileEntity>): Promise<ProfileEntity> {
+  async updateProfile(
+    userId: string,
+    profileData: Partial<ProfileEntity>
+  ): Promise<ProfileEntity> {
     const supabase = createClient();
 
     const updateData: any = {};
-    if (profileData.fullName !== undefined) updateData.full_name = profileData.fullName;
-    if (profileData.avatarUrl !== undefined) updateData.avatar_url = profileData.avatarUrl;
+    if (profileData.fullName !== undefined)
+      updateData.full_name = profileData.fullName;
+    if (profileData.avatarUrl !== undefined)
+      updateData.avatar_url = profileData.avatarUrl;
 
     const { data, error } = await supabase
-      .from('profiles')
+      .from("profiles")
       .update({
         ...updateData,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', userId)
+      .eq("id", userId)
       .select()
       .single();
 
     if (error || !data) {
-      throw new Error('Error al actualizar el perfil');
+      throw new Error("Error al actualizar el perfil");
     }
 
     return ProfileEntity.fromDatabase(data);
@@ -47,24 +52,24 @@ export class SupabaseProfileRepository implements IProfileRepository {
   async promoteToTeacher(userId: string): Promise<void> {
     const supabase = createClient();
 
-    const { error } = await supabase.rpc('promote_to_teacher', {
+    const { error } = await supabase.rpc("promote_to_teacher", {
       user_id: userId,
     });
 
     if (error) {
-      throw new Error('Error al promover a docente');
+      throw new Error("Error al promover a docente");
     }
   }
 
   async demoteToStudent(userId: string): Promise<void> {
     const supabase = createClient();
 
-    const { error } = await supabase.rpc('demote_to_student', {
+    const { error } = await supabase.rpc("demote_to_student", {
       user_id: userId,
     });
 
     if (error) {
-      throw new Error('Error al degradar a estudiante');
+      throw new Error("Error al degradar a estudiante");
     }
   }
 
@@ -72,17 +77,17 @@ export class SupabaseProfileRepository implements IProfileRepository {
     const supabase = createClient();
 
     const { data, error } = await supabase
-      .from('profiles')
+      .from("profiles")
       .update({
         role: role,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', userId)
+      .eq("id", userId)
       .select()
       .single();
 
     if (error || !data) {
-      throw new Error('Error al actualizar el rol');
+      throw new Error("Error al actualizar el rol");
     }
 
     return ProfileEntity.fromDatabase(data);
@@ -92,39 +97,39 @@ export class SupabaseProfileRepository implements IProfileRepository {
     const supabase = createClient();
 
     const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('role', 'teacher');
+      .from("profiles")
+      .select("*")
+      .eq("role", "teacher");
 
     if (error || !data) {
       return [];
     }
 
-    return data.map(profile => ProfileEntity.fromDatabase(profile));
+    return data.map((profile) => ProfileEntity.fromDatabase(profile));
   }
 
   async getAllStudents(): Promise<ProfileEntity[]> {
     const supabase = createClient();
 
     const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('role', 'student');
+      .from("profiles")
+      .select("*")
+      .eq("role", "student");
 
     if (error || !data) {
       return [];
     }
 
-    return data.map(profile => ProfileEntity.fromDatabase(profile));
+    return data.map((profile) => ProfileEntity.fromDatabase(profile));
   }
 
   async getProfileByEmail(email: string): Promise<ProfileEntity | null> {
     const supabase = createClient();
 
     const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('email', email)
+      .from("profiles")
+      .select("*")
+      .eq("email", email)
       .single();
 
     if (error || !data) {
@@ -137,14 +142,12 @@ export class SupabaseProfileRepository implements IProfileRepository {
   async getAllProfiles(): Promise<ProfileEntity[]> {
     const supabase = createClient();
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*');
+    const { data, error } = await supabase.from("profiles").select("*");
 
     if (error || !data) {
       return [];
     }
 
-    return data.map(profile => ProfileEntity.fromDatabase(profile));
+    return data.map((profile) => ProfileEntity.fromDatabase(profile));
   }
 }

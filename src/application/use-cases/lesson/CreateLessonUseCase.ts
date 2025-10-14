@@ -1,9 +1,9 @@
-import { ILessonRepository } from '@/src/core/interfaces/repositories/ILessonRepository';
-import { IModuleRepository } from '@/src/core/interfaces/repositories/IModuleRepository';
-import { ICourseRepository } from '@/src/core/interfaces/repositories/ICourseRepository';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { LessonEntity } from '@/src/core/entities/Lesson.entity';
+import { ILessonRepository } from "@/src/core/interfaces/repositories/ILessonRepository";
+import { IModuleRepository } from "@/src/core/interfaces/repositories/IModuleRepository";
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { LessonEntity } from "@/src/core/entities/Lesson.entity";
 
 export interface CreateLessonInput {
   module_id: string;
@@ -32,11 +32,13 @@ export class CreateLessonUseCase {
   async execute(input: CreateLessonInput): Promise<CreateLessonResult> {
     try {
       // Verify module exists
-      const moduleData = await this.moduleRepository.getModuleById(input.module_id);
+      const moduleData = await this.moduleRepository.getModuleById(
+        input.module_id
+      );
       if (!moduleData) {
         return {
           success: false,
-          error: 'Módulo no encontrado',
+          error: "Módulo no encontrado",
         };
       }
 
@@ -45,32 +47,36 @@ export class CreateLessonUseCase {
       if (!currentUser) {
         return {
           success: false,
-          error: 'No hay usuario autenticado',
+          error: "No hay usuario autenticado",
         };
       }
 
-      const profile = await this.profileRepository.getProfileByUserId(currentUser.id);
+      const profile = await this.profileRepository.getProfileByUserId(
+        currentUser.id
+      );
       if (!profile) {
         return {
           success: false,
-          error: 'Perfil no encontrado',
+          error: "Perfil no encontrado",
         };
       }
 
       if (!profile.isAdmin() && !profile.isTeacher()) {
         return {
           success: false,
-          error: 'No tienes permisos para crear lecciones',
+          error: "No tienes permisos para crear lecciones",
         };
       }
 
       // If teacher, check if assigned to the course
       if (profile.isTeacher()) {
-        const assignedTeachers = await this.courseRepository.getCourseTeachers(moduleData.courseId);
+        const assignedTeachers = await this.courseRepository.getCourseTeachers(
+          moduleData.courseId
+        );
         if (!assignedTeachers.includes(currentUser.id)) {
           return {
             success: false,
-            error: 'No estás asignado a este curso',
+            error: "No estás asignado a este curso",
           };
         }
       }
@@ -85,7 +91,8 @@ export class CreateLessonUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al crear lección',
+        error:
+          error instanceof Error ? error.message : "Error al crear lección",
       };
     }
   }

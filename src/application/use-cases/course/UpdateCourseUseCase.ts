@@ -1,8 +1,8 @@
-import { ICourseRepository } from '@/src/core/interfaces/repositories/ICourseRepository';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { CourseEntity } from '@/src/core/entities/Course.entity';
-import { UpdateCourseInput } from '@/src/core/types/course.types';
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { CourseEntity } from "@/src/core/entities/Course.entity";
+import { UpdateCourseInput } from "@/src/core/types/course.types";
 
 export interface UpdateCourseResult {
   success: boolean;
@@ -17,22 +17,27 @@ export class UpdateCourseUseCase {
     private readonly profileRepository: IProfileRepository
   ) {}
 
-  async execute(courseId: string, input: UpdateCourseInput): Promise<UpdateCourseResult> {
+  async execute(
+    courseId: string,
+    input: UpdateCourseInput
+  ): Promise<UpdateCourseResult> {
     try {
       // Verify current user is admin or assigned teacher
       const currentUser = await this.authRepository.getCurrentUser();
       if (!currentUser) {
         return {
           success: false,
-          error: 'No hay usuario autenticado',
+          error: "No hay usuario autenticado",
         };
       }
 
-      const currentProfile = await this.profileRepository.getProfileByUserId(currentUser.id);
+      const currentProfile = await this.profileRepository.getProfileByUserId(
+        currentUser.id
+      );
       if (!currentProfile) {
         return {
           success: false,
-          error: 'Perfil no encontrado',
+          error: "Perfil no encontrado",
         };
       }
 
@@ -41,16 +46,17 @@ export class UpdateCourseUseCase {
         if (!currentProfile.isTeacher()) {
           return {
             success: false,
-            error: 'No tienes permisos para editar cursos',
+            error: "No tienes permisos para editar cursos",
           };
         }
 
         // Check if teacher is assigned to this course
-        const assignedTeachers = await this.courseRepository.getCourseTeachers(courseId);
+        const assignedTeachers =
+          await this.courseRepository.getCourseTeachers(courseId);
         if (!assignedTeachers.includes(currentUser.id)) {
           return {
             success: false,
-            error: 'No estás asignado a este curso',
+            error: "No estás asignado a este curso",
           };
         }
       }
@@ -63,7 +69,7 @@ export class UpdateCourseUseCase {
         if (endDate <= startDate) {
           return {
             success: false,
-            error: 'La fecha de fin debe ser posterior a la fecha de inicio',
+            error: "La fecha de fin debe ser posterior a la fecha de inicio",
           };
         }
       }
@@ -78,9 +84,9 @@ export class UpdateCourseUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al actualizar curso',
+        error:
+          error instanceof Error ? error.message : "Error al actualizar curso",
       };
     }
   }
 }
-

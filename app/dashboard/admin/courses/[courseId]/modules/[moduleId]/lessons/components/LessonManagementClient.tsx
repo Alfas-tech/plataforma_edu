@@ -4,7 +4,15 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Edit, Trash2, BookOpen, Eye, EyeOff, Clock } from "lucide-react";
+import {
+  PlusCircle,
+  Edit,
+  Trash2,
+  BookOpen,
+  Eye,
+  EyeOff,
+  Clock,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { LessonFormDialog } from "./LessonFormDialog";
 import { DeleteLessonDialog } from "./DeleteLessonDialog";
@@ -28,19 +36,28 @@ interface LessonManagementClientProps {
   isAdmin: boolean;
 }
 
-export function LessonManagementClient({ moduleId, lessons, isAdmin }: LessonManagementClientProps) {
+export function LessonManagementClient({
+  moduleId,
+  lessons,
+  isAdmin,
+}: LessonManagementClientProps) {
   const router = useRouter();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<LessonData | null>(null);
   const [deletingLesson, setDeletingLesson] = useState<LessonData | null>(null);
 
-  const sortedLessons = [...lessons].sort((a, b) => a.orderIndex - b.orderIndex);
+  const sortedLessons = [...lessons].sort(
+    (a, b) => a.orderIndex - b.orderIndex
+  );
 
   return (
     <>
       {/* Create Button */}
       <div className="mb-6">
-        <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+        <Button
+          onClick={() => setIsCreateDialogOpen(true)}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
           <PlusCircle className="mr-2 h-4 w-4" />
           Crear Nueva Lección
         </Button>
@@ -58,7 +75,10 @@ export function LessonManagementClient({ moduleId, lessons, isAdmin }: LessonMan
               <p className="mb-4 text-sm text-slate-600">
                 Comienza creando la primera lección del módulo
               </p>
-              <Button onClick={() => setIsCreateDialogOpen(true)} variant="outline">
+              <Button
+                onClick={() => setIsCreateDialogOpen(true)}
+                variant="outline"
+              >
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Crear primera lección
               </Button>
@@ -68,7 +88,10 @@ export function LessonManagementClient({ moduleId, lessons, isAdmin }: LessonMan
       ) : (
         <div className="space-y-4">
           {sortedLessons.map((lesson) => (
-            <Card key={lesson.id} className="border-2 transition-shadow hover:shadow-lg">
+            <Card
+              key={lesson.id}
+              className="border-2 transition-shadow hover:shadow-lg"
+            >
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
@@ -83,7 +106,10 @@ export function LessonManagementClient({ moduleId, lessons, isAdmin }: LessonMan
                           Publicado
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="border-orange-300 text-orange-600">
+                        <Badge
+                          variant="outline"
+                          className="border-orange-300 text-orange-600"
+                        >
                           <EyeOff className="mr-1 h-3 w-3" />
                           Borrador
                         </Badge>
@@ -150,4 +176,3 @@ export function LessonManagementClient({ moduleId, lessons, isAdmin }: LessonMan
     </>
   );
 }
-

@@ -1,7 +1,7 @@
-import { ResetPasswordUseCase } from '@/src/application/use-cases/auth/ResetPasswordUseCase';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
+import { ResetPasswordUseCase } from "@/src/application/use-cases/auth/ResetPasswordUseCase";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
 
-describe('ResetPasswordUseCase', () => {
+describe("ResetPasswordUseCase", () => {
   let mockAuthRepository: jest.Mocked<any>;
   let resetPasswordUseCase: ResetPasswordUseCase;
 
@@ -22,10 +22,10 @@ describe('ResetPasswordUseCase', () => {
     jest.clearAllMocks();
   });
 
-  describe('execute', () => {
-    const validEmail = 'test@example.com';
+  describe("execute", () => {
+    const validEmail = "test@example.com";
 
-    it('should send reset password email successfully', async () => {
+    it("should send reset password email successfully", async () => {
       mockAuthRepository.resetPassword.mockResolvedValue();
 
       const result = await resetPasswordUseCase.execute(validEmail);
@@ -36,8 +36,8 @@ describe('ResetPasswordUseCase', () => {
       expect(mockAuthRepository.resetPassword).toHaveBeenCalledTimes(1);
     });
 
-    it('should return error when email sending fails', async () => {
-      const errorMessage = 'Error al enviar el correo';
+    it("should return error when email sending fails", async () => {
+      const errorMessage = "Error al enviar el correo";
       mockAuthRepository.resetPassword.mockRejectedValue(
         new Error(errorMessage)
       );
@@ -48,13 +48,13 @@ describe('ResetPasswordUseCase', () => {
       expect(result.error).toBe(errorMessage);
     });
 
-    it('should handle unknown errors gracefully', async () => {
-      mockAuthRepository.resetPassword.mockRejectedValue('Unknown error');
+    it("should handle unknown errors gracefully", async () => {
+      mockAuthRepository.resetPassword.mockRejectedValue("Unknown error");
 
       const result = await resetPasswordUseCase.execute(validEmail);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Error al enviar el correo');
+      expect(result.error).toBe("Error al enviar el correo");
     });
   });
 });

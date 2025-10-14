@@ -1,7 +1,7 @@
-import { UpdatePasswordUseCase } from '@/src/application/use-cases/auth/UpdatePasswordUseCase';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
+import { UpdatePasswordUseCase } from "@/src/application/use-cases/auth/UpdatePasswordUseCase";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
 
-describe('UpdatePasswordUseCase', () => {
+describe("UpdatePasswordUseCase", () => {
   let mockAuthRepository: jest.Mocked<any>;
   let updatePasswordUseCase: UpdatePasswordUseCase;
 
@@ -22,9 +22,9 @@ describe('UpdatePasswordUseCase', () => {
     jest.clearAllMocks();
   });
 
-  describe('execute', () => {
-    it('should update password successfully', async () => {
-      const validPassword = 'newPassword123';
+  describe("execute", () => {
+    it("should update password successfully", async () => {
+      const validPassword = "newPassword123";
       mockAuthRepository.updatePassword.mockResolvedValue();
 
       const result = await updatePasswordUseCase.execute(validPassword);
@@ -36,33 +36,33 @@ describe('UpdatePasswordUseCase', () => {
       );
     });
 
-    it('should return error when password is too short', async () => {
-      const shortPassword = '12345';
+    it("should return error when password is too short", async () => {
+      const shortPassword = "12345";
 
       const result = await updatePasswordUseCase.execute(shortPassword);
 
       expect(result.success).toBe(false);
       expect(result.error).toBe(
-        'La contraseña debe tener al menos 6 caracteres'
+        "La contraseña debe tener al menos 6 caracteres"
       );
       expect(mockAuthRepository.updatePassword).not.toHaveBeenCalled();
     });
 
-    it('should return error when password is empty', async () => {
-      const emptyPassword = '';
+    it("should return error when password is empty", async () => {
+      const emptyPassword = "";
 
       const result = await updatePasswordUseCase.execute(emptyPassword);
 
       expect(result.success).toBe(false);
       expect(result.error).toBe(
-        'La contraseña debe tener al menos 6 caracteres'
+        "La contraseña debe tener al menos 6 caracteres"
       );
       expect(mockAuthRepository.updatePassword).not.toHaveBeenCalled();
     });
 
-    it('should return error when update fails', async () => {
-      const validPassword = 'newPassword123';
-      const errorMessage = 'Error al actualizar la contraseña';
+    it("should return error when update fails", async () => {
+      const validPassword = "newPassword123";
+      const errorMessage = "Error al actualizar la contraseña";
       mockAuthRepository.updatePassword.mockRejectedValue(
         new Error(errorMessage)
       );
@@ -73,14 +73,14 @@ describe('UpdatePasswordUseCase', () => {
       expect(result.error).toBe(errorMessage);
     });
 
-    it('should handle unknown errors gracefully', async () => {
-      const validPassword = 'newPassword123';
-      mockAuthRepository.updatePassword.mockRejectedValue('Unknown error');
+    it("should handle unknown errors gracefully", async () => {
+      const validPassword = "newPassword123";
+      mockAuthRepository.updatePassword.mockRejectedValue("Unknown error");
 
       const result = await updatePasswordUseCase.execute(validPassword);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Error al actualizar la contraseña');
+      expect(result.error).toBe("Error al actualizar la contraseña");
     });
   });
 });

@@ -1,8 +1,8 @@
-import { GetAllCoursesUseCase } from '@/src/application/use-cases/course/GetAllCoursesUseCase';
-import { ICourseRepository } from '@/src/core/interfaces/repositories/ICourseRepository';
-import { CourseEntity } from '@/src/core/entities/Course.entity';
+import { GetAllCoursesUseCase } from "@/src/application/use-cases/course/GetAllCoursesUseCase";
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
+import { CourseEntity } from "@/src/core/entities/Course.entity";
 
-describe('GetAllCoursesUseCase', () => {
+describe("GetAllCoursesUseCase", () => {
   let mockCourseRepository: jest.Mocked<ICourseRepository>;
   let getAllCoursesUseCase: GetAllCoursesUseCase;
 
@@ -26,25 +26,25 @@ describe('GetAllCoursesUseCase', () => {
     jest.clearAllMocks();
   });
 
-  describe('execute', () => {
-    it('should return all courses successfully', async () => {
+  describe("execute", () => {
+    it("should return all courses successfully", async () => {
       const mockCourses = [
         new CourseEntity(
-          'course-1',
-          'Course 1',
-          'Description 1',
-          new Date('2025-01-01'),
-          new Date('2025-06-30'),
+          "course-1",
+          "Course 1",
+          "Description 1",
+          new Date("2025-01-01"),
+          new Date("2025-06-30"),
           true,
           new Date(),
           new Date()
         ),
         new CourseEntity(
-          'course-2',
-          'Course 2',
-          'Description 2',
-          new Date('2025-07-01'),
-          new Date('2025-12-31'),
+          "course-2",
+          "Course 2",
+          "Description 2",
+          new Date("2025-07-01"),
+          new Date("2025-12-31"),
           true,
           new Date(),
           new Date()
@@ -62,7 +62,7 @@ describe('GetAllCoursesUseCase', () => {
       expect(mockCourseRepository.getAllCourses).toHaveBeenCalledTimes(1);
     });
 
-    it('should return empty array when no courses exist', async () => {
+    it("should return empty array when no courses exist", async () => {
       mockCourseRepository.getAllCourses.mockResolvedValue([]);
 
       const result = await getAllCoursesUseCase.execute();
@@ -73,27 +73,26 @@ describe('GetAllCoursesUseCase', () => {
       expect(result.error).toBeUndefined();
     });
 
-    it('should handle repository errors gracefully', async () => {
+    it("should handle repository errors gracefully", async () => {
       mockCourseRepository.getAllCourses.mockRejectedValue(
-        new Error('Database connection failed')
+        new Error("Database connection failed")
       );
 
       const result = await getAllCoursesUseCase.execute();
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Database connection failed');
+      expect(result.error).toBe("Database connection failed");
       expect(result.courses).toBeUndefined();
     });
 
-    it('should handle unknown errors', async () => {
-      mockCourseRepository.getAllCourses.mockRejectedValue('Unknown error');
+    it("should handle unknown errors", async () => {
+      mockCourseRepository.getAllCourses.mockRejectedValue("Unknown error");
 
       const result = await getAllCoursesUseCase.execute();
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Error al obtener cursos');
+      expect(result.error).toBe("Error al obtener cursos");
       expect(result.courses).toBeUndefined();
     });
   });
 });
-

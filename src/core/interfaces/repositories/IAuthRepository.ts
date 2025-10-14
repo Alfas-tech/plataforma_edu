@@ -3,7 +3,9 @@ import { UserEntity } from "../../entities/User.entity";
 
 export interface IAuthRepository {
   login(credentials: LoginCredentials): Promise<UserEntity>;
-  signUp(data: SignUpData): Promise<{ user: UserEntity; needsConfirmation: boolean }>;
+  signUp(
+    data: SignUpData
+  ): Promise<{ user: UserEntity; needsConfirmation: boolean }>;
   signOut(): Promise<void>;
   getCurrentUser(): Promise<UserEntity | null>;
   signInWithGoogle(): Promise<string>;

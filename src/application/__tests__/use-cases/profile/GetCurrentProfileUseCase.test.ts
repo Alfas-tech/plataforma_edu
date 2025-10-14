@@ -1,10 +1,10 @@
-import { GetCurrentProfileUseCase } from '@/src/application/use-cases/profile/GetCurrentProfileUseCase';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { UserEntity } from '@/src/core/entities/User.entity';
-import { ProfileEntity } from '@/src/core/entities/Profile.entity';
+import { GetCurrentProfileUseCase } from "@/src/application/use-cases/profile/GetCurrentProfileUseCase";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { UserEntity } from "@/src/core/entities/User.entity";
+import { ProfileEntity } from "@/src/core/entities/Profile.entity";
 
-describe('GetCurrentProfileUseCase', () => {
+describe("GetCurrentProfileUseCase", () => {
   let mockAuthRepository: jest.Mocked<IAuthRepository>;
   let mockProfileRepository: jest.Mocked<IProfileRepository>;
   let getCurrentProfileUseCase: GetCurrentProfileUseCase;
@@ -39,19 +39,23 @@ describe('GetCurrentProfileUseCase', () => {
     jest.clearAllMocks();
   });
 
-  describe('execute', () => {
-    const mockUser = new UserEntity('user-123', 'test@example.com', 'Test User');
+  describe("execute", () => {
+    const mockUser = new UserEntity(
+      "user-123",
+      "test@example.com",
+      "Test User"
+    );
     const mockProfile = new ProfileEntity(
-      'profile-123',
-      'user-123',
-      'Test',
-      'User',
-      'student',
+      "profile-123",
+      "user-123",
+      "Test",
+      "User",
+      "student",
       new Date(),
       new Date()
     );
 
-    it('should return current profile successfully', async () => {
+    it("should return current profile successfully", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockProfileRepository.getProfileByUserId.mockResolvedValue(mockProfile);
 
@@ -61,53 +65,56 @@ describe('GetCurrentProfileUseCase', () => {
       expect(result.profile).toEqual(mockProfile);
       expect(result.error).toBeUndefined();
       expect(mockAuthRepository.getCurrentUser).toHaveBeenCalledTimes(1);
-      expect(mockProfileRepository.getProfileByUserId).toHaveBeenCalledWith('user-123');
+      expect(mockProfileRepository.getProfileByUserId).toHaveBeenCalledWith(
+        "user-123"
+      );
     });
 
-    it('should return error when no user is authenticated', async () => {
+    it("should return error when no user is authenticated", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(null);
 
       const result = await getCurrentProfileUseCase.execute();
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('No hay usuario autenticado');
+      expect(result.error).toBe("No hay usuario autenticado");
       expect(result.profile).toBeUndefined();
       expect(mockProfileRepository.getProfileByUserId).not.toHaveBeenCalled();
     });
 
-    it('should return error when profile not found', async () => {
+    it("should return error when profile not found", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockProfileRepository.getProfileByUserId.mockResolvedValue(null);
 
       const result = await getCurrentProfileUseCase.execute();
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Perfil no encontrado');
+      expect(result.error).toBe("Perfil no encontrado");
       expect(result.profile).toBeUndefined();
     });
 
-    it('should handle repository errors gracefully', async () => {
+    it("should handle repository errors gracefully", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockProfileRepository.getProfileByUserId.mockRejectedValue(
-        new Error('Database connection failed')
+        new Error("Database connection failed")
       );
 
       const result = await getCurrentProfileUseCase.execute();
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Database connection failed');
+      expect(result.error).toBe("Database connection failed");
       expect(result.profile).toBeUndefined();
     });
 
-    it('should handle unknown errors', async () => {
+    it("should handle unknown errors", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockRejectedValue('Unknown error');
+      mockProfileRepository.getProfileByUserId.mockRejectedValue(
+        "Unknown error"
+      );
 
       const result = await getCurrentProfileUseCase.execute();
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Error al obtener el perfil');
+      expect(result.error).toBe("Error al obtener el perfil");
     });
   });
 });
-

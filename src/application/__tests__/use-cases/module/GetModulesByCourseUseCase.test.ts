@@ -1,14 +1,14 @@
-import { GetModulesByCourseUseCase } from '@/src/application/use-cases/module/GetModulesByCourseUseCase';
-import { IModuleRepository } from '@/src/core/interfaces/repositories/IModuleRepository';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { ICourseRepository } from '@/src/core/interfaces/repositories/ICourseRepository';
-import { CourseModuleEntity } from '@/src/core/entities/CourseModule.entity';
-import { CourseEntity } from '@/src/core/entities/Course.entity';
-import { UserEntity } from '@/src/core/entities/User.entity';
-import { ProfileEntity } from '@/src/core/entities/Profile.entity';
+import { GetModulesByCourseUseCase } from "@/src/application/use-cases/module/GetModulesByCourseUseCase";
+import { IModuleRepository } from "@/src/core/interfaces/repositories/IModuleRepository";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
+import { CourseModuleEntity } from "@/src/core/entities/CourseModule.entity";
+import { CourseEntity } from "@/src/core/entities/Course.entity";
+import { UserEntity } from "@/src/core/entities/User.entity";
+import { ProfileEntity } from "@/src/core/entities/Profile.entity";
 
-describe('GetModulesByCourseUseCase', () => {
+describe("GetModulesByCourseUseCase", () => {
   let mockModuleRepository: jest.Mocked<IModuleRepository>;
   let mockAuthRepository: jest.Mocked<IAuthRepository>;
   let mockProfileRepository: jest.Mocked<IProfileRepository>;
@@ -69,13 +69,17 @@ describe('GetModulesByCourseUseCase', () => {
     jest.clearAllMocks();
   });
 
-  describe('execute', () => {
-    const courseId = 'course-123';
-    const mockUser = new UserEntity('user-123', 'student@example.com', 'Student User');
+  describe("execute", () => {
+    const courseId = "course-123";
+    const mockUser = new UserEntity(
+      "user-123",
+      "student@example.com",
+      "Student User"
+    );
     const mockCourse = new CourseEntity(
       courseId,
-      'Test Course',
-      'Description',
+      "Test Course",
+      "Description",
       new Date(),
       new Date(),
       true,
@@ -83,36 +87,36 @@ describe('GetModulesByCourseUseCase', () => {
       new Date()
     );
 
-    it('should return published modules for students', async () => {
+    it("should return published modules for students", async () => {
       const studentProfile = new ProfileEntity(
-        'profile-123',
-        'user-123',
-        'Student',
-        'User',
-        'student',
+        "profile-123",
+        "user-123",
+        "Student",
+        "User",
+        "student",
         new Date(),
         new Date()
       );
 
       const mockModules = [
         new CourseModuleEntity(
-          'module-1',
+          "module-1",
           courseId,
-          'Module 1',
-          'Description 1',
+          "Module 1",
+          "Description 1",
           1,
-          'Content 1',
+          "Content 1",
           true,
           new Date(),
           new Date()
         ),
         new CourseModuleEntity(
-          'module-2',
+          "module-2",
           courseId,
-          'Module 2',
-          'Description 2',
+          "Module 2",
+          "Description 2",
           2,
-          'Content 2',
+          "Content 2",
           false,
           new Date(),
           new Date()
@@ -121,7 +125,9 @@ describe('GetModulesByCourseUseCase', () => {
 
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(studentProfile);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        studentProfile
+      );
       mockModuleRepository.getModulesByCourseId.mockResolvedValue(mockModules);
 
       const result = await getModulesByCourseUseCase.execute(courseId);
@@ -131,36 +137,36 @@ describe('GetModulesByCourseUseCase', () => {
       expect(result.modules?.[0].isPublished).toBe(true);
     });
 
-    it('should return all modules for admins', async () => {
+    it("should return all modules for admins", async () => {
       const adminProfile = new ProfileEntity(
-        'profile-123',
-        'user-123',
-        'Admin',
-        'User',
-        'admin',
+        "profile-123",
+        "user-123",
+        "Admin",
+        "User",
+        "admin",
         new Date(),
         new Date()
       );
 
       const mockModules = [
         new CourseModuleEntity(
-          'module-1',
+          "module-1",
           courseId,
-          'Module 1',
-          'Description 1',
+          "Module 1",
+          "Description 1",
           1,
-          'Content 1',
+          "Content 1",
           true,
           new Date(),
           new Date()
         ),
         new CourseModuleEntity(
-          'module-2',
+          "module-2",
           courseId,
-          'Module 2',
-          'Description 2',
+          "Module 2",
+          "Description 2",
           2,
-          'Content 2',
+          "Content 2",
           false,
           new Date(),
           new Date()
@@ -178,25 +184,25 @@ describe('GetModulesByCourseUseCase', () => {
       expect(result.modules).toHaveLength(2);
     });
 
-    it('should return all modules for teachers', async () => {
+    it("should return all modules for teachers", async () => {
       const teacherProfile = new ProfileEntity(
-        'profile-123',
-        'user-123',
-        'Teacher',
-        'User',
-        'teacher',
+        "profile-123",
+        "user-123",
+        "Teacher",
+        "User",
+        "teacher",
         new Date(),
         new Date()
       );
 
       const mockModules = [
         new CourseModuleEntity(
-          'module-1',
+          "module-1",
           courseId,
-          'Module 1',
-          'Description 1',
+          "Module 1",
+          "Description 1",
           1,
-          'Content 1',
+          "Content 1",
           true,
           new Date(),
           new Date()
@@ -205,7 +211,9 @@ describe('GetModulesByCourseUseCase', () => {
 
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(teacherProfile);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        teacherProfile
+      );
       mockModuleRepository.getModulesByCourseId.mockResolvedValue(mockModules);
 
       const result = await getModulesByCourseUseCase.execute(courseId);
@@ -214,20 +222,22 @@ describe('GetModulesByCourseUseCase', () => {
       expect(result.modules).toHaveLength(1);
     });
 
-    it('should return empty array when no modules exist', async () => {
+    it("should return empty array when no modules exist", async () => {
       const studentProfile = new ProfileEntity(
-        'profile-123',
-        'user-123',
-        'Student',
-        'User',
-        'student',
+        "profile-123",
+        "user-123",
+        "Student",
+        "User",
+        "student",
         new Date(),
         new Date()
       );
 
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(studentProfile);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        studentProfile
+      );
       mockModuleRepository.getModulesByCourseId.mockResolvedValue([]);
 
       const result = await getModulesByCourseUseCase.execute(courseId);
@@ -237,26 +247,26 @@ describe('GetModulesByCourseUseCase', () => {
       expect(result.modules).toHaveLength(0);
     });
 
-    it('should return error when course not found', async () => {
+    it("should return error when course not found", async () => {
       mockCourseRepository.getCourseById.mockResolvedValue(null);
 
       const result = await getModulesByCourseUseCase.execute(courseId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Curso no encontrado');
+      expect(result.error).toBe("Curso no encontrado");
     });
 
-    it('should return error when no user is authenticated', async () => {
+    it("should return error when no user is authenticated", async () => {
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
       mockAuthRepository.getCurrentUser.mockResolvedValue(null);
 
       const result = await getModulesByCourseUseCase.execute(courseId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('No hay usuario autenticado');
+      expect(result.error).toBe("No hay usuario autenticado");
     });
 
-    it('should return error when profile not found', async () => {
+    it("should return error when profile not found", async () => {
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockProfileRepository.getProfileByUserId.mockResolvedValue(null);
@@ -264,27 +274,27 @@ describe('GetModulesByCourseUseCase', () => {
       const result = await getModulesByCourseUseCase.execute(courseId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Perfil no encontrado');
+      expect(result.error).toBe("Perfil no encontrado");
     });
 
-    it('should handle repository errors gracefully', async () => {
+    it("should handle repository errors gracefully", async () => {
       mockCourseRepository.getCourseById.mockRejectedValue(
-        new Error('Database error')
+        new Error("Database error")
       );
 
       const result = await getModulesByCourseUseCase.execute(courseId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Database error');
+      expect(result.error).toBe("Database error");
     });
 
-    it('should handle unknown errors', async () => {
-      mockCourseRepository.getCourseById.mockRejectedValue('Unknown error');
+    it("should handle unknown errors", async () => {
+      mockCourseRepository.getCourseById.mockRejectedValue("Unknown error");
 
       const result = await getModulesByCourseUseCase.execute(courseId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Error al obtener módulos');
+      expect(result.error).toBe("Error al obtener módulos");
     });
   });
 });

@@ -1,12 +1,12 @@
-import { RemoveTeacherFromCourseUseCase } from '@/src/application/use-cases/course/RemoveTeacherFromCourseUseCase';
-import { ICourseRepository } from '@/src/core/interfaces/repositories/ICourseRepository';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { CourseEntity } from '@/src/core/entities/Course.entity';
-import { UserEntity } from '@/src/core/entities/User.entity';
-import { ProfileEntity } from '@/src/core/entities/Profile.entity';
+import { RemoveTeacherFromCourseUseCase } from "@/src/application/use-cases/course/RemoveTeacherFromCourseUseCase";
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { CourseEntity } from "@/src/core/entities/Course.entity";
+import { UserEntity } from "@/src/core/entities/User.entity";
+import { ProfileEntity } from "@/src/core/entities/Profile.entity";
 
-describe('RemoveTeacherFromCourseUseCase', () => {
+describe("RemoveTeacherFromCourseUseCase", () => {
   let mockCourseRepository: jest.Mocked<ICourseRepository>;
   let mockAuthRepository: jest.Mocked<IAuthRepository>;
   let mockProfileRepository: jest.Mocked<IProfileRepository>;
@@ -60,113 +60,149 @@ describe('RemoveTeacherFromCourseUseCase', () => {
     jest.clearAllMocks();
   });
 
-  describe('execute', () => {
-    const courseId = 'course-123';
-    const teacherId = 'teacher-123';
+  describe("execute", () => {
+    const courseId = "course-123";
+    const teacherId = "teacher-123";
 
-    const mockUser = new UserEntity('admin-123', 'admin@example.com', 'Admin User');
+    const mockUser = new UserEntity(
+      "admin-123",
+      "admin@example.com",
+      "Admin User"
+    );
     const mockAdminProfile = new ProfileEntity(
-      'admin-123',
-      'admin@example.com',
-      'Admin User',
+      "admin-123",
+      "admin@example.com",
+      "Admin User",
       null,
-      'admin',
+      "admin",
       new Date(),
       new Date()
     );
 
     const mockCourse = new CourseEntity(
       courseId,
-      'Test Course',
-      'Course Description',
-      new Date('2024-01-01'),
-      new Date('2024-12-31'),
+      "Test Course",
+      "Course Description",
+      new Date("2024-01-01"),
+      new Date("2024-12-31"),
       true,
-      'admin-123',
+      "admin-123",
       new Date(),
       new Date()
     );
 
-    it('should remove teacher from course when user is admin', async () => {
+    it("should remove teacher from course when user is admin", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(mockAdminProfile);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
       mockCourseRepository.removeTeacher.mockResolvedValue(undefined);
 
-      const result = await removeTeacherFromCourseUseCase.execute(courseId, teacherId);
+      const result = await removeTeacherFromCourseUseCase.execute(
+        courseId,
+        teacherId
+      );
 
       expect(result.success).toBe(true);
-      expect(mockCourseRepository.removeTeacher).toHaveBeenCalledWith(courseId, teacherId);
+      expect(mockCourseRepository.removeTeacher).toHaveBeenCalledWith(
+        courseId,
+        teacherId
+      );
     });
 
-    it('should return error when no user is authenticated', async () => {
+    it("should return error when no user is authenticated", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(null);
 
-      const result = await removeTeacherFromCourseUseCase.execute(courseId, teacherId);
+      const result = await removeTeacherFromCourseUseCase.execute(
+        courseId,
+        teacherId
+      );
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('No hay usuario autenticado');
+      expect(result.error).toBe("No hay usuario autenticado");
       expect(mockCourseRepository.removeTeacher).not.toHaveBeenCalled();
     });
 
-    it('should return error when user is not admin', async () => {
+    it("should return error when user is not admin", async () => {
       const teacherProfile = new ProfileEntity(
-        'user-123',
-        'teacher@example.com',
-        'Teacher User',
+        "user-123",
+        "teacher@example.com",
+        "Teacher User",
         null,
-        'teacher',
+        "teacher",
         new Date(),
         new Date()
       );
 
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(teacherProfile);
-
-      const result = await removeTeacherFromCourseUseCase.execute(courseId, teacherId);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Solo los administradores pueden remover docentes');
-      expect(mockCourseRepository.removeTeacher).not.toHaveBeenCalled();
-    });
-
-    it('should return error when course not found', async () => {
-      mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(mockAdminProfile);
-      mockCourseRepository.getCourseById.mockResolvedValue(null);
-
-      const result = await removeTeacherFromCourseUseCase.execute(courseId, teacherId);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Curso no encontrado');
-      expect(mockCourseRepository.removeTeacher).not.toHaveBeenCalled();
-    });
-
-    it('should handle repository errors gracefully', async () => {
-      mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(mockAdminProfile);
-      mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
-      mockCourseRepository.removeTeacher.mockRejectedValue(
-        new Error('Database error')
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        teacherProfile
       );
 
-      const result = await removeTeacherFromCourseUseCase.execute(courseId, teacherId);
+      const result = await removeTeacherFromCourseUseCase.execute(
+        courseId,
+        teacherId
+      );
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Database error');
+      expect(result.error).toBe(
+        "Solo los administradores pueden remover docentes"
+      );
+      expect(mockCourseRepository.removeTeacher).not.toHaveBeenCalled();
     });
 
-    it('should handle unknown errors', async () => {
+    it("should return error when course not found", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(mockAdminProfile);
-      mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
-      mockCourseRepository.removeTeacher.mockRejectedValue('Unknown error');
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
+      mockCourseRepository.getCourseById.mockResolvedValue(null);
 
-      const result = await removeTeacherFromCourseUseCase.execute(courseId, teacherId);
+      const result = await removeTeacherFromCourseUseCase.execute(
+        courseId,
+        teacherId
+      );
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Error al remover docente');
+      expect(result.error).toBe("Curso no encontrado");
+      expect(mockCourseRepository.removeTeacher).not.toHaveBeenCalled();
+    });
+
+    it("should handle repository errors gracefully", async () => {
+      mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
+      mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
+      mockCourseRepository.removeTeacher.mockRejectedValue(
+        new Error("Database error")
+      );
+
+      const result = await removeTeacherFromCourseUseCase.execute(
+        courseId,
+        teacherId
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Database error");
+    });
+
+    it("should handle unknown errors", async () => {
+      mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
+      mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
+      mockCourseRepository.removeTeacher.mockRejectedValue("Unknown error");
+
+      const result = await removeTeacherFromCourseUseCase.execute(
+        courseId,
+        teacherId
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Error al remover docente");
     });
   });
 });
-

@@ -15,7 +15,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
-import { forgotPasswordSchema, type ForgotPasswordInput } from "@/lib/validations";
+import {
+  forgotPasswordSchema,
+  type ForgotPasswordInput,
+} from "@/lib/validations";
 import { resetPassword } from "@/src/presentation/actions/auth.actions";
 
 export function ForgotPasswordForm() {
@@ -30,7 +33,7 @@ export function ForgotPasswordForm() {
   } = useForm<ForgotPasswordInput>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
-      email: '',
+      email: "",
     },
   });
 
@@ -40,12 +43,12 @@ export function ForgotPasswordForm() {
     setError("");
 
     const formData = new FormData();
-    formData.append('email', data.email);
+    formData.append("email", data.email);
 
     try {
       const result = await resetPassword(formData);
       if (result.error) {
-        setError(result.error || 'Error al enviar el correo');
+        setError(result.error || "Error al enviar el correo");
       } else {
         setMessage(
           result.message ||
@@ -91,7 +94,7 @@ export function ForgotPasswordForm() {
               id="email"
               type="email"
               placeholder="correo@ejemplo.com"
-              {...register('email')}
+              {...register("email")}
               error={errors.email?.message}
               disabled={isSubmitting}
             />

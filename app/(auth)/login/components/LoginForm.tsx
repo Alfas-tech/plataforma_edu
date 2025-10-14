@@ -34,8 +34,8 @@ export function LoginForm() {
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
     },
   });
 
@@ -44,17 +44,17 @@ export function LoginForm() {
     setError("");
 
     const formData = new FormData();
-    formData.append('email', data.email);
-    formData.append('password', data.password);
+    formData.append("email", data.email);
+    formData.append("password", data.password);
     if (redirect) {
-      formData.append('redirect', redirect);
+      formData.append("redirect", redirect);
     }
 
     try {
       const result = await login(formData);
 
       if (result?.error) {
-        setError(result.error || 'Error al iniciar sesión');
+        setError(result.error || "Error al iniciar sesión");
       } else {
         // Login exitoso - redirigir con router.push para forzar revalidación
         const redirectTo = redirect || "/dashboard";
@@ -99,7 +99,7 @@ export function LoginForm() {
               id="email"
               type="email"
               placeholder="correo@ejemplo.com"
-              {...register('email')}
+              {...register("email")}
               error={errors.email?.message}
               disabled={isSubmitting}
             />
@@ -119,7 +119,7 @@ export function LoginForm() {
             <Input
               id="password"
               type="password"
-              {...register('password')}
+              {...register("password")}
               error={errors.password?.message}
               disabled={isSubmitting}
             />

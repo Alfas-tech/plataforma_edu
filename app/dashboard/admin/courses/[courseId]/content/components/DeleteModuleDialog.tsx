@@ -26,7 +26,11 @@ interface DeleteModuleDialogProps {
   module: ModuleData | null;
 }
 
-export function DeleteModuleDialog({ isOpen, onClose, module }: DeleteModuleDialogProps) {
+export function DeleteModuleDialog({
+  isOpen,
+  onClose,
+  module,
+}: DeleteModuleDialogProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,14 +44,14 @@ export function DeleteModuleDialog({ isOpen, onClose, module }: DeleteModuleDial
     try {
       const result = await deleteModule(module.id);
 
-      if ('error' in result) {
-        setError(result.error || 'Error al eliminar el módulo');
+      if ("error" in result) {
+        setError(result.error || "Error al eliminar el módulo");
       } else {
         onClose();
         router.refresh();
       }
     } catch (err) {
-      setError('Error inesperado al eliminar el módulo');
+      setError("Error inesperado al eliminar el módulo");
     } finally {
       setIsLoading(false);
     }
@@ -64,7 +68,8 @@ export function DeleteModuleDialog({ isOpen, onClose, module }: DeleteModuleDial
             Eliminar Módulo
           </DialogTitle>
           <DialogDescription>
-            Esta acción no se puede deshacer. Se eliminará el módulo y todas las lecciones asociadas.
+            Esta acción no se puede deshacer. Se eliminará el módulo y todas las
+            lecciones asociadas.
           </DialogDescription>
         </DialogHeader>
 
@@ -101,7 +106,7 @@ export function DeleteModuleDialog({ isOpen, onClose, module }: DeleteModuleDial
           <Button
             onClick={handleConfirm}
             disabled={isLoading}
-            className="bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-red-600 hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? (
               <>
@@ -109,7 +114,7 @@ export function DeleteModuleDialog({ isOpen, onClose, module }: DeleteModuleDial
                 Eliminando...
               </>
             ) : (
-              'Eliminar Módulo'
+              "Eliminar Módulo"
             )}
           </Button>
         </DialogFooter>

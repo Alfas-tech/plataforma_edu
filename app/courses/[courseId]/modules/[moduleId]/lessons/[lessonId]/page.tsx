@@ -1,11 +1,27 @@
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/src/presentation/actions/profile.actions";
-import { markLessonComplete, markLessonIncomplete } from "@/src/presentation/actions/student.actions";
+import {
+  markLessonComplete,
+  markLessonIncomplete,
+} from "@/src/presentation/actions/student.actions";
 import { signout } from "@/src/presentation/actions/auth.actions";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, ArrowLeft, CheckCircle2, Clock, BookOpen, Circle } from "lucide-react";
+import {
+  LogOut,
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
+  BookOpen,
+  Circle,
+} from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/src/infrastructure/supabase/server";
@@ -22,7 +38,7 @@ interface PageProps {
 export default async function LessonPage({ params }: PageProps) {
   const profileResult = await getCurrentProfile();
 
-  if ('error' in profileResult) {
+  if ("error" in profileResult) {
     redirect("/login");
   }
 
@@ -36,9 +52,9 @@ export default async function LessonPage({ params }: PageProps) {
 
   // Get lesson
   const { data: lesson, error: lessonError } = await supabase
-    .from('lessons')
-    .select('*')
-    .eq('id', params.lessonId)
+    .from("lessons")
+    .select("*")
+    .eq("id", params.lessonId)
     .single();
 
   if (lessonError || !lesson) {
@@ -47,40 +63,46 @@ export default async function LessonPage({ params }: PageProps) {
 
   // Get module
   const { data: module } = await supabase
-    .from('course_modules')
-    .select('*')
-    .eq('id', params.moduleId)
+    .from("course_modules")
+    .select("*")
+    .eq("id", params.moduleId)
     .single();
 
   // Get course
   const { data: course } = await supabase
-    .from('courses')
-    .select('*')
-    .eq('id', params.courseId)
+    .from("courses")
+    .select("*")
+    .eq("id", params.courseId)
     .single();
 
   // Get all lessons in module
   const { data: allLessons } = await supabase
-    .from('lessons')
-    .select('*')
-    .eq('module_id', params.moduleId)
-    .eq('is_published', true)
-    .order('order_index', { ascending: true });
+    .from("lessons")
+    .select("*")
+    .eq("module_id", params.moduleId)
+    .eq("is_published", true)
+    .order("order_index", { ascending: true });
 
   // Get student progress
   const { data: progress } = await supabase
-    .from('student_progress')
-    .select('*')
-    .eq('student_id', profile.id)
-    .eq('lesson_id', params.lessonId)
+    .from("student_progress")
+    .select("*")
+    .eq("student_id", profile.id)
+    .eq("lesson_id", params.lessonId)
     .single();
 
   const isCompleted = progress?.completed || false;
 
   // Find next and previous lessons
-  const currentIndex = (allLessons || []).findIndex(l => l.id === params.lessonId);
-  const previousLesson = currentIndex > 0 ? allLessons![currentIndex - 1] : null;
-  const nextLesson = currentIndex < (allLessons || []).length - 1 ? allLessons![currentIndex + 1] : null;
+  const currentIndex = (allLessons || []).findIndex(
+    (l) => l.id === params.lessonId
+  );
+  const previousLesson =
+    currentIndex > 0 ? allLessons![currentIndex - 1] : null;
+  const nextLesson =
+    currentIndex < (allLessons || []).length - 1
+      ? allLessons![currentIndex + 1]
+      : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -172,18 +194,22 @@ export default async function LessonPage({ params }: PageProps) {
           <div className="lg:col-span-3">
             <Card className="border-2">
               <CardHeader>
-                <CardTitle className="text-2xl sm:text-3xl">{lesson.title}</CardTitle>
+                <CardTitle className="text-2xl sm:text-3xl">
+                  {lesson.title}
+                </CardTitle>
                 {lesson.duration_minutes && (
                   <CardDescription className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
-                    <span>Duración estimada: {lesson.duration_minutes} minutos</span>
+                    <span>
+                      Duración estimada: {lesson.duration_minutes} minutos
+                    </span>
                   </CardDescription>
                 )}
               </CardHeader>
               <CardContent>
                 <LessonContentClient
                   lessonId={lesson.id}
-                  content={lesson.content || ''}
+                  content={lesson.content || ""}
                   isCompleted={isCompleted}
                 />
               </CardContent>
@@ -235,15 +261,15 @@ export default async function LessonPage({ params }: PageProps) {
                 {allLessons && allLessons.length > 0 ? (
                   allLessons.map((l) => {
                     const isCurrent = l.id === params.lessonId;
-                    
+
                     return (
                       <Link
                         key={l.id}
                         href={`/courses/${params.courseId}/modules/${params.moduleId}/lessons/${l.id}`}
                         className={`block rounded-lg border p-3 transition-all ${
                           isCurrent
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-slate-200 bg-white hover:border-blue-300 hover:shadow-md'
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-slate-200 bg-white hover:border-blue-300 hover:shadow-md"
                         }`}
                       >
                         <div className="flex items-start gap-2">
@@ -255,7 +281,9 @@ export default async function LessonPage({ params }: PageProps) {
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className={`text-sm font-medium ${isCurrent ? 'text-blue-900' : 'text-slate-700'}`}>
+                            <p
+                              className={`text-sm font-medium ${isCurrent ? "text-blue-900" : "text-slate-700"}`}
+                            >
                               {l.title}
                             </p>
                             {l.duration_minutes && (
@@ -282,4 +310,3 @@ export default async function LessonPage({ params }: PageProps) {
     </div>
   );
 }
-

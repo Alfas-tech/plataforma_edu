@@ -1,14 +1,17 @@
-import { ICourseRepository } from '@/src/core/interfaces/repositories/ICourseRepository';
-import { CourseEntity } from '@/src/core/entities/Course.entity';
-import { CreateCourseInput, UpdateCourseInput, CourseData } from '@/src/core/types/course.types';
-import { createClient } from '@/src/infrastructure/supabase/server';
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
+import { CourseEntity } from "@/src/core/entities/Course.entity";
+import {
+  CreateCourseInput,
+  UpdateCourseInput,
+  CourseData,
+} from "@/src/core/types/course.types";
+import { createClient } from "@/src/infrastructure/supabase/server";
 
 export class SupabaseCourseRepository implements ICourseRepository {
   async getActiveCourse(): Promise<CourseEntity | null> {
     const supabase = createClient();
 
-    const { data, error } = await supabase
-      .rpc('get_active_course');
+    const { data, error } = await supabase.rpc("get_active_course");
 
     if (error || !data || data.length === 0) {
       return null;
@@ -21,9 +24,9 @@ export class SupabaseCourseRepository implements ICourseRepository {
     const supabase = createClient();
 
     const { data, error } = await supabase
-      .from('courses')
-      .select('*')
-      .eq('id', id)
+      .from("courses")
+      .select("*")
+      .eq("id", id)
       .single();
 
     if (error || !data) {
@@ -37,22 +40,22 @@ export class SupabaseCourseRepository implements ICourseRepository {
     const supabase = createClient();
 
     const { data, error } = await supabase
-      .from('courses')
-      .select('*')
-      .order('start_date', { ascending: false });
+      .from("courses")
+      .select("*")
+      .order("start_date", { ascending: false });
 
     if (error || !data) {
       return [];
     }
 
-    return data.map(course => CourseEntity.fromDatabase(course));
+    return data.map((course) => CourseEntity.fromDatabase(course));
   }
 
   async createCourse(input: CreateCourseInput): Promise<CourseEntity> {
     const supabase = createClient();
 
     const { data, error } = await supabase
-      .from('courses')
+      .from("courses")
       .insert({
         title: input.title,
         description: input.description,
@@ -64,27 +67,30 @@ export class SupabaseCourseRepository implements ICourseRepository {
       .single();
 
     if (error || !data) {
-      throw new Error('Error al crear el curso');
+      throw new Error("Error al crear el curso");
     }
 
     return CourseEntity.fromDatabase(data);
   }
 
-  async updateCourse(id: string, input: UpdateCourseInput): Promise<CourseEntity> {
+  async updateCourse(
+    id: string,
+    input: UpdateCourseInput
+  ): Promise<CourseEntity> {
     const supabase = createClient();
 
     const { data, error } = await supabase
-      .from('courses')
+      .from("courses")
       .update({
         ...input,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
     if (error || !data) {
-      throw new Error('Error al actualizar el curso');
+      throw new Error("Error al actualizar el curso");
     }
 
     return CourseEntity.fromDatabase(data);
@@ -93,29 +99,24 @@ export class SupabaseCourseRepository implements ICourseRepository {
   async deleteCourse(id: string): Promise<void> {
     const supabase = createClient();
 
-    const { error } = await supabase
-      .from('courses')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabase.from("courses").delete().eq("id", id);
 
     if (error) {
-      throw new Error('Error al eliminar el curso');
+      throw new Error("Error al eliminar el curso");
     }
   }
 
   async assignTeacher(courseId: string, teacherId: string): Promise<void> {
     const supabase = createClient();
 
-    const { error } = await supabase
-      .from('course_teachers')
-      .insert({
-        course_id: courseId,
-        teacher_id: teacherId,
-        assigned_by: (await supabase.auth.getUser()).data.user?.id,
-      });
+    const { error } = await supabase.from("course_teachers").insert({
+      course_id: courseId,
+      teacher_id: teacherId,
+      assigned_by: (await supabase.auth.getUser()).data.user?.id,
+    });
 
     if (error) {
-      throw new Error('Error al asignar docente');
+      throw new Error("Error al asignar docente");
     }
   }
 
@@ -123,13 +124,13 @@ export class SupabaseCourseRepository implements ICourseRepository {
     const supabase = createClient();
 
     const { error } = await supabase
-      .from('course_teachers')
+      .from("course_teachers")
       .delete()
-      .eq('course_id', courseId)
-      .eq('teacher_id', teacherId);
+      .eq("course_id", courseId)
+      .eq("teacher_id", teacherId);
 
     if (error) {
-      throw new Error('Error al remover docente');
+      throw new Error("Error al remover docente");
     }
   }
 
@@ -137,15 +138,15 @@ export class SupabaseCourseRepository implements ICourseRepository {
     const supabase = createClient();
 
     const { data, error } = await supabase
-      .from('course_teachers')
-      .select('teacher_id')
-      .eq('course_id', courseId);
+      .from("course_teachers")
+      .select("teacher_id")
+      .eq("course_id", courseId);
 
     if (error || !data) {
       return [];
     }
 
-    return data.map(ct => ct.teacher_id);
+    return data.map((ct) => ct.teacher_id);
   }
 
   async getTeacherCourses(teacherId: string): Promise<CourseEntity[]> {
@@ -153,33 +154,35 @@ export class SupabaseCourseRepository implements ICourseRepository {
 
     // Get course IDs where teacher is assigned
     const { data: courseTeachersData, error: ctError } = await supabase
-      .from('course_teachers')
-      .select('course_id')
-      .eq('teacher_id', teacherId);
+      .from("course_teachers")
+      .select("course_id")
+      .eq("teacher_id", teacherId);
 
     if (ctError) {
-      throw new Error('Error al obtener cursos del docente');
+      throw new Error("Error al obtener cursos del docente");
     }
 
     if (!courseTeachersData || courseTeachersData.length === 0) {
       return [];
     }
 
-    const courseIds = courseTeachersData.map(item => item.course_id);
+    const courseIds = courseTeachersData.map((item) => item.course_id);
 
     // Get courses
     const { data, error } = await supabase
-      .from('courses')
-      .select('*')
-      .in('id', courseIds)
-      .order('start_date', { ascending: false });
+      .from("courses")
+      .select("*")
+      .in("id", courseIds)
+      .order("start_date", { ascending: false });
 
     if (error) {
-      throw new Error('Error al obtener cursos');
+      throw new Error("Error al obtener cursos");
     }
 
     if (!data) return [];
 
-    return data.map((courseData: CourseData) => CourseEntity.fromDatabase(courseData));
+    return data.map((courseData: CourseData) =>
+      CourseEntity.fromDatabase(courseData)
+    );
   }
 }

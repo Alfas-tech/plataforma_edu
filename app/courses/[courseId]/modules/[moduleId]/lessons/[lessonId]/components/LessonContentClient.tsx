@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, Loader2 } from "lucide-react";
-import { markLessonComplete, markLessonIncomplete } from "@/src/presentation/actions/student.actions";
+import {
+  markLessonComplete,
+  markLessonIncomplete,
+} from "@/src/presentation/actions/student.actions";
 import { useRouter } from "next/navigation";
 
 interface LessonContentClientProps {
@@ -12,34 +15,38 @@ interface LessonContentClientProps {
   isCompleted: boolean;
 }
 
-export function LessonContentClient({ lessonId, content, isCompleted: initialCompleted }: LessonContentClientProps) {
+export function LessonContentClient({
+  lessonId,
+  content,
+  isCompleted: initialCompleted,
+}: LessonContentClientProps) {
   const router = useRouter();
   const [isCompleted, setIsCompleted] = useState(initialCompleted);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleToggleComplete = async () => {
     setIsLoading(true);
-    
+
     try {
       if (isCompleted) {
         const result = await markLessonIncomplete(lessonId);
-        if ('error' in result) {
-          console.error('Error:', result.error);
+        if ("error" in result) {
+          console.error("Error:", result.error);
         } else {
           setIsCompleted(false);
           router.refresh();
         }
       } else {
         const result = await markLessonComplete(lessonId);
-        if ('error' in result) {
-          console.error('Error:', result.error);
+        if ("error" in result) {
+          console.error("Error:", result.error);
         } else {
           setIsCompleted(true);
           router.refresh();
         }
       }
     } catch (error) {
-      console.error('Error toggling completion:', error);
+      console.error("Error toggling completion:", error);
     } finally {
       setIsLoading(false);
     }
@@ -50,9 +57,7 @@ export function LessonContentClient({ lessonId, content, isCompleted: initialCom
       {/* Lesson Content */}
       <div className="prose prose-slate max-w-none">
         {content ? (
-          <div className="whitespace-pre-wrap text-slate-700">
-            {content}
-          </div>
+          <div className="whitespace-pre-wrap text-slate-700">{content}</div>
         ) : (
           <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
             <p className="text-slate-600">
@@ -69,8 +74,8 @@ export function LessonContentClient({ lessonId, content, isCompleted: initialCom
           disabled={isLoading}
           className={`w-full ${
             isCompleted
-              ? 'bg-slate-600 hover:bg-slate-700'
-              : 'bg-green-600 hover:bg-green-700'
+              ? "bg-slate-600 hover:bg-slate-700"
+              : "bg-green-600 hover:bg-green-700"
           }`}
           size="lg"
         >
@@ -95,4 +100,3 @@ export function LessonContentClient({ lessonId, content, isCompleted: initialCom
     </div>
   );
 }
-

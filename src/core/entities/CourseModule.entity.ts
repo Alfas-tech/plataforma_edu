@@ -1,4 +1,4 @@
-import { CourseModuleData } from '../types/course.types';
+import { CourseModuleData } from "../types/course.types";
 
 export class CourseModuleEntity {
   constructor(

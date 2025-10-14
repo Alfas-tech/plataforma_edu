@@ -1,8 +1,8 @@
-import { ILessonRepository } from '@/src/core/interfaces/repositories/ILessonRepository';
-import { IModuleRepository } from '@/src/core/interfaces/repositories/IModuleRepository';
-import { ICourseRepository } from '@/src/core/interfaces/repositories/ICourseRepository';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
+import { ILessonRepository } from "@/src/core/interfaces/repositories/ILessonRepository";
+import { IModuleRepository } from "@/src/core/interfaces/repositories/IModuleRepository";
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
 
 export interface DeleteLessonResult {
   success: boolean;
@@ -25,16 +25,18 @@ export class DeleteLessonUseCase {
       if (!lesson) {
         return {
           success: false,
-          error: 'Lección no encontrada',
+          error: "Lección no encontrada",
         };
       }
 
       // Get module
-      const moduleData = await this.moduleRepository.getModuleById(lesson.moduleId);
+      const moduleData = await this.moduleRepository.getModuleById(
+        lesson.moduleId
+      );
       if (!moduleData) {
         return {
           success: false,
-          error: 'Módulo no encontrado',
+          error: "Módulo no encontrado",
         };
       }
 
@@ -43,22 +45,24 @@ export class DeleteLessonUseCase {
       if (!currentUser) {
         return {
           success: false,
-          error: 'No hay usuario autenticado',
+          error: "No hay usuario autenticado",
         };
       }
 
-      const profile = await this.profileRepository.getProfileByUserId(currentUser.id);
+      const profile = await this.profileRepository.getProfileByUserId(
+        currentUser.id
+      );
       if (!profile) {
         return {
           success: false,
-          error: 'Perfil no encontrado',
+          error: "Perfil no encontrado",
         };
       }
 
       if (!profile.isAdmin()) {
         return {
           success: false,
-          error: 'Solo los administradores pueden eliminar lecciones',
+          error: "Solo los administradores pueden eliminar lecciones",
         };
       }
 
@@ -71,7 +75,8 @@ export class DeleteLessonUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al eliminar lección',
+        error:
+          error instanceof Error ? error.message : "Error al eliminar lección",
       };
     }
   }

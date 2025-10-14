@@ -1,5 +1,5 @@
-import { CourseEntity } from '../../entities/Course.entity';
-import { CreateCourseInput, UpdateCourseInput } from '../../types/course.types';
+import { CourseEntity } from "../../entities/Course.entity";
+import { CreateCourseInput, UpdateCourseInput } from "../../types/course.types";
 
 export interface ICourseRepository {
   getActiveCourse(): Promise<CourseEntity | null>;

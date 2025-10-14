@@ -6,7 +6,7 @@ export default async function DashboardPage() {
   const result = await getCurrentProfile();
 
   // If no user, redirect to login
-  if ('error' in result) {
+  if ("error" in result) {
     redirect("/login");
   }
 

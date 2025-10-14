@@ -4,7 +4,13 @@ import { getAllCourses } from "@/src/presentation/actions/course.actions";
 import { signout } from "@/src/presentation/actions/auth.actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, ArrowLeft, BookOpen, Calendar, TrendingUp } from "lucide-react";
+import {
+  LogOut,
+  ArrowLeft,
+  BookOpen,
+  Calendar,
+  TrendingUp,
+} from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { CourseManagementClient } from "./components/CourseManagementClient";
@@ -12,7 +18,7 @@ import { CourseManagementClient } from "./components/CourseManagementClient";
 export default async function CoursesManagementPage() {
   const profileResult = await getCurrentProfile();
 
-  if ('error' in profileResult) {
+  if ("error" in profileResult) {
     redirect("/login");
   }
 
@@ -26,7 +32,7 @@ export default async function CoursesManagementPage() {
   // Obtener todos los cursos
   const coursesResult = await getAllCourses();
 
-  if ('error' in coursesResult) {
+  if ("error" in coursesResult) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
         <div className="container mx-auto px-4 py-8">
@@ -39,9 +45,9 @@ export default async function CoursesManagementPage() {
   }
 
   const courses = coursesResult.courses || [];
-  const activeCourses = courses.filter(c => c.status === 'active');
-  const upcomingCourses = courses.filter(c => c.status === 'upcoming');
-  const endedCourses = courses.filter(c => c.status === 'ended');
+  const activeCourses = courses.filter((c) => c.status === "active");
+  const upcomingCourses = courses.filter((c) => c.status === "upcoming");
+  const endedCourses = courses.filter((c) => c.status === "ended");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
@@ -176,4 +182,3 @@ export default async function CoursesManagementPage() {
     </div>
   );
 }
-
