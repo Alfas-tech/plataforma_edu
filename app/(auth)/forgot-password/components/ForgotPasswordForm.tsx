@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,26 +14,38 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
+import { forgotPasswordSchema, type ForgotPasswordInput } from "@/lib/validations";
 import { resetPassword } from "@/src/presentation/actions/auth.actions";
-import { Info } from "lucide-react";
 
 export function ForgotPasswordForm() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ForgotPasswordInput>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: '',
+    },
+  });
+
+  const onSubmit = async (data: ForgotPasswordInput) => {
+    setIsSubmitting(true);
     setMessage("");
     setError("");
 
-    const formData = new FormData(e.currentTarget);
+    const formData = new FormData();
+    formData.append('email', data.email);
 
     try {
       const result = await resetPassword(formData);
       if (result.error) {
-        setError(result.error);
+        setError(result.error || 'Error al enviar el correo');
       } else {
         setMessage(
           result.message ||
@@ -41,7 +55,7 @@ export function ForgotPasswordForm() {
     } catch (err) {
       setError("Ocurrió un error. Por favor intenta de nuevo.");
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -55,40 +69,49 @@ export function ForgotPasswordForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-                disabled={isLoading}
-              />
-            </div>
-
-            {message && (
-              <div className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-600">
-                {message}
-              </div>
-            )}
-
-            {error && (
-              <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
-                {error}
-              </div>
-            )}
-
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Enviando..." : "Enviar enlace de recuperación"}
-            </Button>
+        {message && (
+          <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3">
+            <p className="text-sm text-green-900">{message}</p>
           </div>
+        )}
+
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3">
+            <p className="text-sm text-red-900">{error}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Email */}
+          <div className="space-y-2">
+            <Label htmlFor="email">
+              Correo electrónico <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="correo@ejemplo.com"
+              {...register('email')}
+              error={errors.email?.message}
+              disabled={isSubmitting}
+            />
+          </div>
+
+          {/* Submit Button */}
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Enviando...
+              </>
+            ) : (
+              "Enviar enlace de recuperación"
+            )}
+          </Button>
         </form>
 
         <div className="mt-4 text-center text-sm">
-          <Link href="/login" className="underline">
+          <Link href="/login" className="underline hover:text-purple-600">
             Volver al inicio de sesión
           </Link>
         </div>
