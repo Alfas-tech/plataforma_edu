@@ -1,4 +1,4 @@
-import { LessonData } from '../types/course.types';
+import { LessonData } from "../types/course.types";
 
 export class LessonEntity {
   constructor(
@@ -32,7 +32,7 @@ export class LessonEntity {
   }
 
   getDurationFormatted(): string {
-    if (!this.durationMinutes) return 'Duración no especificada';
+    if (!this.durationMinutes) return "Duración no especificada";
 
     const hours = Math.floor(this.durationMinutes / 60);
     const minutes = this.durationMinutes % 60;

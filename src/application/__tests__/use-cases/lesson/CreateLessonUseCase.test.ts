@@ -1,13 +1,13 @@
-import { CreateLessonUseCase } from '@/src/application/use-cases/lesson/CreateLessonUseCase';
-import { ILessonRepository } from '@/src/core/interfaces/repositories/ILessonRepository';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { ICourseRepository } from '@/src/core/interfaces/repositories/ICourseRepository';
-import { LessonEntity } from '@/src/core/entities/Lesson.entity';
-import { UserEntity } from '@/src/core/entities/User.entity';
-import { ProfileEntity } from '@/src/core/entities/Profile.entity';
+import { CreateLessonUseCase } from "@/src/application/use-cases/lesson/CreateLessonUseCase";
+import { ILessonRepository } from "@/src/core/interfaces/repositories/ILessonRepository";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
+import { LessonEntity } from "@/src/core/entities/Lesson.entity";
+import { UserEntity } from "@/src/core/entities/User.entity";
+import { ProfileEntity } from "@/src/core/entities/Profile.entity";
 
-describe('CreateLessonUseCase', () => {
+describe("CreateLessonUseCase", () => {
   let mockLessonRepository: jest.Mocked<ILessonRepository>;
   let mockModuleRepository: jest.Mocked<any>;
   let mockAuthRepository: jest.Mocked<IAuthRepository>;
@@ -78,35 +78,39 @@ describe('CreateLessonUseCase', () => {
     jest.clearAllMocks();
   });
 
-  describe('execute', () => {
+  describe("execute", () => {
     const validInput = {
-      module_id: 'module-123',
-      title: 'Test Lesson',
-      content: 'Test Content',
+      module_id: "module-123",
+      title: "Test Lesson",
+      content: "Test Content",
       order_index: 1,
       duration_minutes: 30,
       is_published: false,
     };
 
-    const mockUser = new UserEntity('user-123', 'admin@example.com', 'Admin User');
+    const mockUser = new UserEntity(
+      "user-123",
+      "admin@example.com",
+      "Admin User"
+    );
     const mockAdminProfile = new ProfileEntity(
-      'profile-123',
-      'user-123',
-      'Admin',
-      'User',
-      'admin',
+      "profile-123",
+      "user-123",
+      "Admin",
+      "User",
+      "admin",
       new Date(),
       new Date()
     );
 
-    const mockModule = { id: 'module-123', course_id: 'course-123' };
+    const mockModule = { id: "module-123", course_id: "course-123" };
 
-    it('should create lesson successfully when user is admin', async () => {
+    it("should create lesson successfully when user is admin", async () => {
       const mockLesson = new LessonEntity(
-        'lesson-123',
-        'module-123',
-        'Test Lesson',
-        'Test Content',
+        "lesson-123",
+        "module-123",
+        "Test Lesson",
+        "Test Content",
         1,
         30,
         false,
@@ -116,7 +120,9 @@ describe('CreateLessonUseCase', () => {
 
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(mockAdminProfile);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
       mockLessonRepository.createLesson.mockResolvedValue(mockLesson);
 
       const result = await createLessonUseCase.execute(validInput);
@@ -124,25 +130,27 @@ describe('CreateLessonUseCase', () => {
       expect(result.success).toBe(true);
       expect(result.lesson).toEqual(mockLesson);
       expect(result.error).toBeUndefined();
-      expect(mockLessonRepository.createLesson).toHaveBeenCalledWith(validInput);
+      expect(mockLessonRepository.createLesson).toHaveBeenCalledWith(
+        validInput
+      );
     });
 
-    it('should create lesson successfully when user is assigned teacher', async () => {
+    it("should create lesson successfully when user is assigned teacher", async () => {
       const teacherProfile = new ProfileEntity(
-        'profile-123',
-        'user-123',
-        'Teacher',
-        'User',
-        'teacher',
+        "profile-123",
+        "user-123",
+        "Teacher",
+        "User",
+        "teacher",
         new Date(),
         new Date()
       );
 
       const mockLesson = new LessonEntity(
-        'lesson-123',
-        'module-123',
-        'Test Lesson',
-        'Test Content',
+        "lesson-123",
+        "module-123",
+        "Test Lesson",
+        "Test Content",
         1,
         30,
         false,
@@ -152,8 +160,10 @@ describe('CreateLessonUseCase', () => {
 
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(teacherProfile);
-      mockCourseRepository.getCourseTeachers.mockResolvedValue(['user-123']);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        teacherProfile
+      );
+      mockCourseRepository.getCourseTeachers.mockResolvedValue(["user-123"]);
       mockLessonRepository.createLesson.mockResolvedValue(mockLesson);
 
       const result = await createLessonUseCase.execute(validInput);
@@ -163,28 +173,28 @@ describe('CreateLessonUseCase', () => {
       expect(mockCourseRepository.getCourseTeachers).toHaveBeenCalled();
     });
 
-    it('should return error when module not found', async () => {
+    it("should return error when module not found", async () => {
       mockModuleRepository.getModuleById.mockResolvedValue(null);
 
       const result = await createLessonUseCase.execute(validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Módulo no encontrado');
+      expect(result.error).toBe("Módulo no encontrado");
       expect(mockLessonRepository.createLesson).not.toHaveBeenCalled();
     });
 
-    it('should return error when no user is authenticated', async () => {
+    it("should return error when no user is authenticated", async () => {
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
       mockAuthRepository.getCurrentUser.mockResolvedValue(null);
 
       const result = await createLessonUseCase.execute(validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('No hay usuario autenticado');
+      expect(result.error).toBe("No hay usuario autenticado");
       expect(mockLessonRepository.createLesson).not.toHaveBeenCalled();
     });
 
-    it('should return error when profile not found', async () => {
+    it("should return error when profile not found", async () => {
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockProfileRepository.getProfileByUserId.mockResolvedValue(null);
@@ -192,79 +202,89 @@ describe('CreateLessonUseCase', () => {
       const result = await createLessonUseCase.execute(validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Perfil no encontrado');
+      expect(result.error).toBe("Perfil no encontrado");
       expect(mockLessonRepository.createLesson).not.toHaveBeenCalled();
     });
 
-    it('should return error when user is student', async () => {
+    it("should return error when user is student", async () => {
       const studentProfile = new ProfileEntity(
-        'profile-123',
-        'user-123',
-        'Student',
-        'User',
-        'student',
+        "profile-123",
+        "user-123",
+        "Student",
+        "User",
+        "student",
         new Date(),
         new Date()
       );
 
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(studentProfile);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        studentProfile
+      );
 
       const result = await createLessonUseCase.execute(validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('No tienes permisos para crear lecciones');
+      expect(result.error).toBe("No tienes permisos para crear lecciones");
       expect(mockLessonRepository.createLesson).not.toHaveBeenCalled();
     });
 
-    it('should return error when teacher is not assigned to course', async () => {
+    it("should return error when teacher is not assigned to course", async () => {
       const teacherProfile = new ProfileEntity(
-        'profile-123',
-        'user-123',
-        'Teacher',
-        'User',
-        'teacher',
+        "profile-123",
+        "user-123",
+        "Teacher",
+        "User",
+        "teacher",
         new Date(),
         new Date()
       );
 
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(teacherProfile);
-      mockCourseRepository.getCourseTeachers.mockResolvedValue(['other-user-id']);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        teacherProfile
+      );
+      mockCourseRepository.getCourseTeachers.mockResolvedValue([
+        "other-user-id",
+      ]);
 
       const result = await createLessonUseCase.execute(validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('No estás asignado a este curso');
+      expect(result.error).toBe("No estás asignado a este curso");
       expect(mockLessonRepository.createLesson).not.toHaveBeenCalled();
     });
 
-    it('should handle repository errors gracefully', async () => {
+    it("should handle repository errors gracefully", async () => {
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(mockAdminProfile);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
       mockLessonRepository.createLesson.mockRejectedValue(
-        new Error('Database error')
+        new Error("Database error")
       );
 
       const result = await createLessonUseCase.execute(validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Database error');
+      expect(result.error).toBe("Database error");
     });
 
-    it('should handle unknown errors', async () => {
+    it("should handle unknown errors", async () => {
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(mockAdminProfile);
-      mockLessonRepository.createLesson.mockRejectedValue('Unknown error');
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
+      mockLessonRepository.createLesson.mockRejectedValue("Unknown error");
 
       const result = await createLessonUseCase.execute(validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Error al crear lección');
+      expect(result.error).toBe("Error al crear lección");
     });
   });
 });
