@@ -1,5 +1,5 @@
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
 
 export interface PromoteToTeacherResult {
   success: boolean;
@@ -19,15 +19,17 @@ export class PromoteToTeacherUseCase {
       if (!currentUser) {
         return {
           success: false,
-          error: 'No hay usuario autenticado',
+          error: "No hay usuario autenticado",
         };
       }
 
-      const currentProfile = await this.profileRepository.getProfileByUserId(currentUser.id);
+      const currentProfile = await this.profileRepository.getProfileByUserId(
+        currentUser.id
+      );
       if (!currentProfile || !currentProfile.isAdmin()) {
         return {
           success: false,
-          error: 'No tienes permisos para realizar esta acción',
+          error: "No tienes permisos para realizar esta acción",
         };
       }
 
@@ -40,9 +42,9 @@ export class PromoteToTeacherUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al promover usuario',
+        error:
+          error instanceof Error ? error.message : "Error al promover usuario",
       };
     }
   }
 }
-

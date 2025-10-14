@@ -1,10 +1,10 @@
-import { PromoteToTeacherUseCase } from '@/src/application/use-cases/profile/PromoteToTeacherUseCase';
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { ProfileEntity } from '@/src/core/entities/Profile.entity';
-import { UserEntity } from '@/src/core/entities/User.entity';
+import { PromoteToTeacherUseCase } from "@/src/application/use-cases/profile/PromoteToTeacherUseCase";
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { ProfileEntity } from "@/src/core/entities/Profile.entity";
+import { UserEntity } from "@/src/core/entities/User.entity";
 
-describe('PromoteToTeacherUseCase', () => {
+describe("PromoteToTeacherUseCase", () => {
   let mockProfileRepository: jest.Mocked<IProfileRepository>;
   let mockAuthRepository: jest.Mocked<IAuthRepository>;
   let promoteToTeacherUseCase: PromoteToTeacherUseCase;
@@ -41,80 +41,94 @@ describe('PromoteToTeacherUseCase', () => {
     jest.clearAllMocks();
   });
 
-  describe('execute', () => {
-    const mockUser = new UserEntity('admin-123', 'admin@example.com', 'Admin User');
+  describe("execute", () => {
+    const mockUser = new UserEntity(
+      "admin-123",
+      "admin@example.com",
+      "Admin User"
+    );
     const mockAdminProfile = new ProfileEntity(
-      'profile-admin',
-      'admin-123',
-      'Admin',
-      'User',
-      'admin',
+      "profile-admin",
+      "admin-123",
+      "Admin",
+      "User",
+      "admin",
       new Date(),
       new Date()
     );
 
-    it('should promote user to teacher when user is admin', async () => {
+    it("should promote user to teacher when user is admin", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(mockAdminProfile);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
       mockProfileRepository.promoteToTeacher.mockResolvedValue(undefined);
 
-      const result = await promoteToTeacherUseCase.execute('user-123');
+      const result = await promoteToTeacherUseCase.execute("user-123");
 
       expect(result.success).toBe(true);
-      expect(mockProfileRepository.promoteToTeacher).toHaveBeenCalledWith('user-123');
+      expect(mockProfileRepository.promoteToTeacher).toHaveBeenCalledWith(
+        "user-123"
+      );
     });
 
-    it('should return error when no user is authenticated', async () => {
+    it("should return error when no user is authenticated", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(null);
 
-      const result = await promoteToTeacherUseCase.execute('user-123');
+      const result = await promoteToTeacherUseCase.execute("user-123");
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('No hay usuario autenticado');
+      expect(result.error).toBe("No hay usuario autenticado");
     });
 
-    it('should return error when user is not admin', async () => {
+    it("should return error when user is not admin", async () => {
       const teacherProfile = new ProfileEntity(
-        'profile-123',
-        'user-123',
-        'Teacher',
-        'User',
-        'teacher',
+        "profile-123",
+        "user-123",
+        "Teacher",
+        "User",
+        "teacher",
         new Date(),
         new Date()
       );
 
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(teacherProfile);
-
-      const result = await promoteToTeacherUseCase.execute('user-123');
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('No tienes permisos para realizar esta acción');
-    });
-
-    it('should handle repository errors gracefully', async () => {
-      mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(mockAdminProfile);
-      mockProfileRepository.promoteToTeacher.mockRejectedValue(
-        new Error('Database error')
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        teacherProfile
       );
 
-      const result = await promoteToTeacherUseCase.execute('user-123');
+      const result = await promoteToTeacherUseCase.execute("user-123");
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Database error');
+      expect(result.error).toBe("No tienes permisos para realizar esta acción");
     });
 
-    it('should handle unknown errors', async () => {
+    it("should handle repository errors gracefully", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(mockAdminProfile);
-      mockProfileRepository.promoteToTeacher.mockRejectedValue('Unknown error');
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
+      mockProfileRepository.promoteToTeacher.mockRejectedValue(
+        new Error("Database error")
+      );
 
-      const result = await promoteToTeacherUseCase.execute('user-123');
+      const result = await promoteToTeacherUseCase.execute("user-123");
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Error al promover usuario');
+      expect(result.error).toBe("Database error");
+    });
+
+    it("should handle unknown errors", async () => {
+      mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
+      mockProfileRepository.promoteToTeacher.mockRejectedValue("Unknown error");
+
+      const result = await promoteToTeacherUseCase.execute("user-123");
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Error al promover usuario");
     });
   });
 });

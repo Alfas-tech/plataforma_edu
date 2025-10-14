@@ -1,4 +1,4 @@
-import { UserRole } from './roles.types';
+import { UserRole } from "./roles.types";
 
 export interface LoginCredentials {
   email: string;

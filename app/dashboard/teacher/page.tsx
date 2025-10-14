@@ -5,14 +5,21 @@ import { signout } from "@/src/presentation/actions/auth.actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, BookOpen, FileEdit, Clock, CheckCircle2, XCircle } from "lucide-react";
+import {
+  LogOut,
+  BookOpen,
+  FileEdit,
+  Clock,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
 export default async function TeacherDashboardPage() {
   const profileResult = await getCurrentProfile();
 
-  if ('error' in profileResult) {
+  if ("error" in profileResult) {
     redirect("/login");
   }
 
@@ -24,19 +31,20 @@ export default async function TeacherDashboardPage() {
 
   // Obtener cursos asignados al docente
   const coursesResult = await getTeacherCourses(profile.id);
-  const courses = 'error' in coursesResult ? [] : coursesResult.courses || [];
+  const courses = "error" in coursesResult ? [] : coursesResult.courses || [];
 
   // Calcular estadísticas
-  const activeCourses = courses.filter(c => c.status === 'active');
-  const upcomingCourses = courses.filter(c => c.status === 'upcoming');
-  const completedCourses = courses.filter(c => c.status === 'ended');
+  const activeCourses = courses.filter((c) => c.status === "active");
+  const upcomingCourses = courses.filter((c) => c.status === "upcoming");
+  const completedCourses = courses.filter((c) => c.status === "ended");
 
   function formatDate(dateInput: string | Date): string {
-    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
-    return date.toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+    const date =
+      typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+    return date.toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   }
 
@@ -110,7 +118,8 @@ export default async function TeacherDashboardPage() {
             Panel de Docente
           </h1>
           <p className="text-pretty text-sm text-slate-600 sm:text-base">
-            Bienvenido, {profile.displayName}. Gestiona el contenido de tus cursos asignados
+            Bienvenido, {profile.displayName}. Gestiona el contenido de tus
+            cursos asignados
           </p>
         </div>
 
@@ -124,7 +133,9 @@ export default async function TeacherDashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-emerald-600 sm:text-3xl">{courses.length}</p>
+              <p className="text-2xl font-bold text-emerald-600 sm:text-3xl">
+                {courses.length}
+              </p>
             </CardContent>
           </Card>
 
@@ -136,7 +147,9 @@ export default async function TeacherDashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-green-600 sm:text-3xl">{activeCourses.length}</p>
+              <p className="text-2xl font-bold text-green-600 sm:text-3xl">
+                {activeCourses.length}
+              </p>
             </CardContent>
           </Card>
 
@@ -148,7 +161,9 @@ export default async function TeacherDashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-blue-600 sm:text-3xl">{upcomingCourses.length}</p>
+              <p className="text-2xl font-bold text-blue-600 sm:text-3xl">
+                {upcomingCourses.length}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -168,7 +183,8 @@ export default async function TeacherDashboardPage() {
                     No tienes cursos asignados
                   </h3>
                   <p className="text-sm text-slate-600">
-                    El administrador te asignará cursos para que puedas gestionar su contenido
+                    El administrador te asignará cursos para que puedas
+                    gestionar su contenido
                   </p>
                 </div>
               </CardContent>
@@ -176,23 +192,31 @@ export default async function TeacherDashboardPage() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
               {courses.map((course) => (
-                <Card key={course.id} className="border-2 transition-shadow hover:shadow-lg">
+                <Card
+                  key={course.id}
+                  className="border-2 transition-shadow hover:shadow-lg"
+                >
                   <CardHeader>
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <CardTitle className="mb-2 text-xl">{course.title}</CardTitle>
-                        {course.status === 'active' ? (
+                        <CardTitle className="mb-2 text-xl">
+                          {course.title}
+                        </CardTitle>
+                        {course.status === "active" ? (
                           <Badge className="bg-green-100 text-green-700">
                             <CheckCircle2 className="mr-1 h-3 w-3" />
                             Activo
                           </Badge>
-                        ) : course.status === 'upcoming' ? (
+                        ) : course.status === "upcoming" ? (
                           <Badge className="bg-blue-100 text-blue-700">
                             <Clock className="mr-1 h-3 w-3" />
                             Próximo
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="border-slate-300 text-slate-600">
+                          <Badge
+                            variant="outline"
+                            className="border-slate-300 text-slate-600"
+                          >
                             <XCircle className="mr-1 h-3 w-3" />
                             Finalizado
                           </Badge>
@@ -201,46 +225,68 @@ export default async function TeacherDashboardPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="mb-4 text-sm text-slate-600">{course.description}</p>
-                    
+                    <p className="mb-4 text-sm text-slate-600">
+                      {course.description}
+                    </p>
+
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="rounded-lg border bg-slate-50 p-3">
-                        <p className="mb-1 text-xs text-slate-600">Fecha de Inicio</p>
+                        <p className="mb-1 text-xs text-slate-600">
+                          Fecha de Inicio
+                        </p>
                         <p className="text-sm font-semibold text-slate-800">
                           {formatDate(course.startDate)}
                         </p>
                       </div>
                       <div className="rounded-lg border bg-slate-50 p-3">
-                        <p className="mb-1 text-xs text-slate-600">Fecha de Fin</p>
+                        <p className="mb-1 text-xs text-slate-600">
+                          Fecha de Fin
+                        </p>
                         <p className="text-sm font-semibold text-slate-800">
                           {formatDate(course.endDate)}
                         </p>
                       </div>
                     </div>
 
-                    {course.status === 'active' && course.daysRemaining > 0 && (
+                    {course.status === "active" && course.daysRemaining > 0 && (
                       <div className="mt-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
-                        <strong>⏳ {course.daysRemaining} días restantes</strong> hasta finalizar
+                        <strong>
+                          ⏳ {course.daysRemaining} días restantes
+                        </strong>{" "}
+                        hasta finalizar
                       </div>
                     )}
 
-                    {course.status === 'upcoming' && (() => {
-                      const startDate = new Date(course.startDate);
-                      const today = new Date();
-                      const daysUntilStart = Math.ceil((startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                      return daysUntilStart > 0;
-                    })() && (
-                      <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-                        <strong>⏰ Inicia en {(() => {
-                          const startDate = new Date(course.startDate);
-                          const today = new Date();
-                          return Math.ceil((startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                        })()} días</strong>
-                      </div>
-                    )}
+                    {course.status === "upcoming" &&
+                      (() => {
+                        const startDate = new Date(course.startDate);
+                        const today = new Date();
+                        const daysUntilStart = Math.ceil(
+                          (startDate.getTime() - today.getTime()) /
+                            (1000 * 60 * 60 * 24)
+                        );
+                        return daysUntilStart > 0;
+                      })() && (
+                        <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+                          <strong>
+                            ⏰ Inicia en{" "}
+                            {(() => {
+                              const startDate = new Date(course.startDate);
+                              const today = new Date();
+                              return Math.ceil(
+                                (startDate.getTime() - today.getTime()) /
+                                  (1000 * 60 * 60 * 24)
+                              );
+                            })()}{" "}
+                            días
+                          </strong>
+                        </div>
+                      )}
 
                     <div className="mt-4">
-                      <Link href={`/dashboard/admin/courses/${course.id}/content`}>
+                      <Link
+                        href={`/dashboard/admin/courses/${course.id}/content`}
+                      >
                         <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
                           <FileEdit className="mr-2 h-4 w-4" />
                           Gestionar Contenido
@@ -270,7 +316,9 @@ export default async function TeacherDashboardPage() {
                     <li>✓ Crear y editar módulos</li>
                     <li>✓ Crear y editar lecciones</li>
                     <li>✓ Publicar/ocultar contenido</li>
-                    <li>✗ No puedes eliminar módulos ni lecciones (solo admins)</li>
+                    <li>
+                      ✗ No puedes eliminar módulos ni lecciones (solo admins)
+                    </li>
                   </ul>
                 </div>
               </div>

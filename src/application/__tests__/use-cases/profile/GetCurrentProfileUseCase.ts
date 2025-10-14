@@ -1,6 +1,6 @@
-import { IProfileRepository } from '@/src/core/interfaces/repositories/IProfileRepository';
-import { IAuthRepository } from '@/src/core/interfaces/repositories/IAuthRepository';
-import { ProfileEntity } from '@/src/core/entities/Profile.entity';
+import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { ProfileEntity } from "@/src/core/entities/Profile.entity";
 
 export interface GetCurrentProfileResult {
   success: boolean;
@@ -18,11 +18,11 @@ export class GetCurrentProfileUseCase {
     try {
       // Get current user
       const user = await this.authRepository.getCurrentUser();
-      
+
       if (!user) {
         return {
           success: false,
-          error: 'No hay usuario autenticado'
+          error: "No hay usuario autenticado",
         };
       }
 
@@ -32,20 +32,20 @@ export class GetCurrentProfileUseCase {
       if (!profile) {
         return {
           success: false,
-          error: 'Perfil no encontrado'
+          error: "Perfil no encontrado",
         };
       }
 
       return {
         success: true,
-        profile
+        profile,
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al obtener el perfil'
+        error:
+          error instanceof Error ? error.message : "Error al obtener el perfil",
       };
     }
   }
 }
-
