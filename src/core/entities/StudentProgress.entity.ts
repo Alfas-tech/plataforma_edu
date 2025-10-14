@@ -1,4 +1,4 @@
-import { StudentProgressData } from '../types/course.types';
+import { StudentProgressData } from "../types/course.types";
 
 export class StudentProgressEntity {
   constructor(
@@ -26,7 +26,7 @@ export class StudentProgressEntity {
   }
 
   getTimeSpentFormatted(): string {
-    if (this.timeSpentMinutes === 0) return 'Sin tiempo registrado';
+    if (this.timeSpentMinutes === 0) return "Sin tiempo registrado";
 
     const hours = Math.floor(this.timeSpentMinutes / 60);
     const minutes = this.timeSpentMinutes % 60;
