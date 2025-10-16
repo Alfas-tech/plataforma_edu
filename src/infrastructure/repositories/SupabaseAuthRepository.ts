@@ -1,5 +1,5 @@
 import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
-import { LoginCredentials, SignUpData } from "@/src/core/types/auth.types";
+import { LoginCredentials, SignUpData, OAuthCallbackData } from "@/src/core/types/auth.types";
 import { UserEntity } from "@/src/core/entities/User.entity";
 import { createClient } from "../supabase/server";
 
@@ -32,7 +32,7 @@ export class SupabaseAuthRepository implements IAuthRepository {
           full_name: `${data.firstName} ${data.lastName}`,
           email: data.email,
         },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/dashboard`,
+        emailRedirectTo: "/auth/confirm?next=/dashboard",
       },
     });
 
@@ -64,7 +64,7 @@ export class SupabaseAuthRepository implements IAuthRepository {
     return user ? UserEntity.fromSupabase(user) : null;
   }
 
-  async signInWithGoogle(): Promise<any> {
+  async signInWithGoogle(): Promise<string> {
     const supabase = createClient();
 
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -74,7 +74,7 @@ export class SupabaseAuthRepository implements IAuthRepository {
           access_type: "offline",
           prompt: "consent",
         },
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/dashboard`,
+        redirectTo: "/auth/confirm?next=/dashboard",
       },
     });
 
@@ -85,11 +85,23 @@ export class SupabaseAuthRepository implements IAuthRepository {
     return data.url;
   }
 
+  async handleOAuthCallback(data: OAuthCallbackData): Promise<UserEntity> {
+    const supabase = createClient();
+
+    const { data: authData, error } = await supabase.auth.exchangeCodeForSession(data.code);
+
+    if (error || !authData.user) {
+      throw new Error("Error al procesar el callback de autenticación");
+    }
+
+    return UserEntity.fromSupabase(authData.user);
+  }
+
   async resetPassword(email: string): Promise<void> {
     const supabase = createClient();
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/auth/update-password`,
+      redirectTo: "/auth/confirm?next=/auth/update-password",
     });
 
     if (error) {

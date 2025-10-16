@@ -1,4 +1,4 @@
-import { LoginCredentials, SignUpData } from "../../types/auth.types";
+import { LoginCredentials, SignUpData, OAuthCallbackData } from "../../types/auth.types";
 import { UserEntity } from "../../entities/User.entity";
 
 export interface IAuthRepository {
@@ -9,6 +9,7 @@ export interface IAuthRepository {
   signOut(): Promise<void>;
   getCurrentUser(): Promise<UserEntity | null>;
   signInWithGoogle(): Promise<string>;
+  handleOAuthCallback(data: OAuthCallbackData): Promise<UserEntity>;
   resetPassword(email: string): Promise<void>;
   updatePassword(password: string): Promise<void>;
 }
