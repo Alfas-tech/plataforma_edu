@@ -18,6 +18,7 @@ describe("DeleteUserUseCase", () => {
       signInWithGoogle: jest.fn(),
       resetPassword: jest.fn(),
       updatePassword: jest.fn(),
+      deleteUser: jest.fn(),
     } as any;
 
     mockProfileRepository = {
@@ -78,13 +79,14 @@ describe("DeleteUserUseCase", () => {
         mockAdminProfile,
         mockUserProfile,
       ]);
+      mockAuthRepository.deleteUser.mockResolvedValue(undefined);
 
       const result = await deleteUserUseCase.execute(userId);
 
       expect(result.success).toBe(true);
-      expect(result.error).toBe(
-        "Esta funcionalidad requiere configuración adicional en Supabase"
-      );
+      expect(result.error).toBeUndefined();
+      expect(mockAuthRepository.deleteUser).toHaveBeenCalledWith(userId);
+      expect(mockAuthRepository.deleteUser).toHaveBeenCalledTimes(1);
     });
 
     it("should return error when no user is authenticated", async () => {
@@ -93,7 +95,8 @@ describe("DeleteUserUseCase", () => {
       const result = await deleteUserUseCase.execute(userId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("No hay usuario autenticado");
+      expect(result.error).toBe("No authenticated user found");
+      expect(mockAuthRepository.deleteUser).not.toHaveBeenCalled();
     });
 
     it("should return error when user is not admin", async () => {
@@ -115,9 +118,8 @@ describe("DeleteUserUseCase", () => {
       const result = await deleteUserUseCase.execute(userId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe(
-        "Solo los administradores pueden eliminar usuarios"
-      );
+      expect(result.error).toBe("Only administrators can delete users");
+      expect(mockAuthRepository.deleteUser).not.toHaveBeenCalled();
     });
 
     it("should return error when trying to delete self", async () => {
@@ -129,7 +131,8 @@ describe("DeleteUserUseCase", () => {
       const result = await deleteUserUseCase.execute("admin-123");
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("No puedes eliminar tu propia cuenta");
+      expect(result.error).toBe("Cannot delete your own account");
+      expect(mockAuthRepository.deleteUser).not.toHaveBeenCalled();
     });
 
     it("should return error when user not found", async () => {
@@ -141,7 +144,8 @@ describe("DeleteUserUseCase", () => {
       const result = await deleteUserUseCase.execute(userId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("Usuario no encontrado");
+      expect(result.error).toBe("User not found");
+      expect(mockAuthRepository.deleteUser).not.toHaveBeenCalled();
     });
 
     it("should return error when trying to delete last admin", async () => {
@@ -164,7 +168,8 @@ describe("DeleteUserUseCase", () => {
       const result = await deleteUserUseCase.execute(userId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("No se puede eliminar al último administrador");
+      expect(result.error).toBe("Cannot delete the last administrator");
+      expect(mockAuthRepository.deleteUser).not.toHaveBeenCalled();
     });
 
     it("should allow deleting admin when multiple admins exist", async () => {
@@ -197,13 +202,13 @@ describe("DeleteUserUseCase", () => {
         adminToDelete,
         anotherAdmin,
       ]);
+      mockAuthRepository.deleteUser.mockResolvedValue(undefined);
 
       const result = await deleteUserUseCase.execute(userId);
 
       expect(result.success).toBe(true);
-      expect(result.error).toBe(
-        "Esta funcionalidad requiere configuración adicional en Supabase"
-      );
+      expect(result.error).toBeUndefined();
+      expect(mockAuthRepository.deleteUser).toHaveBeenCalledWith(userId);
     });
 
     it("should handle repository errors gracefully", async () => {
@@ -215,6 +220,7 @@ describe("DeleteUserUseCase", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("Database error");
+      expect(mockAuthRepository.deleteUser).not.toHaveBeenCalled();
     });
 
     it("should handle unknown errors", async () => {
@@ -223,7 +229,28 @@ describe("DeleteUserUseCase", () => {
       const result = await deleteUserUseCase.execute(userId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("Error al eliminar usuario");
+      expect(result.error).toBe("Error deleting user");
+      expect(mockAuthRepository.deleteUser).not.toHaveBeenCalled();
+    });
+
+    it("should handle deleteUser repository errors", async () => {
+      mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
+      mockProfileRepository.getProfileByUserId
+        .mockResolvedValueOnce(mockAdminProfile)
+        .mockResolvedValueOnce(mockUserProfile);
+      mockProfileRepository.getAllProfiles.mockResolvedValue([
+        mockAdminProfile,
+        mockUserProfile,
+      ]);
+      mockAuthRepository.deleteUser.mockRejectedValue(
+        new Error("Failed to delete user from auth")
+      );
+
+      const result = await deleteUserUseCase.execute(userId);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Failed to delete user from auth");
+      expect(mockAuthRepository.deleteUser).toHaveBeenCalledWith(userId);
     });
   });
 });

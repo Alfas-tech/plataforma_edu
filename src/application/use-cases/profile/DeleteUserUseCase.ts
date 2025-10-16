@@ -1,35 +1,53 @@
 import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
 import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
 
+/**
+ * Result type for delete user operations
+ */
 export interface DeleteUserResult {
   success: boolean;
   error?: string;
 }
 
+/**
+ * Delete User Use Case
+ *
+ * Handles user deletion with proper validation:
+ * - Verify current user is admin
+ * - Prevent self-deletion
+ * - Prevent deleting last admin
+ * - Execute atomic delete from both auth and database
+ */
 export class DeleteUserUseCase {
   constructor(
     private readonly authRepository: IAuthRepository,
     private readonly profileRepository: IProfileRepository
   ) {}
 
+  /**
+   * Execute user deletion
+   * @param userId - ID of the user to delete
+   * @returns Result with success status and error message if applicable
+   */
   async execute(userId: string): Promise<DeleteUserResult> {
     try {
-      // Verify current user is admin
+      // Verify current user is authenticated
       const currentUser = await this.authRepository.getCurrentUser();
       if (!currentUser) {
         return {
           success: false,
-          error: "No hay usuario autenticado",
+          error: "No authenticated user found",
         };
       }
 
+      // Verify current user is admin
       const currentProfile = await this.profileRepository.getProfileByUserId(
         currentUser.id
       );
       if (!currentProfile || !currentProfile.isAdmin()) {
         return {
           success: false,
-          error: "Solo los administradores pueden eliminar usuarios",
+          error: "Only administrators can delete users",
         };
       }
 
@@ -37,7 +55,7 @@ export class DeleteUserUseCase {
       if (currentUser.id === userId) {
         return {
           success: false,
-          error: "No puedes eliminar tu propia cuenta",
+          error: "Cannot delete your own account",
         };
       }
 
@@ -47,7 +65,7 @@ export class DeleteUserUseCase {
       if (!userProfile) {
         return {
           success: false,
-          error: "Usuario no encontrado",
+          error: "User not found",
         };
       }
 
@@ -59,22 +77,22 @@ export class DeleteUserUseCase {
         if (adminCount <= 1) {
           return {
             success: false,
-            error: "No se puede eliminar al último administrador",
+            error: "Cannot delete the last administrator",
           };
         }
       }
 
-      // Delete user - This will be handled by Supabase Admin API
+      // Delete user from both auth and database
+      await this.authRepository.deleteUser(userId);
+
       return {
         success: true,
-        error:
-          "Esta funcionalidad requiere configuración adicional en Supabase",
       };
     } catch (error) {
       return {
         success: false,
         error:
-          error instanceof Error ? error.message : "Error al eliminar usuario",
+          error instanceof Error ? error.message : "Error deleting user",
       };
     }
   }

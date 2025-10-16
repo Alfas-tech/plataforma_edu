@@ -7,11 +7,17 @@ jest.mock("@/src/infrastructure/supabase/server", () => ({
   createClient: jest.fn(),
 }));
 
+jest.mock("@/src/infrastructure/supabase/admin", () => ({
+  createAdminClient: jest.fn(),
+}));
+
 import { createClient } from "@/src/infrastructure/supabase/server";
+import { createAdminClient } from "@/src/infrastructure/supabase/admin";
 
 describe("SupabaseAuthRepository", () => {
   let repository: SupabaseAuthRepository;
   let mockSupabaseClient: any;
+  let mockAdminClient: any;
 
   beforeEach(() => {
     mockSupabaseClient = {
@@ -25,9 +31,19 @@ describe("SupabaseAuthRepository", () => {
         resetPasswordForEmail: jest.fn(),
         updateUser: jest.fn(),
       },
+      rpc: jest.fn(),
+    };
+
+    mockAdminClient = {
+      auth: {
+        admin: {
+          deleteUser: jest.fn(),
+        },
+      },
     };
 
     (createClient as jest.Mock).mockReturnValue(mockSupabaseClient);
+    (createAdminClient as jest.Mock).mockReturnValue(mockAdminClient);
     repository = new SupabaseAuthRepository();
   });
 
@@ -344,6 +360,116 @@ describe("SupabaseAuthRepository", () => {
       await expect(repository.updatePassword("newPassword123")).rejects.toThrow(
         "No se pudo actualizar la contraseña"
       );
+    });
+  });
+
+  describe("deleteUser", () => {
+    const userId = "user-123";
+
+    it("should delete user successfully with both RPC and Admin API", async () => {
+      // Mock RPC response for profile deletion
+      mockSupabaseClient.rpc.mockResolvedValue({
+        data: { success: true },
+        error: null,
+      });
+
+      // Mock admin client deletion
+      mockAdminClient.auth.admin.deleteUser.mockResolvedValue({
+        error: null,
+      });
+
+      await expect(repository.deleteUser(userId)).resolves.not.toThrow();
+
+      expect(mockSupabaseClient.rpc).toHaveBeenCalledWith(
+        "delete_user_profile",
+        { user_id: userId }
+      );
+      expect(mockAdminClient.auth.admin.deleteUser).toHaveBeenCalledWith(
+        userId
+      );
+    });
+
+    it("should throw error when RPC profile deletion fails", async () => {
+      mockSupabaseClient.rpc.mockResolvedValue({
+        data: null,
+        error: { message: "RPC error: permission denied" },
+      });
+
+      await expect(repository.deleteUser(userId)).rejects.toThrow(
+        "Error deleting profile: RPC error: permission denied"
+      );
+
+      expect(mockAdminClient.auth.admin.deleteUser).not.toHaveBeenCalled();
+    });
+
+    it("should throw error when RPC returns success=false", async () => {
+      mockSupabaseClient.rpc.mockResolvedValue({
+        data: {
+          success: false,
+          error: "User profile not found",
+        },
+        error: null,
+      });
+
+      await expect(repository.deleteUser(userId)).rejects.toThrow(
+        "User profile not found"
+      );
+
+      expect(mockAdminClient.auth.admin.deleteUser).not.toHaveBeenCalled();
+    });
+
+    it("should handle RPC response with no error message", async () => {
+      mockSupabaseClient.rpc.mockResolvedValue({
+        data: {
+          success: false,
+        },
+        error: null,
+      });
+
+      await expect(repository.deleteUser(userId)).rejects.toThrow(
+        "Error deleting profile"
+      );
+
+      expect(mockAdminClient.auth.admin.deleteUser).not.toHaveBeenCalled();
+    });
+
+    it("should throw error when admin deleteUser fails", async () => {
+      // Mock successful RPC response
+      mockSupabaseClient.rpc.mockResolvedValue({
+        data: { success: true },
+        error: null,
+      });
+
+      // Mock admin client with error
+      mockAdminClient.auth.admin.deleteUser.mockResolvedValue({
+        error: { message: "Admin API error: user not found" },
+      });
+
+      await expect(repository.deleteUser(userId)).rejects.toThrow(
+        "Error deleting user from authentication: Admin API error: user not found"
+      );
+    });
+
+    it("should throw error when RPC throws exception", async () => {
+      mockSupabaseClient.rpc.mockRejectedValue(
+        new Error("Network error")
+      );
+
+      await expect(repository.deleteUser(userId)).rejects.toThrow(
+        "Network error"
+      );
+
+      expect(mockAdminClient.auth.admin.deleteUser).not.toHaveBeenCalled();
+    });
+
+    it("should throw generic error for non-Error exceptions", async () => {
+      mockSupabaseClient.rpc.mockRejectedValue("String error");
+
+      await expect(repository.deleteUser(userId)).rejects.toThrow(
+        "Unknown error while deleting user"
+      );
+
+      expect(mockAdminClient.auth.admin.deleteUser).not.toHaveBeenCalled();
     });
   });
 });
