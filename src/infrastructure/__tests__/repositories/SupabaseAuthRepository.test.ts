@@ -21,6 +21,7 @@ describe("SupabaseAuthRepository", () => {
         signOut: jest.fn(),
         getUser: jest.fn(),
         signInWithOAuth: jest.fn(),
+        exchangeCodeForSession: jest.fn(),
         resetPasswordForEmail: jest.fn(),
         updateUser: jest.fn(),
       },
@@ -234,6 +235,61 @@ describe("SupabaseAuthRepository", () => {
       await expect(repository.signInWithGoogle()).rejects.toThrow(
         "Error al iniciar sesión con Google"
       );
+    });
+  });
+
+  describe("handleOAuthCallback", () => {
+    it("should handle OAuth callback successfully", async () => {
+      const mockUser = {
+        id: "123",
+        email: "test@example.com",
+        user_metadata: { full_name: "John Doe" },
+      };
+
+      mockSupabaseClient.auth.exchangeCodeForSession.mockResolvedValue({
+        data: { user: mockUser },
+        error: null,
+      });
+
+      const result = await repository.handleOAuthCallback({
+        code: "auth_code_from_google",
+        next: "/dashboard",
+      });
+
+      expect(result).toBeInstanceOf(UserEntity);
+      expect(result.id).toBe("123");
+      expect(result.email).toBe("test@example.com");
+      expect(mockSupabaseClient.auth.exchangeCodeForSession).toHaveBeenCalledWith(
+        "auth_code_from_google"
+      );
+    });
+
+    it("should throw error when OAuth callback fails", async () => {
+      mockSupabaseClient.auth.exchangeCodeForSession.mockResolvedValue({
+        data: { user: null },
+        error: { message: "Invalid code" },
+      });
+
+      await expect(
+        repository.handleOAuthCallback({
+          code: "invalid_code",
+          next: "/dashboard",
+        })
+      ).rejects.toThrow("Error al procesar el callback de autenticación");
+    });
+
+    it("should throw error when user is null", async () => {
+      mockSupabaseClient.auth.exchangeCodeForSession.mockResolvedValue({
+        data: { user: null },
+        error: null,
+      });
+
+      await expect(
+        repository.handleOAuthCallback({
+          code: "auth_code_from_google",
+          next: "/dashboard",
+        })
+      ).rejects.toThrow("Error al procesar el callback de autenticación");
     });
   });
 

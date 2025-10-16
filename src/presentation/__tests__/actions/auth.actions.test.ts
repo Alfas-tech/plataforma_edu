@@ -1,36 +1,25 @@
-import { SupabaseAuthRepository } from "@/src/infrastructure/repositories/SupabaseAuthRepository";
 import { LoginUseCase } from "@/src/application/use-cases/auth/LoginUseCase";
 import { SignUpUseCase } from "@/src/application/use-cases/auth/SignUpUseCase";
 import { SignOutUseCase } from "@/src/application/use-cases/auth/SignOutUseCase";
 import { ResetPasswordUseCase } from "@/src/application/use-cases/auth/ResetPasswordUseCase";
 import { UpdatePasswordUseCase } from "@/src/application/use-cases/auth/UpdatePasswordUseCase";
-
-// Mock Supabase
-jest.mock("@/src/infrastructure/supabase/server", () => ({
-  createClient: jest.fn(),
-}));
-
-import { createClient } from "@/src/infrastructure/supabase/server";
+import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
+import { UserEntity } from "@/src/core/entities/User.entity";
 
 describe("Auth Actions Logic", () => {
-  let mockSupabaseClient: any;
-  let authRepository: SupabaseAuthRepository;
+  let authRepository: jest.Mocked<IAuthRepository>;
 
   beforeEach(() => {
-    mockSupabaseClient = {
-      auth: {
-        signInWithPassword: jest.fn(),
-        signUp: jest.fn(),
-        signOut: jest.fn(),
-        getUser: jest.fn(),
-        signInWithOAuth: jest.fn(),
-        resetPasswordForEmail: jest.fn(),
-        updateUser: jest.fn(),
-      },
+    authRepository = {
+      login: jest.fn(),
+      signUp: jest.fn(),
+      signOut: jest.fn(),
+      getCurrentUser: jest.fn(),
+      signInWithGoogle: jest.fn(),
+      handleOAuthCallback: jest.fn(),
+      resetPassword: jest.fn(),
+      updatePassword: jest.fn(),
     };
-
-    (createClient as jest.Mock).mockReturnValue(mockSupabaseClient);
-    authRepository = new SupabaseAuthRepository();
   });
 
   afterEach(() => {
@@ -41,16 +30,14 @@ describe("Auth Actions Logic", () => {
     it("should successfully login with valid credentials", async () => {
       const loginUseCase = new LoginUseCase(authRepository);
 
-      const mockUser = {
-        id: "123",
-        email: "test@example.com",
-        user_metadata: { full_name: "John Doe" },
-      };
+      const mockUser = new UserEntity(
+        "123",
+        "test@example.com",
+        "John Doe",
+        undefined
+      );
 
-      mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
-        data: { user: mockUser },
-        error: null,
-      });
+      authRepository.login.mockResolvedValue(mockUser);
 
       const result = await loginUseCase.execute({
         email: "test@example.com",
@@ -60,15 +47,16 @@ describe("Auth Actions Logic", () => {
       expect(result.success).toBe(true);
       expect(result.user).toBeDefined();
       expect(result.user?.email).toBe("test@example.com");
+      expect(authRepository.login).toHaveBeenCalledWith({
+        email: "test@example.com",
+        password: "password123",
+      });
     });
 
     it("should return error for invalid credentials", async () => {
       const loginUseCase = new LoginUseCase(authRepository);
 
-      mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
-        data: { user: null },
-        error: { message: "Invalid credentials" },
-      });
+      authRepository.login.mockRejectedValue(new Error("Email o contraseña incorrectos"));
 
       const result = await loginUseCase.execute({
         email: "test@example.com",
@@ -84,16 +72,16 @@ describe("Auth Actions Logic", () => {
     it("should successfully sign up a new user", async () => {
       const signUpUseCase = new SignUpUseCase(authRepository);
 
-      const mockUser = {
-        id: "123",
-        email: "test@example.com",
-        user_metadata: { full_name: "John Doe" },
-        confirmed_at: null,
-      };
+      const mockUser = new UserEntity(
+        "123",
+        "test@example.com",
+        "John Doe",
+        undefined
+      );
 
-      mockSupabaseClient.auth.signUp.mockResolvedValue({
-        data: { user: mockUser },
-        error: null,
+      authRepository.signUp.mockResolvedValue({
+        user: mockUser,
+        needsConfirmation: true,
       });
 
       const result = await signUpUseCase.execute({
@@ -106,15 +94,18 @@ describe("Auth Actions Logic", () => {
       expect(result.success).toBe(true);
       expect(result.user).toBeDefined();
       expect(result.needsConfirmation).toBe(true);
+      expect(authRepository.signUp).toHaveBeenCalledWith({
+        email: "test@example.com",
+        password: "password123",
+        firstName: "John",
+        lastName: "Doe",
+      });
     });
 
     it("should return error if email already exists", async () => {
       const signUpUseCase = new SignUpUseCase(authRepository);
 
-      mockSupabaseClient.auth.signUp.mockResolvedValue({
-        data: { user: null },
-        error: { message: "User already exists" },
-      });
+      authRepository.signUp.mockRejectedValue(new Error("Error al crear la cuenta"));
 
       const result = await signUpUseCase.execute({
         email: "existing@example.com",
@@ -132,22 +123,18 @@ describe("Auth Actions Logic", () => {
     it("should successfully sign out user", async () => {
       const signOutUseCase = new SignOutUseCase(authRepository);
 
-      mockSupabaseClient.auth.signOut.mockResolvedValue({
-        error: null,
-      });
+      authRepository.signOut.mockResolvedValue();
 
       const result = await signOutUseCase.execute();
 
       expect(result.success).toBe(true);
-      expect(mockSupabaseClient.auth.signOut).toHaveBeenCalled();
+      expect(authRepository.signOut).toHaveBeenCalled();
     });
 
     it("should handle sign out errors", async () => {
       const signOutUseCase = new SignOutUseCase(authRepository);
 
-      mockSupabaseClient.auth.signOut.mockResolvedValue({
-        error: { message: "Sign out failed" },
-      });
+      authRepository.signOut.mockRejectedValue(new Error("Error al cerrar sesión"));
 
       const result = await signOutUseCase.execute();
 
@@ -160,24 +147,18 @@ describe("Auth Actions Logic", () => {
     it("should send reset password email successfully", async () => {
       const resetPasswordUseCase = new ResetPasswordUseCase(authRepository);
 
-      mockSupabaseClient.auth.resetPasswordForEmail.mockResolvedValue({
-        error: null,
-      });
+      authRepository.resetPassword.mockResolvedValue();
 
       const result = await resetPasswordUseCase.execute("test@example.com");
 
       expect(result.success).toBe(true);
-      expect(
-        mockSupabaseClient.auth.resetPasswordForEmail
-      ).toHaveBeenCalledWith("test@example.com", expect.any(Object));
+      expect(authRepository.resetPassword).toHaveBeenCalledWith("test@example.com");
     });
 
     it("should handle email sending errors", async () => {
       const resetPasswordUseCase = new ResetPasswordUseCase(authRepository);
 
-      mockSupabaseClient.auth.resetPasswordForEmail.mockResolvedValue({
-        error: { message: "Email service error" },
-      });
+      authRepository.resetPassword.mockRejectedValue(new Error("Error al enviar el correo de recuperación"));
 
       const result = await resetPasswordUseCase.execute("test@example.com");
 
@@ -190,16 +171,12 @@ describe("Auth Actions Logic", () => {
     it("should update password successfully", async () => {
       const updatePasswordUseCase = new UpdatePasswordUseCase(authRepository);
 
-      mockSupabaseClient.auth.updateUser.mockResolvedValue({
-        error: null,
-      });
+      authRepository.updatePassword.mockResolvedValue();
 
       const result = await updatePasswordUseCase.execute("newPassword123");
 
       expect(result.success).toBe(true);
-      expect(mockSupabaseClient.auth.updateUser).toHaveBeenCalledWith({
-        password: "newPassword123",
-      });
+      expect(authRepository.updatePassword).toHaveBeenCalledWith("newPassword123");
     });
 
     it("should validate password length", async () => {
@@ -209,15 +186,13 @@ describe("Auth Actions Logic", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain("6 caracteres");
-      expect(mockSupabaseClient.auth.updateUser).not.toHaveBeenCalled();
+      expect(authRepository.updatePassword).not.toHaveBeenCalled();
     });
 
     it("should handle update errors", async () => {
       const updatePasswordUseCase = new UpdatePasswordUseCase(authRepository);
 
-      mockSupabaseClient.auth.updateUser.mockResolvedValue({
-        error: { message: "Update failed" },
-      });
+      authRepository.updatePassword.mockRejectedValue(new Error("No se pudo actualizar la contraseña"));
 
       const result = await updatePasswordUseCase.execute("newPassword123");
 
