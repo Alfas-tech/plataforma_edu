@@ -32,7 +32,7 @@ export async function createUser(formData: {
           full_name: formData.fullName,
           role: formData.role,
         },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,
+        emailRedirectTo: "/auth/confirm",
       },
     });
 
@@ -145,7 +145,7 @@ export async function sendPasswordResetEmail(userId: string) {
 
     // Send password reset email
     const { error } = await supabase.auth.resetPasswordForEmail(profile.email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/update-password`,
+      redirectTo: "/auth/update-password",
     });
 
     if (error) {
