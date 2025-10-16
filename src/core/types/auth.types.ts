@@ -17,6 +17,17 @@ export interface AuthResult {
   error?: string;
 }
 
+export interface OAuthCallbackData {
+  code: string;
+  next?: string;
+}
+
+export interface OAuthCallbackResult {
+  success: boolean;
+  redirectTo?: string;
+  error?: string;
+}
+
 export interface UserData {
   id: string;
   email: string;
