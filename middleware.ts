@@ -2,20 +2,20 @@ import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/src/infrastructure/supabase/middleware";
 import { createClient } from "@/src/infrastructure/supabase/server";
 
-export async function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
-  // Actualizar la sesión
+  // Update session
   const response = await updateSession(request);
 
-  // Crear cliente de Supabase para verificar autenticación
+  // Create Supabase client to verify authentication
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Rutas públicas que NO requieren autenticación
-  const publicRoutes = [
+  // Public routes that do NOT require authentication
+  const publicRoutes: readonly string[] = [
     "/",
     "/login",
     "/signup",
@@ -28,8 +28,8 @@ export async function middleware(request: NextRequest) {
     "/signup/success",
   ];
 
-  // Rutas protegidas que REQUIEREN autenticación
-  const protectedRoutes = ["/dashboard", "/profile", "/courses", "/lessons"];
+  // Protected routes that REQUIRE authentication
+  const protectedRoutes: readonly string[] = ["/dashboard", "/profile", "/courses", "/lessons"];
 
   const isPublicRoute = publicRoutes.some((route) =>
     pathname.startsWith(route)
@@ -38,14 +38,14 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith(route)
   );
 
-  // Si el usuario está autenticado y trata de acceder a rutas de auth, redirigir al dashboard
+  // If user is authenticated and tries to access auth routes, redirect to dashboard
   if (user && (pathname === "/login" || pathname === "/signup")) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 
-  // Si el usuario NO está autenticado y trata de acceder a una ruta protegida
+  // If user is NOT authenticated and tries to access a protected route
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
