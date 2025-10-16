@@ -3,7 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/src/infrastructure/supabase/server";
 import { getCurrentProfile } from "./profile.actions";
+import { SupabaseAuthRepository } from "@/src/infrastructure/repositories/SupabaseAuthRepository";
+import { SupabaseProfileRepository } from "@/src/infrastructure/repositories/SupabaseProfileRepository";
+import { DeleteUserUseCase } from "@/src/application/use-cases/profile/DeleteUserUseCase";
 
+/**
+ * Create a new user
+ * @param formData - User creation data (email, password, fullName, role)
+ * @returns Object with success flag or error message for UI display
+ */
 export async function createUser(formData: {
   email: string;
   password: string;
@@ -63,49 +71,25 @@ export async function createUser(formData: {
   }
 }
 
+/**
+ * Delete a user
+ * Removes user from both authentication and database
+ * @param userId - ID of the user to delete
+ * @returns Object with success flag or error message for UI display
+ */
 export async function deleteUser(userId: string) {
   try {
-    // Verify current user is admin
-    const profileResult = await getCurrentProfile();
-    if ("error" in profileResult) {
-      return { error: "No autenticado" };
-    }
+    const authRepository = new SupabaseAuthRepository();
+    const profileRepository = new SupabaseProfileRepository();
+    const deleteUserUseCase = new DeleteUserUseCase(
+      authRepository,
+      profileRepository
+    );
 
-    if (!profileResult.profile.isAdmin) {
-      return { error: "Solo administradores pueden eliminar usuarios" };
-    }
+    const result = await deleteUserUseCase.execute(userId);
 
-    // Prevent self-deletion
-    if (profileResult.profile.id === userId) {
-      return { error: "No puedes eliminar tu propia cuenta" };
-    }
-
-    const supabase = createClient();
-
-    // Get user profile
-    const { data: targetProfile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .single();
-
-    if (targetProfile?.role === "admin") {
-      // Check if it's the last admin
-      const { count } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .eq("role", "admin");
-
-      if (count && count <= 1) {
-        return { error: "No se puede eliminar al último administrador" };
-      }
-    }
-
-    // Delete user profile (auth.users will cascade delete via trigger)
-    const { error } = await supabase.from("profiles").delete().eq("id", userId);
-
-    if (error) {
-      return { error: error.message };
+    if (!result.success) {
+      return { error: result.error || "Error al eliminar usuario" };
     }
 
     revalidatePath("/dashboard/admin/users");
@@ -118,6 +102,11 @@ export async function deleteUser(userId: string) {
   }
 }
 
+/**
+ * Send password reset email to a user
+ * @param userId - ID of the user to reset password
+ * @returns Object with success flag or error message for UI display
+ */
 export async function sendPasswordResetEmail(userId: string) {
   try {
     // Verify current user is admin

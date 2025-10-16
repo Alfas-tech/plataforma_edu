@@ -6,6 +6,7 @@ import {
 } from "@/src/core/types/auth.types";
 import { UserEntity } from "@/src/core/entities/User.entity";
 import { createClient } from "../supabase/server";
+import { createAdminClient } from "../supabase/admin";
 
 export class SupabaseAuthRepository implements IAuthRepository {
   async login(credentials: LoginCredentials): Promise<UserEntity> {
@@ -123,6 +124,51 @@ export class SupabaseAuthRepository implements IAuthRepository {
 
     if (error) {
       throw new Error("No se pudo actualizar la contraseña");
+    }
+  }
+
+  /**
+   * Delete a user from both auth.users and public.profiles
+   * @param userId - The ID of the user to delete
+   * @throws Error if profile deletion or auth deletion fails
+   */
+  async deleteUser(userId: string): Promise<void> {
+    const supabase = createClient();
+    const adminClient = createAdminClient();
+
+    try {
+      // Step 1: Validate and delete from public.profiles using RPC
+      const { data, error: rpcError } = await supabase.rpc(
+        "delete_user_profile",
+        {
+          user_id: userId,
+        }
+      );
+
+      if (rpcError) {
+        throw new Error("Error deleting profile: " + rpcError.message);
+      }
+
+      // Validate RPC response
+      if (data && !data.success) {
+        throw new Error(data.error || "Error deleting profile");
+      }
+
+      // Step 2: Delete from auth.users using Admin API
+      const { error: authError } = await adminClient.auth.admin.deleteUser(
+        userId
+      );
+
+      if (authError) {
+        throw new Error(
+          "Error deleting user from authentication: " + authError.message
+        );
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Unknown error while deleting user");
     }
   }
 }

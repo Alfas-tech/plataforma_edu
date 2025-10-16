@@ -16,4 +16,10 @@ export interface IAuthRepository {
   handleOAuthCallback(data: OAuthCallbackData): Promise<UserEntity>;
   resetPassword(email: string): Promise<void>;
   updatePassword(password: string): Promise<void>;
+  /**
+   * Delete a user from authentication system
+   * @param userId - The ID of the user to delete
+   * @throws Error if deletion fails
+   */
+  deleteUser(userId: string): Promise<void>;
 }
