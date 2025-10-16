@@ -24,8 +24,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Handle OAuth callback (Google, etc.) using Use Case
     if (code) {
       const authRepository = new SupabaseAuthRepository();
-      const handleOAuthCallbackUseCase = new HandleOAuthCallbackUseCase(authRepository);
-      
+      const handleOAuthCallbackUseCase = new HandleOAuthCallbackUseCase(
+        authRepository
+      );
+
       const result = await handleOAuthCallbackUseCase.execute({
         code,
         next,
@@ -65,7 +67,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     // If no code or tokenHash, check if user is already authenticated
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (user) {
       return NextResponse.redirect(redirectTo);
     }
@@ -74,7 +78,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     redirectTo.pathname = "/error";
     redirectTo.searchParams.set("error", "invalid_auth_params");
     return NextResponse.redirect(redirectTo);
-
   } catch (error) {
     redirectTo.pathname = "/error";
     redirectTo.searchParams.set("error", "unexpected_error");

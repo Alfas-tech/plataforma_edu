@@ -56,7 +56,9 @@ describe("Auth Actions Logic", () => {
     it("should return error for invalid credentials", async () => {
       const loginUseCase = new LoginUseCase(authRepository);
 
-      authRepository.login.mockRejectedValue(new Error("Email o contraseña incorrectos"));
+      authRepository.login.mockRejectedValue(
+        new Error("Email o contraseña incorrectos")
+      );
 
       const result = await loginUseCase.execute({
         email: "test@example.com",
@@ -105,7 +107,9 @@ describe("Auth Actions Logic", () => {
     it("should return error if email already exists", async () => {
       const signUpUseCase = new SignUpUseCase(authRepository);
 
-      authRepository.signUp.mockRejectedValue(new Error("Error al crear la cuenta"));
+      authRepository.signUp.mockRejectedValue(
+        new Error("Error al crear la cuenta")
+      );
 
       const result = await signUpUseCase.execute({
         email: "existing@example.com",
@@ -134,7 +138,9 @@ describe("Auth Actions Logic", () => {
     it("should handle sign out errors", async () => {
       const signOutUseCase = new SignOutUseCase(authRepository);
 
-      authRepository.signOut.mockRejectedValue(new Error("Error al cerrar sesión"));
+      authRepository.signOut.mockRejectedValue(
+        new Error("Error al cerrar sesión")
+      );
 
       const result = await signOutUseCase.execute();
 
@@ -152,13 +158,17 @@ describe("Auth Actions Logic", () => {
       const result = await resetPasswordUseCase.execute("test@example.com");
 
       expect(result.success).toBe(true);
-      expect(authRepository.resetPassword).toHaveBeenCalledWith("test@example.com");
+      expect(authRepository.resetPassword).toHaveBeenCalledWith(
+        "test@example.com"
+      );
     });
 
     it("should handle email sending errors", async () => {
       const resetPasswordUseCase = new ResetPasswordUseCase(authRepository);
 
-      authRepository.resetPassword.mockRejectedValue(new Error("Error al enviar el correo de recuperación"));
+      authRepository.resetPassword.mockRejectedValue(
+        new Error("Error al enviar el correo de recuperación")
+      );
 
       const result = await resetPasswordUseCase.execute("test@example.com");
 
@@ -176,7 +186,9 @@ describe("Auth Actions Logic", () => {
       const result = await updatePasswordUseCase.execute("newPassword123");
 
       expect(result.success).toBe(true);
-      expect(authRepository.updatePassword).toHaveBeenCalledWith("newPassword123");
+      expect(authRepository.updatePassword).toHaveBeenCalledWith(
+        "newPassword123"
+      );
     });
 
     it("should validate password length", async () => {
@@ -192,7 +204,9 @@ describe("Auth Actions Logic", () => {
     it("should handle update errors", async () => {
       const updatePasswordUseCase = new UpdatePasswordUseCase(authRepository);
 
-      authRepository.updatePassword.mockRejectedValue(new Error("No se pudo actualizar la contraseña"));
+      authRepository.updatePassword.mockRejectedValue(
+        new Error("No se pudo actualizar la contraseña")
+      );
 
       const result = await updatePasswordUseCase.execute("newPassword123");
 

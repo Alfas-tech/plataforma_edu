@@ -18,7 +18,9 @@ describe("HandleOAuthCallbackUseCase", () => {
       resetPassword: jest.fn(),
       updatePassword: jest.fn(),
     };
-    handleOAuthCallbackUseCase = new HandleOAuthCallbackUseCase(mockAuthRepository);
+    handleOAuthCallbackUseCase = new HandleOAuthCallbackUseCase(
+      mockAuthRepository
+    );
   });
 
   afterEach(() => {
@@ -35,12 +37,15 @@ describe("HandleOAuthCallbackUseCase", () => {
       const mockUser = new UserEntity("123", "test@example.com");
       mockAuthRepository.handleOAuthCallback.mockResolvedValue(mockUser);
 
-      const result = await handleOAuthCallbackUseCase.execute(validCallbackData);
+      const result =
+        await handleOAuthCallbackUseCase.execute(validCallbackData);
 
       expect(result.success).toBe(true);
       expect(result.redirectTo).toBe("/dashboard");
       expect(result.error).toBeUndefined();
-      expect(mockAuthRepository.handleOAuthCallback).toHaveBeenCalledWith(validCallbackData);
+      expect(mockAuthRepository.handleOAuthCallback).toHaveBeenCalledWith(
+        validCallbackData
+      );
     });
 
     it("should use default redirect when next is not provided", async () => {
@@ -50,7 +55,9 @@ describe("HandleOAuthCallbackUseCase", () => {
       const mockUser = new UserEntity("123", "test@example.com");
       mockAuthRepository.handleOAuthCallback.mockResolvedValue(mockUser);
 
-      const result = await handleOAuthCallbackUseCase.execute(callbackDataWithoutNext);
+      const result = await handleOAuthCallbackUseCase.execute(
+        callbackDataWithoutNext
+      );
 
       expect(result.success).toBe(true);
       expect(result.redirectTo).toBe("/dashboard");
@@ -62,7 +69,8 @@ describe("HandleOAuthCallbackUseCase", () => {
         new Error(errorMessage)
       );
 
-      const result = await handleOAuthCallbackUseCase.execute(validCallbackData);
+      const result =
+        await handleOAuthCallbackUseCase.execute(validCallbackData);
 
       expect(result.success).toBe(false);
       expect(result.error).toBe(errorMessage);
@@ -72,7 +80,8 @@ describe("HandleOAuthCallbackUseCase", () => {
     it("should handle unknown errors gracefully", async () => {
       mockAuthRepository.handleOAuthCallback.mockRejectedValue("Unknown error");
 
-      const result = await handleOAuthCallbackUseCase.execute(validCallbackData);
+      const result =
+        await handleOAuthCallbackUseCase.execute(validCallbackData);
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("Error desconocido");

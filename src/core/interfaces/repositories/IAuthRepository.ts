@@ -1,4 +1,8 @@
-import { LoginCredentials, SignUpData, OAuthCallbackData } from "../../types/auth.types";
+import {
+  LoginCredentials,
+  SignUpData,
+  OAuthCallbackData,
+} from "../../types/auth.types";
 import { UserEntity } from "../../entities/User.entity";
 
 export interface IAuthRepository {

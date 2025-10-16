@@ -259,9 +259,9 @@ describe("SupabaseAuthRepository", () => {
       expect(result).toBeInstanceOf(UserEntity);
       expect(result.id).toBe("123");
       expect(result.email).toBe("test@example.com");
-      expect(mockSupabaseClient.auth.exchangeCodeForSession).toHaveBeenCalledWith(
-        "auth_code_from_google"
-      );
+      expect(
+        mockSupabaseClient.auth.exchangeCodeForSession
+      ).toHaveBeenCalledWith("auth_code_from_google");
     });
 
     it("should throw error when OAuth callback fails", async () => {

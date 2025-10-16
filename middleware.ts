@@ -29,7 +29,12 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   ];
 
   // Protected routes that REQUIRE authentication
-  const protectedRoutes: readonly string[] = ["/dashboard", "/profile", "/courses", "/lessons"];
+  const protectedRoutes: readonly string[] = [
+    "/dashboard",
+    "/profile",
+    "/courses",
+    "/lessons",
+  ];
 
   const isPublicRoute = publicRoutes.some((route) =>
     pathname.startsWith(route)

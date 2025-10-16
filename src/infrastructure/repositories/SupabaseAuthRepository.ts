@@ -1,5 +1,9 @@
 import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
-import { LoginCredentials, SignUpData, OAuthCallbackData } from "@/src/core/types/auth.types";
+import {
+  LoginCredentials,
+  SignUpData,
+  OAuthCallbackData,
+} from "@/src/core/types/auth.types";
 import { UserEntity } from "@/src/core/entities/User.entity";
 import { createClient } from "../supabase/server";
 
@@ -88,7 +92,8 @@ export class SupabaseAuthRepository implements IAuthRepository {
   async handleOAuthCallback(data: OAuthCallbackData): Promise<UserEntity> {
     const supabase = createClient();
 
-    const { data: authData, error } = await supabase.auth.exchangeCodeForSession(data.code);
+    const { data: authData, error } =
+      await supabase.auth.exchangeCodeForSession(data.code);
 
     if (error || !authData.user) {
       throw new Error("Error al procesar el callback de autenticación");
