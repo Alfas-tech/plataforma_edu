@@ -29,6 +29,6 @@ export class UserEntity {
     ) {
       return this.metadata.full_name;
     }
-    return this.email.split("@")[0] || "Usuario";
+    return (this.email && this.email.split("@")[0]) || "Usuario";
   }
 }
