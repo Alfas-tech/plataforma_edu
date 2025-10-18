@@ -4,7 +4,7 @@ export default function LoadingDashboard() {
       <div className="flex flex-col items-center gap-3 rounded-xl border border-purple-100 bg-white/80 px-8 py-6 shadow-lg backdrop-blur">
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
         <p className="text-sm font-medium text-slate-700">
-          Preparando tu panel personalizado…
+          Preparando tu panel…
         </p>
       </div>
     </div>

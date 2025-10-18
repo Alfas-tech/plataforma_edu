@@ -165,7 +165,7 @@ describe("SupabaseAuthRepository", () => {
       });
 
       await expect(repository.signUp(signUpData)).rejects.toThrow(
-        "Error al crear la cuenta"
+        "Ya existe una cuenta registrada con este correo electrónico"
       );
     });
   });
