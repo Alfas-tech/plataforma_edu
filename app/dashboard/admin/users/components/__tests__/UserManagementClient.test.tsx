@@ -88,11 +88,11 @@ describe("UserManagementClient", () => {
 
     const dialog = screen.getByRole("dialog");
 
-    await user.click(
-      within(dialog).getByRole("button", { name: /promover/i })
-    );
+    await user.click(within(dialog).getByRole("button", { name: /promover/i }));
 
-    await waitFor(() => expect(mockPromote).toHaveBeenCalledWith(baseStudent.id));
+    await waitFor(() =>
+      expect(mockPromote).toHaveBeenCalledWith(baseStudent.id)
+    );
 
     await waitFor(() =>
       expect(

@@ -25,12 +25,10 @@ describe("SupabaseCourseRepository", () => {
       order: jest.fn().mockReturnThis(),
       rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
       auth: {
-        getUser: jest
-          .fn()
-          .mockResolvedValue({
-            data: { user: { id: "user-123" } },
-            error: null,
-          }),
+        getUser: jest.fn().mockResolvedValue({
+          data: { user: { id: "user-123" } },
+          error: null,
+        }),
       },
     };
 

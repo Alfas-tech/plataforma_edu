@@ -89,7 +89,7 @@ describe("SupabaseProfileRepository", () => {
       expect(result?.id).toBe("123");
       expect(result?.email).toBe("test@example.com");
       expect(mockSupabaseClient.from).toHaveBeenCalledWith("profiles");
-  expect(mockSupabaseClient.select).toHaveBeenCalledWith(PROFILE_SELECT);
+      expect(mockSupabaseClient.select).toHaveBeenCalledWith(PROFILE_SELECT);
       expect(mockSupabaseClient.eq).toHaveBeenCalledWith("id", "123");
     });
 

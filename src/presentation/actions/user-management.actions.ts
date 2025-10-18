@@ -62,8 +62,8 @@ export async function createUser(formData: {
       console.error("Error updating role:", updateError);
     }
 
-  revalidateTag("admin-users");
-  revalidatePath("/dashboard/admin/users");
+    revalidateTag("admin-users");
+    revalidatePath("/dashboard/admin/users");
     return { success: true };
   } catch (error) {
     return {
@@ -93,8 +93,8 @@ export async function deleteUser(userId: string) {
       return { error: result.error || "Error al eliminar usuario" };
     }
 
-  revalidateTag("admin-users");
-  revalidatePath("/dashboard/admin/users");
+    revalidateTag("admin-users");
+    revalidatePath("/dashboard/admin/users");
     return { success: true };
   } catch (error) {
     return {

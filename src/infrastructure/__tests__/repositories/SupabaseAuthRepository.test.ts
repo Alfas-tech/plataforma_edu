@@ -451,9 +451,7 @@ describe("SupabaseAuthRepository", () => {
     });
 
     it("should throw error when RPC throws exception", async () => {
-      mockSupabaseClient.rpc.mockRejectedValue(
-        new Error("Network error")
-      );
+      mockSupabaseClient.rpc.mockRejectedValue(new Error("Network error"));
 
       await expect(repository.deleteUser(userId)).rejects.toThrow(
         "Network error"

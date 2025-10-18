@@ -72,10 +72,7 @@ export function CourseManagementClient({
   const getStatusBadge = (course: CourseData) => {
     if (!course.isActive) {
       return (
-        <Badge
-          variant="outline"
-          className="border-orange-300 text-orange-600"
-        >
+        <Badge variant="outline" className="border-orange-300 text-orange-600">
           <XCircle className="mr-1 h-3 w-3" />
           Inactivo
         </Badge>
