@@ -94,7 +94,9 @@ export class SupabaseCourseRepository implements ICourseRepository {
       ...(input.description !== undefined
         ? { description: input.description }
         : {}),
-      ...(input.start_date !== undefined ? { start_date: input.start_date } : {}),
+      ...(input.start_date !== undefined
+        ? { start_date: input.start_date }
+        : {}),
       ...(input.end_date !== undefined ? { end_date: input.end_date } : {}),
       ...(input.is_active !== undefined ? { is_active: input.is_active } : {}),
       updated_at: new Date().toISOString(),

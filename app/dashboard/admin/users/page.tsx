@@ -110,7 +110,7 @@ export default async function UsersManagementPage() {
           </div>
         </div>
 
-        <Suspense fallback={<UsersPageSkeleton />}> 
+        <Suspense fallback={<UsersPageSkeleton />}>
           <UsersManagementContent usersPromise={usersPromise} />
         </Suspense>
       </main>

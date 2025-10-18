@@ -10,7 +10,9 @@ type ProfileRow = ProfileData;
 const PROFILE_SELECT =
   "id, email, full_name, avatar_url, role, created_at, updated_at";
 
-async function mapToEntity(data: ProfileRow | null): Promise<ProfileEntity | null> {
+async function mapToEntity(
+  data: ProfileRow | null
+): Promise<ProfileEntity | null> {
   if (!data) {
     return null;
   }

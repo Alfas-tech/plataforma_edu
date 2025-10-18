@@ -29,13 +29,19 @@ export default function LoadingAdminUsers() {
 
         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[0, 1, 2].map((item) => (
-            <div key={item} className="h-32 animate-pulse rounded-lg border bg-white" />
+            <div
+              key={item}
+              className="h-32 animate-pulse rounded-lg border bg-white"
+            />
           ))}
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
           {[0, 1].map((card) => (
-            <div key={card} className="h-[360px] animate-pulse rounded-lg border bg-white" />
+            <div
+              key={card}
+              className="h-[360px] animate-pulse rounded-lg border bg-white"
+            />
           ))}
         </div>
       </main>

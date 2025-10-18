@@ -224,10 +224,7 @@ function AdminManagementSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       {[0, 1].map((item) => (
-        <div
-          key={item}
-          className="rounded-lg border-2 bg-white p-6 shadow-sm"
-        >
+        <div key={item} className="rounded-lg border-2 bg-white p-6 shadow-sm">
           <div className="mb-4 h-6 w-1/3 animate-pulse rounded bg-slate-200" />
           <div className="mb-6 h-4 w-2/3 animate-pulse rounded bg-slate-100" />
           <div className="flex flex-wrap gap-2">

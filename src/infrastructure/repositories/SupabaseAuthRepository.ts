@@ -59,7 +59,9 @@ export class SupabaseAuthRepository implements IAuthRepository {
     }
 
     if (authData.user.identities && authData.user.identities.length === 0) {
-      throw new Error("Ya existe una cuenta registrada con este correo electrónico");
+      throw new Error(
+        "Ya existe una cuenta registrada con este correo electrónico"
+      );
     }
 
     const user = UserEntity.fromSupabase(authData.user);
@@ -172,9 +174,8 @@ export class SupabaseAuthRepository implements IAuthRepository {
       }
 
       // Step 2: Delete from auth.users using Admin API
-      const { error: authError } = await adminClient.auth.admin.deleteUser(
-        userId
-      );
+      const { error: authError } =
+        await adminClient.auth.admin.deleteUser(userId);
 
       if (authError) {
         throw new Error(

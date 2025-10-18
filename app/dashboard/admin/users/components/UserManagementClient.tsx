@@ -117,7 +117,11 @@ export function UserManagementClient({
       } else {
         let successMessage: string;
 
-        if (result && "message" in result && typeof result.message === "string") {
+        if (
+          result &&
+          "message" in result &&
+          typeof result.message === "string"
+        ) {
           successMessage = result.message;
         } else {
           successMessage =
@@ -229,9 +233,7 @@ export function UserManagementClient({
                             title={student.email}
                           >
                             <Mail className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
-                            <span className="truncate">
-                              {student.email}
-                            </span>
+                            <span className="truncate">{student.email}</span>
                           </p>
                         ) : (
                           <p className="mt-1 text-xs italic text-slate-400">
@@ -333,9 +335,7 @@ export function UserManagementClient({
                             title={teacher.email}
                           >
                             <Mail className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
-                            <span className="truncate">
-                              {teacher.email}
-                            </span>
+                            <span className="truncate">{teacher.email}</span>
                           </p>
                         ) : (
                           <p className="mt-1 text-xs italic text-slate-400">
