@@ -1,15 +1,47 @@
 import { SupabaseProfileRepository } from "@/src/infrastructure/repositories/SupabaseProfileRepository";
 import { ProfileEntity } from "@/src/core/entities/Profile.entity";
+import { UserRole } from "@/src/core/types/roles.types";
 
 jest.mock("@/src/infrastructure/supabase/server", () => ({
   createClient: jest.fn(),
 }));
 
+jest.mock("@/src/infrastructure/supabase/admin", () => ({
+  createAdminClient: jest.fn(),
+}));
+
 import { createClient } from "@/src/infrastructure/supabase/server";
+import { createAdminClient } from "@/src/infrastructure/supabase/admin";
 
 describe("SupabaseProfileRepository", () => {
   let repository: SupabaseProfileRepository;
   let mockSupabaseClient: any;
+  let mockAdminClient: any;
+  let mockAdminGetUserById: jest.Mock;
+
+  const PROFILE_SELECT =
+    "id, email, full_name, avatar_url, role, created_at, updated_at";
+
+  const buildProfile = (
+    overrides: Partial<{
+      id: string;
+      email: string | null;
+      full_name: string | null;
+      avatar_url: string | null;
+      role: UserRole;
+      created_at: string;
+      updated_at: string;
+    }> = {}
+  ) => ({
+    id: "123",
+    email: "test@example.com",
+    full_name: "John Doe",
+    avatar_url: "https://avatar.com/avatar.jpg",
+    role: "student" as UserRole,
+    created_at: new Date("2024-01-01T00:00:00Z").toISOString(),
+    updated_at: new Date("2024-01-02T00:00:00Z").toISOString(),
+    ...overrides,
+  });
 
   beforeEach(() => {
     mockSupabaseClient = {
@@ -21,7 +53,20 @@ describe("SupabaseProfileRepository", () => {
       rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
     };
 
+    mockAdminGetUserById = jest.fn().mockResolvedValue({
+      data: { user: { email: "fallback@example.com" } },
+      error: null,
+    });
+    mockAdminClient = {
+      auth: {
+        admin: {
+          getUserById: mockAdminGetUserById,
+        },
+      },
+    };
+
     (createClient as jest.Mock).mockReturnValue(mockSupabaseClient);
+    (createAdminClient as jest.Mock).mockReturnValue(mockAdminClient);
     repository = new SupabaseProfileRepository();
   });
 
@@ -31,12 +76,7 @@ describe("SupabaseProfileRepository", () => {
 
   describe("getProfileByUserId", () => {
     it("should return profile when found", async () => {
-      const mockProfile = {
-        id: "123",
-        email: "test@example.com",
-        full_name: "John Doe",
-        avatar_url: "https://avatar.com/avatar.jpg",
-      };
+      const mockProfile = buildProfile();
 
       mockSupabaseClient.single.mockResolvedValue({
         data: mockProfile,
@@ -49,7 +89,7 @@ describe("SupabaseProfileRepository", () => {
       expect(result?.id).toBe("123");
       expect(result?.email).toBe("test@example.com");
       expect(mockSupabaseClient.from).toHaveBeenCalledWith("profiles");
-      expect(mockSupabaseClient.select).toHaveBeenCalledWith("*");
+      expect(mockSupabaseClient.select).toHaveBeenCalledWith(PROFILE_SELECT);
       expect(mockSupabaseClient.eq).toHaveBeenCalledWith("id", "123");
     });
 
@@ -63,16 +103,30 @@ describe("SupabaseProfileRepository", () => {
 
       expect(result).toBeNull();
     });
+
+    it("should fallback to auth_users email when profile email is null", async () => {
+      const mockProfile = buildProfile({
+        email: null,
+      });
+
+      mockSupabaseClient.single.mockResolvedValue({
+        data: mockProfile,
+        error: null,
+      });
+
+      const result = await repository.getProfileByUserId("123");
+
+      expect(result?.email).toBe("fallback@example.com");
+      expect(mockAdminGetUserById).toHaveBeenCalledWith("123");
+    });
   });
 
   describe("updateProfile", () => {
     it("should update profile successfully", async () => {
-      const mockProfile = {
-        id: "123",
-        email: "test@example.com",
+      const mockProfile = buildProfile({
         full_name: "Jane Doe",
         avatar_url: "https://avatar.com/new.jpg",
-      };
+      });
 
       mockSupabaseClient.single.mockResolvedValue({
         data: mockProfile,
@@ -160,13 +214,7 @@ describe("SupabaseProfileRepository", () => {
 
   describe("updateRole", () => {
     it("should update user role successfully", async () => {
-      const mockProfile = {
-        id: "123",
-        email: "test@example.com",
-        full_name: "John Doe",
-        avatar_url: null,
-        role: "teacher",
-      };
+      const mockProfile = buildProfile({ role: "teacher" });
 
       mockSupabaseClient.single.mockResolvedValue({
         data: mockProfile,
@@ -199,18 +247,18 @@ describe("SupabaseProfileRepository", () => {
   describe("getAllTeachers", () => {
     it("should return all teachers", async () => {
       const mockTeachers = [
-        {
+        buildProfile({
           id: "1",
           email: "teacher1@example.com",
           full_name: "Teacher One",
           role: "teacher",
-        },
-        {
+        }),
+        buildProfile({
           id: "2",
           email: "teacher2@example.com",
           full_name: "Teacher Two",
           role: "teacher",
-        },
+        }),
       ];
 
       mockSupabaseClient.eq.mockResolvedValue({
@@ -251,12 +299,12 @@ describe("SupabaseProfileRepository", () => {
   describe("getAllStudents", () => {
     it("should return all students", async () => {
       const mockStudents = [
-        {
+        buildProfile({
           id: "1",
           email: "student1@example.com",
           full_name: "Student One",
           role: "student",
-        },
+        }),
       ];
 
       mockSupabaseClient.eq.mockResolvedValue({

@@ -1,18 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/src/infrastructure/supabase/middleware";
-import { createClient } from "@/src/infrastructure/supabase/server";
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
-  // Update session
-  const response = await updateSession(request);
-
-  // Create Supabase client to verify authentication
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Update session and retrieve current user
+  const { response, user } = await updateSession(request);
 
   // Public routes that do NOT require authentication
   const publicRoutes: readonly string[] = [

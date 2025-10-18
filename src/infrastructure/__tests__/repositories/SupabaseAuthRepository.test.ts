@@ -165,7 +165,7 @@ describe("SupabaseAuthRepository", () => {
       });
 
       await expect(repository.signUp(signUpData)).rejects.toThrow(
-        "Error al crear la cuenta"
+        "Ya existe una cuenta registrada con este correo electrónico"
       );
     });
   });
@@ -451,9 +451,7 @@ describe("SupabaseAuthRepository", () => {
     });
 
     it("should throw error when RPC throws exception", async () => {
-      mockSupabaseClient.rpc.mockRejectedValue(
-        new Error("Network error")
-      );
+      mockSupabaseClient.rpc.mockRejectedValue(new Error("Network error"));
 
       await expect(repository.deleteUser(userId)).rejects.toThrow(
         "Network error"

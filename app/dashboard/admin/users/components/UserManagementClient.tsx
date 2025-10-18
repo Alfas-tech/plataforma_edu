@@ -115,32 +115,26 @@ export function UserManagementClient({
       if (result && "error" in result) {
         setError(result.error || "Error en la operación");
       } else {
-        // Success
+        let successMessage: string;
+
         if (
           result &&
           "message" in result &&
           typeof result.message === "string"
         ) {
-          setSuccess(result.message);
+          successMessage = result.message;
         } else {
-          setSuccess(
+          successMessage =
             action === "promote"
               ? "Usuario promovido a docente"
               : action === "demote"
                 ? "Usuario degradado a estudiante"
                 : action === "delete"
                   ? "Usuario eliminado exitosamente"
-                  : "Acción completada"
-          );
+                  : "Acción completada";
         }
 
-        // Wait a bit to show success message, then close and refresh
-        setTimeout(() => {
-          setSelectedUser(null);
-          setAction(null);
-          setSuccess(null);
-          router.refresh();
-        }, 1500);
+        setSuccess(successMessage);
       }
     } catch (err) {
       setError("Error inesperado al realizar la acción");
@@ -154,6 +148,12 @@ export function UserManagementClient({
     setAction(null);
     setError(null);
     setSuccess(null);
+    setIsLoading(false);
+  };
+
+  const handleCloseAfterSuccess = () => {
+    router.refresh();
+    handleCancel();
   };
 
   const formatDate = (dateString: string) => {
@@ -215,13 +215,31 @@ export function UserManagementClient({
                           {student.displayName.charAt(0).toUpperCase()}
                         </div>
                       )}
-                      <div>
-                        <p className="font-medium text-slate-800">
-                          {student.displayName}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          {student.email}
-                        </p>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium text-slate-800">
+                            {student.displayName}
+                          </p>
+                          <Badge
+                            variant="outline"
+                            className="border-blue-200 bg-blue-50 text-[11px] font-medium text-blue-700"
+                          >
+                            Estudiante
+                          </Badge>
+                        </div>
+                        {student.email ? (
+                          <p
+                            className="mt-1 flex items-center gap-1 text-sm text-slate-600"
+                            title={student.email}
+                          >
+                            <Mail className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
+                            <span className="truncate">{student.email}</span>
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-xs italic text-slate-400">
+                            Correo no disponible
+                          </p>
+                        )}
                         <div className="mt-1 flex items-center gap-1 text-xs text-slate-400">
                           <Calendar className="h-3 w-3" />
                           {formatDate(student.createdAt)}
@@ -299,13 +317,31 @@ export function UserManagementClient({
                           {teacher.displayName.charAt(0).toUpperCase()}
                         </div>
                       )}
-                      <div>
-                        <p className="font-medium text-slate-800">
-                          {teacher.displayName}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          {teacher.email}
-                        </p>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium text-slate-800">
+                            {teacher.displayName}
+                          </p>
+                          <Badge
+                            variant="outline"
+                            className="border-emerald-200 bg-emerald-50 text-[11px] font-medium text-emerald-700"
+                          >
+                            Docente
+                          </Badge>
+                        </div>
+                        {teacher.email ? (
+                          <p
+                            className="mt-1 flex items-center gap-1 text-sm text-slate-600"
+                            title={teacher.email}
+                          >
+                            <Mail className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
+                            <span className="truncate">{teacher.email}</span>
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-xs italic text-slate-400">
+                            Correo no disponible
+                          </p>
+                        )}
                         <div className="mt-1 flex items-center gap-1 text-xs text-slate-400">
                           <Calendar className="h-3 w-3" />
                           {formatDate(teacher.createdAt)}
@@ -389,24 +425,48 @@ export function UserManagementClient({
             </div>
           )}
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isLoading}
-            >
-              Cancelar
-            </Button>
-            <Button onClick={handleConfirm} disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Procesando...
-                </>
-              ) : (
-                "Confirmar"
-              )}
-            </Button>
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+            {success ? (
+              <Button
+                onClick={handleCloseAfterSuccess}
+                className="w-full sm:w-auto"
+              >
+                Cerrar
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={isLoading}
+                  className="w-full sm:w-auto"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleConfirm}
+                  disabled={isLoading}
+                  className="w-full sm:w-auto"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Procesando...
+                    </>
+                  ) : action === "promote" ? (
+                    <>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Promover
+                    </>
+                  ) : (
+                    <>
+                      <UserMinus className="mr-2 h-4 w-4" />
+                      Degradar
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -439,31 +499,44 @@ export function UserManagementClient({
             </div>
           )}
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isLoading}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleConfirm}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Eliminando...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Eliminar
-                </>
-              )}
-            </Button>
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+            {success ? (
+              <Button
+                onClick={handleCloseAfterSuccess}
+                className="w-full sm:w-auto"
+              >
+                Cerrar
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={isLoading}
+                  className="w-full sm:w-auto"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleConfirm}
+                  disabled={isLoading}
+                  className="w-full sm:w-auto"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Eliminando...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Eliminar
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -495,27 +568,43 @@ export function UserManagementClient({
             </div>
           )}
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isLoading}
-            >
-              Cancelar
-            </Button>
-            <Button onClick={handleConfirm} disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Enviando...
-                </>
-              ) : (
-                <>
-                  <Mail className="mr-2 h-4 w-4" />
-                  Enviar Email
-                </>
-              )}
-            </Button>
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+            {success ? (
+              <Button
+                onClick={handleCloseAfterSuccess}
+                className="w-full sm:w-auto"
+              >
+                Cerrar
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={isLoading}
+                  className="w-full sm:w-auto"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleConfirm}
+                  disabled={isLoading}
+                  className="w-full sm:w-auto"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="mr-2 h-4 w-4" />
+                      Enviar Email
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

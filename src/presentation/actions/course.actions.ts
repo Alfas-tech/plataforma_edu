@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { GetAllCoursesUseCase } from "@/src/application/use-cases/course/GetAllCoursesUseCase";
 import { CreateCourseUseCase } from "@/src/application/use-cases/course/CreateCourseUseCase";
 import { UpdateCourseUseCase } from "@/src/application/use-cases/course/UpdateCourseUseCase";
@@ -59,6 +59,7 @@ export async function createCourse(input: CreateCourseInput) {
     return { error: result.error || "Error al crear curso" };
   }
 
+  revalidateTag("admin-courses");
   revalidatePath("/dashboard/admin");
   revalidatePath("/dashboard/admin/courses");
 
@@ -78,6 +79,7 @@ export async function updateCourse(courseId: string, input: UpdateCourseInput) {
     return { error: result.error || "Error al actualizar curso" };
   }
 
+  revalidateTag("admin-courses");
   revalidatePath("/dashboard/admin");
   revalidatePath("/dashboard/admin/courses");
   revalidatePath("/dashboard/teacher");
@@ -98,6 +100,7 @@ export async function deleteCourse(courseId: string) {
     return { error: result.error || "Error al eliminar curso" };
   }
 
+  revalidateTag("admin-courses");
   revalidatePath("/dashboard/admin");
   revalidatePath("/dashboard/admin/courses");
 
@@ -120,6 +123,7 @@ export async function assignTeacherToCourse(
     return { error: result.error || "Error al asignar docente" };
   }
 
+  revalidateTag("admin-courses");
   revalidatePath("/dashboard/admin");
   revalidatePath("/dashboard/admin/courses");
   revalidatePath(`/dashboard/admin/courses/${courseId}`);
@@ -143,6 +147,7 @@ export async function removeTeacherFromCourse(
     return { error: result.error || "Error al remover docente" };
   }
 
+  revalidateTag("admin-courses");
   revalidatePath("/dashboard/admin");
   revalidatePath("/dashboard/admin/courses");
   revalidatePath(`/dashboard/admin/courses/${courseId}`);

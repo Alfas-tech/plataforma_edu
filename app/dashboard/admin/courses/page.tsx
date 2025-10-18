@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { Suspense } from "react";
 import { CourseManagementClient } from "./components/CourseManagementClient";
 
 export default async function CoursesManagementPage() {
@@ -29,25 +30,7 @@ export default async function CoursesManagementPage() {
     redirect("/dashboard");
   }
 
-  // Obtener todos los cursos
-  const coursesResult = await getAllCourses();
-
-  if ("error" in coursesResult) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
-            <p>Error al cargar cursos: {coursesResult.error}</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const courses = coursesResult.courses || [];
-  const activeCourses = courses.filter((c) => c.status === "active");
-  const upcomingCourses = courses.filter((c) => c.status === "upcoming");
-  const endedCourses = courses.filter((c) => c.status === "ended");
+  const coursesPromise = getAllCourses();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
@@ -131,54 +114,105 @@ export default async function CoursesManagementPage() {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:mb-8 sm:grid-cols-3">
-          <Card className="border-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <BookOpen className="h-5 w-5 text-purple-600" />
-                Total Cursos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-slate-800">
-                {courses.length}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <Calendar className="h-5 w-5 text-green-600" />
-                Cursos Activos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-green-600">
-                {activeCourses.length}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
-                Próximos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-blue-600">
-                {upcomingCourses.length}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Course Management Client Component */}
-        <CourseManagementClient courses={courses} />
+        <Suspense fallback={<CoursesPageSkeleton />}>
+          <CoursesManagementContent coursesPromise={coursesPromise} />
+        </Suspense>
       </main>
+    </div>
+  );
+}
+
+type CoursesResult = Awaited<ReturnType<typeof getAllCourses>>;
+
+async function CoursesManagementContent({
+  coursesPromise,
+}: {
+  coursesPromise: Promise<CoursesResult>;
+}) {
+  const coursesResult = await coursesPromise;
+
+  if ("error" in coursesResult) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+        <p>Error al cargar cursos: {coursesResult.error}</p>
+      </div>
+    );
+  }
+
+  const courses = coursesResult.courses || [];
+  const activeCourses = courses.filter((c) => c.status === "active");
+  const upcomingCourses = courses.filter((c) => c.status === "upcoming");
+
+  return (
+    <>
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:mb-8 sm:grid-cols-3">
+        <Card className="border-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <BookOpen className="h-5 w-5 text-purple-600" />
+              Total Cursos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-slate-800">
+              {courses.length}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Calendar className="h-5 w-5 text-green-600" />
+              Cursos Activos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-green-600">
+              {activeCourses.length}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <TrendingUp className="h-5 w-5 text-blue-600" />
+              Próximos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-blue-600">
+              {upcomingCourses.length}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <CourseManagementClient courses={courses} />
+    </>
+  );
+}
+
+function CoursesPageSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {[0, 1, 2].map((item) => (
+          <div
+            key={item}
+            className="h-32 animate-pulse rounded-lg border bg-white"
+          />
+        ))}
+      </div>
+      <div className="space-y-4">
+        {[0, 1, 2].map((card) => (
+          <div
+            key={card}
+            className="h-[260px] animate-pulse rounded-lg border bg-white"
+          />
+        ))}
+      </div>
     </div>
   );
 }

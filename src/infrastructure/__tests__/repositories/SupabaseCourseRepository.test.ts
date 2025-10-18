@@ -25,12 +25,10 @@ describe("SupabaseCourseRepository", () => {
       order: jest.fn().mockReturnThis(),
       rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
       auth: {
-        getUser: jest
-          .fn()
-          .mockResolvedValue({
-            data: { user: { id: "user-123" } },
-            error: null,
-          }),
+        getUser: jest.fn().mockResolvedValue({
+          data: { user: { id: "user-123" } },
+          error: null,
+        }),
       },
     };
 
@@ -250,11 +248,13 @@ describe("SupabaseCourseRepository", () => {
       const updateData = {
         title: "Updated Course",
         description: "Updated Description",
+        is_active: false,
       };
 
-      const mockUpdatedCourse = {
+      const existingCourse = {
         id: "course-1",
-        ...updateData,
+        title: "Original Course",
+        description: "Original Description",
         start_date: "2024-01-01",
         end_date: "2024-12-31",
         is_active: true,
@@ -263,27 +263,65 @@ describe("SupabaseCourseRepository", () => {
         updated_at: "2024-01-02",
       };
 
-      mockSupabase.single.mockResolvedValue({
-        data: mockUpdatedCourse,
+      mockSupabase.single.mockResolvedValueOnce({
+        data: existingCourse,
         error: null,
       });
+
+      mockSupabase.eq
+        .mockImplementationOnce(() => mockSupabase) // for initial select
+        .mockImplementationOnce(() =>
+          Promise.resolve({ data: null, error: null })
+        );
 
       const result = await repository.updateCourse("course-1", updateData);
 
       expect(result).toBeInstanceOf(CourseEntity);
       expect(result.title).toBe("Updated Course");
+      expect(result.description).toBe("Updated Description");
+      expect(result.isActive).toBe(false);
       expect(mockSupabase.from).toHaveBeenCalledWith("courses");
     });
 
     it("should throw error when update fails", async () => {
-      mockSupabase.single.mockResolvedValue({
-        data: null,
-        error: { message: "Update failed" },
+      mockSupabase.single.mockResolvedValueOnce({
+        data: {
+          id: "course-1",
+          title: "Original Course",
+          description: "Original Description",
+          start_date: "2024-01-01",
+          end_date: "2024-12-31",
+          is_active: true,
+          created_by: "admin-1",
+          created_at: "2024-01-01",
+          updated_at: "2024-01-02",
+        },
+        error: null,
       });
+
+      mockSupabase.eq
+        .mockImplementationOnce(() => mockSupabase)
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            data: null,
+            error: { message: "Update failed" },
+          })
+        );
 
       await expect(
         repository.updateCourse("course-1", { title: "New Title" })
-      ).rejects.toThrow("Error al actualizar el curso");
+      ).rejects.toThrow("Update failed");
+    });
+
+    it("should throw error when course does not exist", async () => {
+      mockSupabase.single.mockResolvedValueOnce({
+        data: null,
+        error: { message: "Not found" },
+      });
+
+      await expect(
+        repository.updateCourse("course-404", { title: "Ghost" })
+      ).rejects.toThrow("Curso no encontrado");
     });
   });
 

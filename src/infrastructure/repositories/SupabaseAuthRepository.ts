@@ -41,8 +41,27 @@ export class SupabaseAuthRepository implements IAuthRepository {
       },
     });
 
-    if (error || !authData.user) {
-      throw new Error("Error al crear la cuenta");
+    if (error) {
+      const duplicateMessages = [
+        "User already registered",
+        "Email already exists",
+      ];
+
+      throw new Error(
+        error.message && duplicateMessages.includes(error.message)
+          ? "Ya existe una cuenta registrada con este correo electrónico"
+          : error.message || "Error al crear la cuenta"
+      );
+    }
+
+    if (!authData.user) {
+      throw new Error("No se pudo crear la cuenta");
+    }
+
+    if (authData.user.identities && authData.user.identities.length === 0) {
+      throw new Error(
+        "Ya existe una cuenta registrada con este correo electrónico"
+      );
     }
 
     const user = UserEntity.fromSupabase(authData.user);
@@ -155,9 +174,8 @@ export class SupabaseAuthRepository implements IAuthRepository {
       }
 
       // Step 2: Delete from auth.users using Admin API
-      const { error: authError } = await adminClient.auth.admin.deleteUser(
-        userId
-      );
+      const { error: authError } =
+        await adminClient.auth.admin.deleteUser(userId);
 
       if (authError) {
         throw new Error(

@@ -17,12 +17,20 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const showAnalytics =
+    process.env.NODE_ENV === "production" &&
+    Boolean(process.env.NEXT_PUBLIC_VERCEL_ANALYTICS_ID?.trim());
+
   return (
     <html lang="en">
       <body className={cn("bg-background", inter.className)}>
         {children}
-        <Analytics />
-        <SpeedInsights />
+        {showAnalytics ? (
+          <>
+            <Analytics />
+            <SpeedInsights />
+          </>
+        ) : null}
       </body>
     </html>
   );

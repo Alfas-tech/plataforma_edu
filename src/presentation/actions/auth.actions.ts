@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { SupabaseAuthRepository } from "@/src/infrastructure/repositories/SupabaseAuthRepository";
+import { SupabaseProfileRepository } from "@/src/infrastructure/repositories/SupabaseProfileRepository";
+import { GetCurrentProfileUseCase } from "@/src/application/use-cases/profile/GetCurrentProfileUseCase";
 import { LoginUseCase } from "@/src/application/use-cases/auth/LoginUseCase";
 import { SignUpUseCase } from "@/src/application/use-cases/auth/SignUpUseCase";
 import { SignOutUseCase } from "@/src/application/use-cases/auth/SignOutUseCase";
@@ -12,12 +14,14 @@ import { UpdatePasswordUseCase } from "@/src/application/use-cases/auth/UpdatePa
 
 // Instancia del repositorio (singleton)
 const authRepository = new SupabaseAuthRepository();
+const profileRepository = new SupabaseProfileRepository();
 
 export async function login(formData: FormData) {
   const loginUseCase = new LoginUseCase(authRepository);
 
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const redirectParam = formData.get("redirect") as string | null;
 
   const result = await loginUseCase.execute({ email, password });
 
@@ -25,10 +29,31 @@ export async function login(formData: FormData) {
     return { error: result.error };
   }
 
+  let redirectTo = redirectParam || "/dashboard";
+
+  if (!redirectParam) {
+    const getCurrentProfileUseCase = new GetCurrentProfileUseCase(
+      profileRepository,
+      authRepository
+    );
+
+    const profileResult = await getCurrentProfileUseCase.execute();
+
+    if (profileResult.success && profileResult.profile) {
+      if (profileResult.profile.isAdmin()) {
+        redirectTo = "/dashboard/admin";
+      } else if (profileResult.profile.isTeacher()) {
+        redirectTo = "/dashboard/teacher";
+      } else {
+        redirectTo = "/dashboard/student";
+      }
+    }
+  }
+
   revalidatePath("/", "layout");
   revalidatePath("/dashboard");
 
-  return { success: true };
+  return { success: true, redirectTo };
 }
 
 export async function signup(formData: FormData) {

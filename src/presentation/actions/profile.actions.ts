@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { GetCurrentProfileUseCase } from "@/src/application/use-cases/profile/GetCurrentProfileUseCase";
 import { GetAllUsersUseCase } from "@/src/application/use-cases/profile/GetAllUsersUseCase";
 import { PromoteToTeacherUseCase } from "@/src/application/use-cases/profile/PromoteToTeacherUseCase";
@@ -87,6 +87,7 @@ export async function promoteToTeacher(userId: string) {
     return { error: result.error || "Error al promover usuario" };
   }
 
+  revalidateTag("admin-users");
   revalidatePath("/dashboard/admin");
   revalidatePath("/dashboard/admin/users");
 
@@ -105,6 +106,7 @@ export async function demoteToStudent(userId: string) {
     return { error: result.error || "Error al degradar usuario" };
   }
 
+  revalidateTag("admin-users");
   revalidatePath("/dashboard/admin");
   revalidatePath("/dashboard/admin/users");
 
