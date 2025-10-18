@@ -79,21 +79,43 @@ export class SupabaseCourseRepository implements ICourseRepository {
   ): Promise<CourseEntity> {
     const supabase = createClient();
 
-    const { data, error } = await supabase
+    const { data: existingData, error: fetchError } = await supabase
       .from("courses")
-      .update({
-        ...input,
-        updated_at: new Date().toISOString(),
-      })
+      .select("*")
       .eq("id", id)
-      .select()
       .single();
 
-    if (error || !data) {
-      throw new Error("Error al actualizar el curso");
+    if (fetchError || !existingData) {
+      throw new Error("Curso no encontrado");
     }
 
-    return CourseEntity.fromDatabase(data);
+    const updates: Partial<CourseData> = {
+      ...(input.title !== undefined ? { title: input.title } : {}),
+      ...(input.description !== undefined
+        ? { description: input.description }
+        : {}),
+      ...(input.start_date !== undefined ? { start_date: input.start_date } : {}),
+      ...(input.end_date !== undefined ? { end_date: input.end_date } : {}),
+      ...(input.is_active !== undefined ? { is_active: input.is_active } : {}),
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase
+      .from("courses")
+      .update(updates)
+      .eq("id", id);
+
+    if (error) {
+      throw new Error(error.message || "Error al actualizar el curso");
+    }
+
+    const mergedCourse: CourseData = {
+      ...existingData,
+      ...updates,
+      updated_at: updates.updated_at ?? existingData.updated_at,
+    } as CourseData;
+
+    return CourseEntity.fromDatabase(mergedCourse);
   }
 
   async deleteCourse(id: string): Promise<void> {

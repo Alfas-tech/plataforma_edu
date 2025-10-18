@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
@@ -26,6 +26,13 @@ export function LoginForm() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect");
   const router = useRouter();
+
+  useEffect(() => {
+    router.prefetch("/dashboard");
+    router.prefetch("/dashboard/admin");
+    router.prefetch("/dashboard/teacher");
+    router.prefetch("/dashboard/student");
+  }, [router]);
 
   const {
     register,
@@ -55,21 +62,28 @@ export function LoginForm() {
 
       if (result?.error) {
         setError(result.error || "Error al iniciar sesión");
+        setIsSubmitting(false);
       } else {
-        // Login exitoso - redirigir con router.push para forzar revalidación
-        const redirectTo = redirect || "/dashboard";
-        router.push(redirectTo);
-        router.refresh(); // Forzar refresh de datos del servidor
+        const redirectTo = result?.redirectTo || redirect || "/dashboard";
+        void router.prefetch(redirectTo);
+        router.replace(redirectTo);
       }
     } catch (err) {
       setError("Ocurrió un error. Por favor intenta de nuevo.");
-    } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Card className="mx-auto max-w-sm">
+    <Card className="relative mx-auto max-w-sm">
+      {isSubmitting && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 rounded-lg bg-white/80 backdrop-blur-sm">
+          <Loader2 className="h-6 w-6 animate-spin text-purple-600" />
+          <p className="text-sm font-medium text-slate-700">
+            Iniciando sesión...
+          </p>
+        </div>
+      )}
       <CardHeader>
         <CardTitle className="text-2xl">Iniciar sesión</CardTitle>
         <CardDescription>

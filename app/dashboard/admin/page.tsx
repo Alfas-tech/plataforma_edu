@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogOut, Users, BookOpen, Settings } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { Suspense } from "react";
 
 export default async function AdminDashboardPage() {
   const profileResult = await getCurrentProfile();
@@ -21,20 +22,7 @@ export default async function AdminDashboardPage() {
   if (!profile.isAdmin) {
     redirect("/dashboard");
   }
-
-  // Obtener cursos
-  const coursesResult = await getAllCourses();
-  const courses = "error" in coursesResult ? [] : coursesResult.courses || [];
-
-  // Obtener usuarios
-  const usersResult = await getAllUsers();
-  const students = "error" in usersResult ? [] : usersResult.students || [];
-  const teachers = "error" in usersResult ? [] : usersResult.teachers || [];
-
-  // Calcular estadísticas
-  const activeCourses = courses.filter((c) => c.status === "active").length;
-  const upcomingCourses = courses.filter((c) => c.status === "upcoming").length;
-  const completedCourses = courses.filter((c) => c.status === "ended").length;
+  const managementDataPromise = Promise.all([getAllCourses(), getAllUsers()]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
@@ -111,86 +99,151 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Management Links */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Card className="border-2 transition-shadow hover:shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Users className="h-6 w-6 text-blue-600" />
-                Gestión de Usuarios
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4 text-sm text-slate-600">
-                Administra roles y permisos de estudiantes y docentes
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Link href="/dashboard/admin/users" className="flex-1">
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Gestionar Usuarios
-                  </Button>
-                </Link>
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-4">
-                <div className="rounded-lg border bg-slate-50 p-3">
-                  <p className="mb-1 text-xs text-slate-600">Estudiantes</p>
-                  <p className="text-xl font-bold text-blue-600">
-                    {students.length}
-                  </p>
-                </div>
-                <div className="rounded-lg border bg-slate-50 p-3">
-                  <p className="mb-1 text-xs text-slate-600">Docentes</p>
-                  <p className="text-xl font-bold text-purple-600">
-                    {teachers.length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 transition-shadow hover:shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <BookOpen className="h-6 w-6 text-green-600" />
-                Gestión de Cursos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4 text-sm text-slate-600">
-                Crea, edita cursos y asigna docentes
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Link href="/dashboard/admin/courses" className="flex-1">
-                  <Button className="w-full bg-green-600 hover:bg-green-700">
-                    <BookOpen className="mr-2 h-4 w-4" />
-                    Gestionar Cursos
-                  </Button>
-                </Link>
-              </div>
-              <div className="mt-4 grid grid-cols-3 gap-2">
-                <div className="rounded-lg border bg-slate-50 p-3">
-                  <p className="mb-1 text-xs text-slate-600">Total</p>
-                  <p className="text-xl font-bold text-green-600">
-                    {courses.length}
-                  </p>
-                </div>
-                <div className="rounded-lg border bg-slate-50 p-3">
-                  <p className="mb-1 text-xs text-slate-600">Activos</p>
-                  <p className="text-xl font-bold text-orange-600">
-                    {activeCourses}
-                  </p>
-                </div>
-                <div className="rounded-lg border bg-slate-50 p-3">
-                  <p className="mb-1 text-xs text-slate-600">Próximos</p>
-                  <p className="text-xl font-bold text-blue-600">
-                    {upcomingCourses}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <Suspense fallback={<AdminManagementSkeleton />}>
+          <AdminManagementContent dataPromise={managementDataPromise} />
+        </Suspense>
       </main>
+    </div>
+  );
+}
+
+type CoursesResult = Awaited<ReturnType<typeof getAllCourses>>;
+type UsersResult = Awaited<ReturnType<typeof getAllUsers>>;
+
+async function AdminManagementContent({
+  dataPromise,
+}: {
+  dataPromise: Promise<[CoursesResult, UsersResult]>;
+}) {
+  const [coursesResult, usersResult] = await dataPromise;
+
+  if ("error" in coursesResult || "error" in usersResult) {
+    const errorMessage =
+      ("error" in coursesResult && coursesResult.error) ||
+      ("error" in usersResult && usersResult.error) ||
+      "Error al cargar datos";
+
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+        <p>{errorMessage}</p>
+      </div>
+    );
+  }
+
+  const courses = coursesResult.courses || [];
+  const students = usersResult.students || [];
+  const teachers = usersResult.teachers || [];
+
+  const activeCourses = courses.filter((c) => c.status === "active").length;
+  const upcomingCourses = courses.filter((c) => c.status === "upcoming").length;
+
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <Card className="border-2 transition-shadow hover:shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <Users className="h-6 w-6 text-blue-600" />
+            Gestión de Usuarios
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-4 text-sm text-slate-600">
+            Administra roles y permisos de estudiantes y docentes
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/dashboard/admin/users" className="flex-1">
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                <Settings className="mr-2 h-4 w-4" />
+                Gestionar Usuarios
+              </Button>
+            </Link>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <div className="rounded-lg border bg-slate-50 p-3">
+              <p className="mb-1 text-xs text-slate-600">Estudiantes</p>
+              <p className="text-xl font-bold text-blue-600">
+                {students.length}
+              </p>
+            </div>
+            <div className="rounded-lg border bg-slate-50 p-3">
+              <p className="mb-1 text-xs text-slate-600">Docentes</p>
+              <p className="text-xl font-bold text-purple-600">
+                {teachers.length}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-2 transition-shadow hover:shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <BookOpen className="h-6 w-6 text-green-600" />
+            Gestión de Cursos
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-4 text-sm text-slate-600">
+            Crea, edita cursos y asigna docentes
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/dashboard/admin/courses" className="flex-1">
+              <Button className="w-full bg-green-600 hover:bg-green-700">
+                <BookOpen className="mr-2 h-4 w-4" />
+                Gestionar Cursos
+              </Button>
+            </Link>
+          </div>
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <div className="rounded-lg border bg-slate-50 p-3">
+              <p className="mb-1 text-xs text-slate-600">Total</p>
+              <p className="text-xl font-bold text-green-600">
+                {courses.length}
+              </p>
+            </div>
+            <div className="rounded-lg border bg-slate-50 p-3">
+              <p className="mb-1 text-xs text-slate-600">Activos</p>
+              <p className="text-xl font-bold text-orange-600">
+                {activeCourses}
+              </p>
+            </div>
+            <div className="rounded-lg border bg-slate-50 p-3">
+              <p className="mb-1 text-xs text-slate-600">Próximos</p>
+              <p className="text-xl font-bold text-blue-600">
+                {upcomingCourses}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function AdminManagementSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      {[0, 1].map((item) => (
+        <div
+          key={item}
+          className="rounded-lg border-2 bg-white p-6 shadow-sm"
+        >
+          <div className="mb-4 h-6 w-1/3 animate-pulse rounded bg-slate-200" />
+          <div className="mb-6 h-4 w-2/3 animate-pulse rounded bg-slate-100" />
+          <div className="flex flex-wrap gap-2">
+            <div className="h-10 w-32 animate-pulse rounded bg-slate-200" />
+            <div className="h-10 w-32 animate-pulse rounded bg-slate-200" />
+          </div>
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            {[0, 1, 2].map((stat) => (
+              <div
+                key={stat}
+                className="h-16 animate-pulse rounded bg-slate-100"
+              />
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

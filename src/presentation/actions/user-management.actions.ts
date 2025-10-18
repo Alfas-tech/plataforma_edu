@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/src/infrastructure/supabase/server";
 import { getCurrentProfile } from "./profile.actions";
 import { SupabaseAuthRepository } from "@/src/infrastructure/repositories/SupabaseAuthRepository";
@@ -62,7 +62,8 @@ export async function createUser(formData: {
       console.error("Error updating role:", updateError);
     }
 
-    revalidatePath("/dashboard/admin/users");
+  revalidateTag("admin-users");
+  revalidatePath("/dashboard/admin/users");
     return { success: true };
   } catch (error) {
     return {
@@ -92,7 +93,8 @@ export async function deleteUser(userId: string) {
       return { error: result.error || "Error al eliminar usuario" };
     }
 
-    revalidatePath("/dashboard/admin/users");
+  revalidateTag("admin-users");
+  revalidatePath("/dashboard/admin/users");
     return { success: true };
   } catch (error) {
     return {

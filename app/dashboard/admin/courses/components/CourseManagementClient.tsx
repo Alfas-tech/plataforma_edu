@@ -70,6 +70,18 @@ export function CourseManagementClient({
   };
 
   const getStatusBadge = (course: CourseData) => {
+    if (!course.isActive) {
+      return (
+        <Badge
+          variant="outline"
+          className="border-orange-300 text-orange-600"
+        >
+          <XCircle className="mr-1 h-3 w-3" />
+          Inactivo
+        </Badge>
+      );
+    }
+
     if (course.status === "active") {
       return (
         <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
@@ -87,7 +99,7 @@ export function CourseManagementClient({
     } else {
       return (
         <Badge className="bg-slate-100 text-slate-700 hover:bg-slate-100">
-          <XCircle className="mr-1 h-3 w-3" />
+          <Clock className="mr-1 h-3 w-3" />
           Finalizado
         </Badge>
       );
@@ -139,14 +151,6 @@ export function CourseManagementClient({
                     <div className="mb-2 flex flex-wrap items-center gap-2">
                       <CardTitle className="text-xl">{course.title}</CardTitle>
                       {getStatusBadge(course)}
-                      {!course.isActive && (
-                        <Badge
-                          variant="outline"
-                          className="border-orange-300 text-orange-600"
-                        >
-                          Inactivo
-                        </Badge>
-                      )}
                     </div>
                     {course.description && (
                       <p className="text-sm text-slate-600">
