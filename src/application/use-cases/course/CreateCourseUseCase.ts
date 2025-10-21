@@ -38,17 +38,6 @@ export class CreateCourseUseCase {
         };
       }
 
-      // Validate dates
-      const startDate = new Date(input.start_date);
-      const endDate = new Date(input.end_date);
-
-      if (endDate <= startDate) {
-        return {
-          success: false,
-          error: "La fecha de fin debe ser posterior a la fecha de inicio",
-        };
-      }
-
       // Create course
       const course = await this.courseRepository.createCourse(input);
 

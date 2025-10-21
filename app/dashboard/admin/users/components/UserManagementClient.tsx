@@ -197,7 +197,7 @@ export function UserManagementClient({
                 {students.map((student) => (
                   <div
                     key={student.id}
-                    className="flex items-center justify-between rounded-lg border bg-white p-3 transition-shadow hover:shadow-md"
+                    className="flex flex-col gap-3 rounded-lg border bg-white p-3 transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="flex items-center gap-3">
                       {student.avatarUrl ? (
@@ -246,12 +246,12 @@ export function UserManagementClient({
                         </div>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2 sm:w-auto sm:items-end">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handlePromoteClick(student)}
-                        className="whitespace-nowrap"
+                        className="w-full whitespace-nowrap sm:w-auto"
                       >
                         <UserPlus className="mr-1 h-3 w-3" />
                         Promover
@@ -260,6 +260,7 @@ export function UserManagementClient({
                         variant="ghost"
                         size="sm"
                         onClick={() => handleResetPasswordClick(student)}
+                        className="w-full sm:w-auto"
                       >
                         <KeyRound className="mr-1 h-3 w-3" />
                         Reset
@@ -268,7 +269,7 @@ export function UserManagementClient({
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteClick(student)}
-                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                        className="w-full text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
                       >
                         <Trash2 className="mr-1 h-3 w-3" />
                         Eliminar
@@ -299,7 +300,7 @@ export function UserManagementClient({
                 {teachers.map((teacher) => (
                   <div
                     key={teacher.id}
-                    className="flex items-center justify-between rounded-lg border bg-white p-3 transition-shadow hover:shadow-md"
+                    className="flex flex-col gap-3 rounded-lg border bg-white p-3 transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="flex items-center gap-3">
                       {teacher.avatarUrl ? (
@@ -348,12 +349,12 @@ export function UserManagementClient({
                         </div>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2 sm:w-auto sm:items-end">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleDemoteClick(teacher)}
-                        className="whitespace-nowrap"
+                        className="w-full whitespace-nowrap sm:w-auto"
                       >
                         <UserMinus className="mr-1 h-3 w-3" />
                         Degradar
@@ -362,6 +363,7 @@ export function UserManagementClient({
                         variant="ghost"
                         size="sm"
                         onClick={() => handleResetPasswordClick(teacher)}
+                        className="w-full sm:w-auto"
                       >
                         <KeyRound className="mr-1 h-3 w-3" />
                         Reset
@@ -370,7 +372,7 @@ export function UserManagementClient({
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteClick(teacher)}
-                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                        className="w-full text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
                       >
                         <Trash2 className="mr-1 h-3 w-3" />
                         Eliminar

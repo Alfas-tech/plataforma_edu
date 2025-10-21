@@ -18,10 +18,19 @@ interface PageProps {
     courseId: string;
     moduleId: string;
   };
+  searchParams?: {
+    branchId?: string;
+    versionId?: string;
+  };
 }
 
-export default async function ModuleLessonsPage({ params }: PageProps) {
+export default async function ModuleLessonsPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { courseId, moduleId } = params;
+  const requestedBranchId = searchParams?.branchId ?? null;
+  const requestedVersionId = searchParams?.versionId ?? null;
 
   const profileResult = await getCurrentProfile();
 
@@ -44,13 +53,48 @@ export default async function ModuleLessonsPage({ params }: PageProps) {
 
   const { course } = courseResult;
 
+  const branchCandidates = [course.defaultBranch, ...course.branches].filter(
+    Boolean
+  ) as typeof course.branches;
+
+  const selectedBranch = requestedBranchId
+    ? (branchCandidates.find((branch) => branch.id === requestedBranchId) ??
+      null)
+    : (course.defaultBranch ?? null);
+
+  const effectiveBranch = selectedBranch ?? course.defaultBranch ?? null;
+
+  const effectiveVersionId = (() => {
+    if (requestedVersionId) {
+      return requestedVersionId;
+    }
+
+    if (effectiveBranch?.tipVersionId) {
+      return effectiveBranch.tipVersionId;
+    }
+
+    if (effectiveBranch?.isDefault) {
+      return course.activeVersion?.id ?? null;
+    }
+
+    return null;
+  })();
+
   // Obtener módulo
-  const modulesResult = await getModulesByCourse(courseId);
+  const modulesResult = await getModulesByCourse(courseId, {
+    courseVersionId: effectiveVersionId ?? undefined,
+  });
   const modules = "error" in modulesResult ? [] : modulesResult.modules || [];
   const moduleData = modules.find((m) => m.id === moduleId);
 
   if (!moduleData) {
-    redirect(`/dashboard/admin/courses/${courseId}/content`);
+    const search = new URLSearchParams();
+    if (effectiveBranch?.id) search.set("branchId", effectiveBranch.id);
+    if (effectiveVersionId) search.set("versionId", effectiveVersionId);
+    const query = search.toString();
+    redirect(
+      `/dashboard/admin/courses/${courseId}/content${query ? `?${query}` : ""}`
+    );
   }
 
   // Obtener lecciones
@@ -123,7 +167,15 @@ export default async function ModuleLessonsPage({ params }: PageProps) {
       <main className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8">
         {/* Header Section */}
         <div className="mb-6 flex items-center gap-4 sm:mb-8">
-          <Link href={`/dashboard/admin/courses/${courseId}/content`}>
+          <Link
+            href={{
+              pathname: `/dashboard/admin/courses/${courseId}/content`,
+              query: {
+                branchId: effectiveBranch?.id ?? undefined,
+                versionId: effectiveVersionId ?? undefined,
+              },
+            }}
+          >
             <Button variant="outline" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Volver
@@ -173,6 +225,9 @@ export default async function ModuleLessonsPage({ params }: PageProps) {
         {/* Lesson Management */}
         <LessonManagementClient
           moduleId={moduleId}
+          branchName={effectiveBranch?.name ?? "principal"}
+          isDefaultBranch={effectiveBranch?.isDefault ?? true}
+          courseVersionId={effectiveVersionId ?? null}
           lessons={lessons}
           isAdmin={profile.isAdmin}
         />

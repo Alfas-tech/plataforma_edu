@@ -1,14 +1,22 @@
+import Image from "next/image";
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getCurrentProfile } from "@/src/presentation/actions/profile.actions";
-import { getAllCourses } from "@/src/presentation/actions/course.actions";
-import { getAllUsers } from "@/src/presentation/actions/profile.actions";
-import { signout } from "@/src/presentation/actions/auth.actions";
+import {
+  LogOut,
+  Users,
+  GitPullRequest,
+  GitBranch,
+  GitMerge,
+} from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Users, BookOpen, Settings } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
-import { Suspense } from "react";
+import { signout } from "@/src/presentation/actions/auth.actions";
+import { getAllCourses } from "@/src/presentation/actions/course.actions";
+import { getCurrentProfile } from "@/src/presentation/actions/profile.actions";
+import type { CourseOverview } from "@/src/presentation/types/course";
+
+import { CourseManagementClient } from "./courses/components/CourseManagementClient";
 
 export default async function AdminDashboardPage() {
   const profileResult = await getCurrentProfile();
@@ -22,225 +30,205 @@ export default async function AdminDashboardPage() {
   if (!profile.isAdmin) {
     redirect("/dashboard");
   }
-  const managementDataPromise = Promise.all([getAllCourses(), getAllUsers()]);
+
+  const displayName =
+    profile.displayName ?? profile.fullName ?? profile.email ?? "Administrador";
+  const initials = displayName.trim().charAt(0).toUpperCase() || "A";
+  const coursesResult = await getAllCourses();
+  const courseData: CourseOverview[] =
+    "error" in coursesResult ? [] : (coursesResult.courses ?? []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white shadow-sm">
-        <div className="container mx-auto px-3 py-3 sm:px-4 sm:py-4 lg:px-6">
-          <div className="flex items-center justify-between gap-2 sm:gap-4">
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2 transition-opacity hover:opacity-80 sm:gap-3"
-            >
-              <div className="relative h-8 w-8 flex-shrink-0 sm:h-10 sm:w-10">
-                <Image
-                  src="/logo.png"
-                  alt="Aprende Code Logo"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </div>
-              <h1 className="truncate text-lg font-bold text-slate-800 sm:text-xl md:text-2xl">
-                Aprende Code
-              </h1>
-            </Link>
+      <AdminHeader
+        displayName={displayName}
+        avatarUrl={profile.avatarUrl}
+        initials={initials}
+      />
 
-            <div className="flex items-center gap-2 sm:gap-3">
-              <span className="hidden text-xs font-medium text-purple-600 sm:inline sm:text-sm">
-                🛡️ Administrador
-              </span>
-              {profile.avatarUrl ? (
-                <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-full sm:h-10 sm:w-10">
-                  <Image
-                    src={profile.avatarUrl}
-                    alt={profile.displayName}
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
-                </div>
-              ) : (
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-600 text-xs font-semibold text-white sm:h-10 sm:w-10 sm:text-sm">
-                  {profile.displayName.charAt(0).toUpperCase()}
-                </div>
-              )}
-              <span className="hidden max-w-[120px] truncate text-xs font-medium text-slate-700 sm:text-sm md:inline lg:max-w-none">
-                {profile.displayName}
-              </span>
-              <form action={signout}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  type="submit"
-                  className="bg-transparent text-xs sm:text-sm"
-                >
-                  <LogOut className="h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">Salir</span>
-                </Button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
       <main className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8">
-        {/* Header Section */}
-        <div className="mb-6 sm:mb-8">
-          <h1 className="mb-2 text-balance text-2xl font-bold text-slate-800 sm:mb-3 sm:text-3xl md:text-4xl">
-            Panel de Administración
-          </h1>
-          <p className="text-pretty text-sm text-slate-600 sm:text-base">
-            Gestiona usuarios, cursos y contenido de la plataforma
-          </p>
+        <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="mb-1 text-balance text-2xl font-bold text-slate-800 sm:mb-2 sm:text-3xl md:text-4xl">
+              Gestión de Cursos
+            </h1>
+            <p className="text-pretty text-sm text-slate-600 sm:text-base md:text-lg">
+              Itera el curso principal usando ediciones de trabajo y solicitudes
+              de fusión sin interrumpir a los estudiantes.
+            </p>
+          </div>
+          <Link href="/dashboard/admin/users">
+            <Button
+              variant="outline"
+              className="gap-2 border-purple-200 text-purple-700 hover:bg-purple-50"
+            >
+              <Users className="h-4 w-4" />
+              Gestionar usuarios
+            </Button>
+          </Link>
         </div>
 
-        {/* Management Links */}
-        <Suspense fallback={<AdminManagementSkeleton />}>
-          <AdminManagementContent dataPromise={managementDataPromise} />
-        </Suspense>
+        {"error" in coursesResult ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+            <p>Error al cargar cursos: {coursesResult.error}</p>
+          </div>
+        ) : (
+          <CoursesOverview courses={courseData} />
+        )}
       </main>
     </div>
   );
 }
 
-type CoursesResult = Awaited<ReturnType<typeof getAllCourses>>;
-type UsersResult = Awaited<ReturnType<typeof getAllUsers>>;
+type AdminHeaderProps = {
+  displayName: string;
+  avatarUrl?: string | null;
+  initials: string;
+};
 
-async function AdminManagementContent({
-  dataPromise,
-}: {
-  dataPromise: Promise<[CoursesResult, UsersResult]>;
-}) {
-  const [coursesResult, usersResult] = await dataPromise;
-
-  if ("error" in coursesResult || "error" in usersResult) {
-    const errorMessage =
-      ("error" in coursesResult && coursesResult.error) ||
-      ("error" in usersResult && usersResult.error) ||
-      "Error al cargar datos";
-
-    return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
-        <p>{errorMessage}</p>
-      </div>
-    );
-  }
-
-  const courses = coursesResult.courses || [];
-  const students = usersResult.students || [];
-  const teachers = usersResult.teachers || [];
-
-  const activeCourses = courses.filter((c) => c.status === "active").length;
-  const upcomingCourses = courses.filter((c) => c.status === "upcoming").length;
-
+function AdminHeader({ displayName, avatarUrl, initials }: AdminHeaderProps) {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <Card className="border-2 transition-shadow hover:shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <Users className="h-6 w-6 text-blue-600" />
-            Gestión de Usuarios
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-4 text-sm text-slate-600">
-            Administra roles y permisos de estudiantes y docentes
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Link href="/dashboard/admin/users" className="flex-1">
-              <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                <Settings className="mr-2 h-4 w-4" />
-                Gestionar Usuarios
-              </Button>
-            </Link>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-4">
-            <div className="rounded-lg border bg-slate-50 p-3">
-              <p className="mb-1 text-xs text-slate-600">Estudiantes</p>
-              <p className="text-xl font-bold text-blue-600">
-                {students.length}
-              </p>
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white shadow-sm">
+      <div className="container mx-auto px-3 py-3 sm:px-4 sm:py-4 lg:px-6">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 transition-opacity hover:opacity-80 sm:gap-3"
+          >
+            <div className="relative h-8 w-8 flex-shrink-0 sm:h-10 sm:w-10">
+              <Image
+                src="/logo.png"
+                alt="Aprende Code Logo"
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
-            <div className="rounded-lg border bg-slate-50 p-3">
-              <p className="mb-1 text-xs text-slate-600">Docentes</p>
-              <p className="text-xl font-bold text-purple-600">
-                {teachers.length}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            <h1 className="truncate text-lg font-bold text-slate-800 sm:text-xl md:text-2xl">
+              Aprende Code
+            </h1>
+          </Link>
 
-      <Card className="border-2 transition-shadow hover:shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <BookOpen className="h-6 w-6 text-green-600" />
-            Gestión de Cursos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-4 text-sm text-slate-600">
-            Crea, edita cursos y asigna docentes
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Link href="/dashboard/admin/courses" className="flex-1">
-              <Button className="w-full bg-green-600 hover:bg-green-700">
-                <BookOpen className="mr-2 h-4 w-4" />
-                Gestionar Cursos
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="hidden text-xs font-medium text-purple-600 sm:inline sm:text-sm">
+              🛡️ Administrador
+            </span>
+            {avatarUrl ? (
+              <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-full sm:h-10 sm:w-10">
+                <Image
+                  src={avatarUrl}
+                  alt={displayName}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
+            ) : (
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-600 text-xs font-semibold text-white sm:h-10 sm:w-10 sm:text-sm">
+                {initials}
+              </div>
+            )}
+            <span className="hidden max-w-[120px] truncate text-xs font-medium text-slate-700 sm:text-sm md:inline lg:max-w-none">
+              {displayName}
+            </span>
+            <form action={signout}>
+              <Button
+                variant="outline"
+                size="sm"
+                type="submit"
+                className="bg-transparent text-xs sm:text-sm"
+              >
+                <LogOut className="h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Salir</span>
               </Button>
-            </Link>
+            </form>
           </div>
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            <div className="rounded-lg border bg-slate-50 p-3">
-              <p className="mb-1 text-xs text-slate-600">Total</p>
-              <p className="text-xl font-bold text-green-600">
-                {courses.length}
-              </p>
-            </div>
-            <div className="rounded-lg border bg-slate-50 p-3">
-              <p className="mb-1 text-xs text-slate-600">Activos</p>
-              <p className="text-xl font-bold text-orange-600">
-                {activeCourses}
-              </p>
-            </div>
-            <div className="rounded-lg border bg-slate-50 p-3">
-              <p className="mb-1 text-xs text-slate-600">Próximos</p>
-              <p className="text-xl font-bold text-blue-600">
-                {upcomingCourses}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </div>
+    </header>
   );
 }
 
-function AdminManagementSkeleton() {
+type CoursesOverviewProps = {
+  courses: CourseOverview[];
+};
+
+function CoursesOverview({ courses }: CoursesOverviewProps) {
+  const openMergeRequests = courses.reduce((count, course) => {
+    const openForCourse = course.pendingMergeRequests.filter(
+      (mr) => mr.status === "open"
+    ).length;
+    return count + openForCourse;
+  }, 0);
+  const readyToMerge = courses.reduce((count, course) => {
+    const approvedForCourse = course.pendingMergeRequests.filter(
+      (mr) => mr.status === "approved"
+    ).length;
+    return count + approvedForCourse;
+  }, 0);
+  const draftBranches = courses.reduce((count, course) => {
+    const hasPending = course.branches.some(
+      (branch) =>
+        branch.tipVersionStatus === "draft" ||
+        branch.tipVersionStatus === "pending_review"
+    );
+
+    return hasPending ? count + 1 : count;
+  }, 0);
+
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      {[0, 1].map((item) => (
-        <div key={item} className="rounded-lg border-2 bg-white p-6 shadow-sm">
-          <div className="mb-4 h-6 w-1/3 animate-pulse rounded bg-slate-200" />
-          <div className="mb-6 h-4 w-2/3 animate-pulse rounded bg-slate-100" />
-          <div className="flex flex-wrap gap-2">
-            <div className="h-10 w-32 animate-pulse rounded bg-slate-200" />
-            <div className="h-10 w-32 animate-pulse rounded bg-slate-200" />
-          </div>
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            {[0, 1, 2].map((stat) => (
-              <div
-                key={stat}
-                className="h-16 animate-pulse rounded bg-slate-100"
-              />
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
+    <>
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:mb-8 sm:grid-cols-3">
+        <Card className="border-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <GitMerge className="h-5 w-5 text-emerald-600" />
+              Listas para fusionar
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-emerald-600">
+              {readyToMerge}
+            </p>
+            <p className="mt-2 text-sm text-slate-500">
+              Solicitudes ya aprobadas esperando ser fusionadas a la edición
+              principal.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <GitBranch className="h-5 w-5 text-slate-600" />
+              Ediciones con trabajo pendiente
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-slate-600">{draftBranches}</p>
+            <p className="mt-2 text-sm text-slate-500">
+              Cursos con contenido nuevo en ediciones alternativas listo para
+              revisión.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <GitPullRequest className="h-5 w-5 text-purple-600" />
+              Solicitudes abiertas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-purple-600">
+              {openMergeRequests}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <CourseManagementClient courses={courses} />
+    </>
   );
 }

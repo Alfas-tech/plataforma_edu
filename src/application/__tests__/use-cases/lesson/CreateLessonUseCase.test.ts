@@ -58,11 +58,14 @@ describe("CreateLessonUseCase", () => {
       getCourseById: jest.fn(),
       updateCourse: jest.fn(),
       deleteCourse: jest.fn(),
-      assignTeacherToCourse: jest.fn(),
-      removeTeacherFromCourse: jest.fn(),
-      getCourseWithTeachers: jest.fn(),
+      assignTeacherToVersion: jest.fn(),
+      removeTeacherFromVersion: jest.fn(),
+      getCourseVersionById: jest.fn(),
+      getCourseVersionAssignments: jest.fn(),
+      isTeacherAssignedToVersion: jest.fn(),
       getTeacherCourses: jest.fn(),
       getCourseTeachers: jest.fn(),
+      getVersionTeachers: jest.fn(),
     } as any;
 
     createLessonUseCase = new CreateLessonUseCase(
@@ -103,7 +106,11 @@ describe("CreateLessonUseCase", () => {
       new Date()
     );
 
-    const mockModule = { id: "module-123", course_id: "course-123" };
+    const mockModule = {
+      id: "module-123",
+      course_id: "course-123",
+      courseVersionId: "version-123",
+    };
 
     it("should create lesson successfully when user is admin", async () => {
       const mockLesson = new LessonEntity(
@@ -163,14 +170,16 @@ describe("CreateLessonUseCase", () => {
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         teacherProfile
       );
-      mockCourseRepository.getCourseTeachers.mockResolvedValue(["user-123"]);
+      mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(true);
       mockLessonRepository.createLesson.mockResolvedValue(mockLesson);
 
       const result = await createLessonUseCase.execute(validInput);
 
       expect(result.success).toBe(true);
       expect(result.lesson).toEqual(mockLesson);
-      expect(mockCourseRepository.getCourseTeachers).toHaveBeenCalled();
+      expect(
+        mockCourseRepository.isTeacherAssignedToVersion
+      ).toHaveBeenCalledWith("version-123", mockUser.id);
     });
 
     it("should return error when module not found", async () => {
@@ -246,14 +255,12 @@ describe("CreateLessonUseCase", () => {
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         teacherProfile
       );
-      mockCourseRepository.getCourseTeachers.mockResolvedValue([
-        "other-user-id",
-      ]);
+      mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(false);
 
       const result = await createLessonUseCase.execute(validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("No estás asignado a este curso");
+      expect(result.error).toBe("No estás asignado a esta versión del curso");
       expect(mockLessonRepository.createLesson).not.toHaveBeenCalled();
     });
 

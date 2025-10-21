@@ -49,6 +49,7 @@ describe("SupabaseProfileRepository", () => {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       update: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue({ data: [], error: null }),
       single: jest.fn(),
       rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
     };
@@ -63,6 +64,12 @@ describe("SupabaseProfileRepository", () => {
           getUserById: mockAdminGetUserById,
         },
       },
+      from: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue({ data: [], error: null }),
     };
 
     (createClient as jest.Mock).mockReturnValue(mockSupabaseClient);
@@ -163,51 +170,86 @@ describe("SupabaseProfileRepository", () => {
 
   describe("promoteToTeacher", () => {
     it("should promote user to teacher successfully", async () => {
-      mockSupabaseClient.rpc.mockResolvedValue({ data: null, error: null });
+      mockAdminClient.eq
+        .mockImplementationOnce(() => mockAdminClient)
+        .mockImplementationOnce(() =>
+          Promise.resolve({ data: null, error: null })
+        );
+      mockAdminClient.limit.mockResolvedValueOnce({
+        data: [{ role: "student" }],
+        error: null,
+      });
 
       await expect(
         repository.promoteToTeacher("user-123")
       ).resolves.not.toThrow();
-      expect(mockSupabaseClient.rpc).toHaveBeenCalledWith(
-        "promote_to_teacher",
-        {
-          user_id: "user-123",
-        }
+      expect(mockAdminClient.from).toHaveBeenCalledWith("profiles");
+      expect(mockAdminClient.limit).toHaveBeenCalledWith(1);
+      expect(mockAdminClient.update).toHaveBeenCalledWith(
+        expect.objectContaining({ role: "teacher" })
       );
     });
 
     it("should throw error when promotion fails", async () => {
-      mockSupabaseClient.rpc.mockResolvedValue({
-        data: null,
-        error: { message: "Promotion failed" },
+      mockAdminClient.eq.mockImplementationOnce(() => mockAdminClient);
+      mockAdminClient.limit.mockResolvedValueOnce({
+        data: [{ role: "student" }],
+        error: null,
+      });
+      mockAdminClient.update.mockReturnValueOnce({
+        eq: () =>
+          Promise.resolve({
+            data: null,
+            error: { message: "Promotion failed" },
+          }),
       });
 
       await expect(repository.promoteToTeacher("user-123")).rejects.toThrow(
-        "Error al promover a docente"
+        "Error al promover a docente: Promotion failed"
       );
     });
   });
 
   describe("demoteToStudent", () => {
     it("should demote user to student successfully", async () => {
-      mockSupabaseClient.rpc.mockResolvedValue({ data: null, error: null });
+      mockAdminClient.eq
+        .mockImplementationOnce(() => mockAdminClient)
+        .mockImplementationOnce(() =>
+          Promise.resolve({ data: null, error: null })
+        )
+        .mockImplementationOnce(() =>
+          Promise.resolve({ data: null, error: null })
+        );
+      mockAdminClient.limit.mockResolvedValueOnce({
+        data: [{ role: "teacher" }],
+        error: null,
+      });
 
       await expect(
         repository.demoteToStudent("user-123")
       ).resolves.not.toThrow();
-      expect(mockSupabaseClient.rpc).toHaveBeenCalledWith("demote_to_student", {
-        user_id: "user-123",
-      });
+      expect(mockAdminClient.delete).toHaveBeenCalled();
+      expect(mockAdminClient.update).toHaveBeenCalledWith(
+        expect.objectContaining({ role: "student" })
+      );
     });
 
     it("should throw error when demotion fails", async () => {
-      mockSupabaseClient.rpc.mockResolvedValue({
-        data: null,
-        error: { message: "Demotion failed" },
+      mockAdminClient.eq.mockImplementationOnce(() => mockAdminClient);
+      mockAdminClient.limit.mockResolvedValueOnce({
+        data: [{ role: "teacher" }],
+        error: null,
+      });
+      mockAdminClient.delete.mockReturnValueOnce({
+        eq: () =>
+          Promise.resolve({
+            data: null,
+            error: { message: "Demotion failed" },
+          }),
       });
 
       await expect(repository.demoteToStudent("user-123")).rejects.toThrow(
-        "Error al degradar a estudiante"
+        "Error al degradar a estudiante: Demotion failed"
       );
     });
   });

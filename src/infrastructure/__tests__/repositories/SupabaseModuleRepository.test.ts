@@ -22,7 +22,7 @@ describe("SupabaseModuleRepository", () => {
       order: jest.fn().mockReturnThis(),
     };
 
-    (createClient as jest.Mock).mockReturnValue(mockSupabase);
+    (createClient as any).mockReturnValue(mockSupabase);
     repository = new SupabaseModuleRepository();
   });
 
@@ -36,6 +36,7 @@ describe("SupabaseModuleRepository", () => {
         {
           id: "module-1",
           course_id: "course-1",
+          course_version_id: "version-1",
           title: "Module 1",
           description: "Description",
           order_index: 1,
@@ -72,6 +73,25 @@ describe("SupabaseModuleRepository", () => {
       const result = await repository.getModulesByCourseId("course-1");
       expect(result).toEqual([]);
     });
+
+    it("should filter by course version when provided", async () => {
+      mockSupabase.order.mockResolvedValue({ data: [], error: null });
+
+      await repository.getModulesByCourseId("course-1", {
+        courseVersionId: "version-1",
+      });
+
+      expect(mockSupabase.eq).toHaveBeenNthCalledWith(
+        1,
+        "course_id",
+        "course-1"
+      );
+      expect(mockSupabase.eq).toHaveBeenNthCalledWith(
+        2,
+        "course_version_id",
+        "version-1"
+      );
+    });
   });
 
   describe("getModuleById", () => {
@@ -79,6 +99,7 @@ describe("SupabaseModuleRepository", () => {
       const mockModule = {
         id: "module-1",
         course_id: "course-1",
+        course_version_id: "version-1",
         title: "Module 1",
         description: "Description",
         order_index: 1,
@@ -109,6 +130,7 @@ describe("SupabaseModuleRepository", () => {
     it("should create a new module", async () => {
       const moduleData = {
         course_id: "course-1",
+        course_version_id: "version-1",
         title: "New Module",
         description: "Description",
         order_index: 1,
@@ -140,13 +162,19 @@ describe("SupabaseModuleRepository", () => {
         error: { message: "Creation failed" },
       });
 
-      await expect(
-        repository.createModule({
-          course_id: "course-1",
-          title: "New Module",
-          order_index: 1,
-        })
-      ).rejects.toThrow("Error al crear módulo");
+      const moduleData = {
+        course_id: "course-1",
+        course_version_id: "version-1",
+        title: "New Module",
+        description: "Description",
+        order_index: 1,
+        content: "Content",
+        is_published: false,
+      };
+
+      await expect(repository.createModule(moduleData)).rejects.toThrow(
+        "Error al crear módulo"
+      );
     });
   });
 
@@ -160,6 +188,7 @@ describe("SupabaseModuleRepository", () => {
       const mockUpdatedModule = {
         id: "module-1",
         course_id: "course-1",
+        course_version_id: "version-1",
         ...updateData,
         description: "Description",
         order_index: 1,

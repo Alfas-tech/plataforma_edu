@@ -57,11 +57,18 @@ export async function getCourseWithModulesAndLessons(courseId: string) {
       return { error: courseError.message };
     }
 
-    // Get modules
+    // Ensure course has an active version to scope content
+    const activeVersionId = course.active_version_id;
+    if (!activeVersionId) {
+      return { error: "El curso no tiene una versión activa" };
+    }
+
+    // Get modules limited to the active version
     const modulesQuery = supabase
       .from("course_modules")
       .select("*")
       .eq("course_id", courseId)
+      .eq("course_version_id", activeVersionId)
       .order("order_index", { ascending: true });
 
     // Only show published modules to students

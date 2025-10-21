@@ -2,24 +2,34 @@ import { GetAllCoursesUseCase } from "@/src/application/use-cases/course/GetAllC
 import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
 import { CourseEntity } from "@/src/core/entities/Course.entity";
 
+declare const describe: any;
+declare const beforeEach: any;
+declare const afterEach: any;
+declare const it: any;
+declare const expect: any;
+declare const jest: any;
+
 describe("GetAllCoursesUseCase", () => {
-  let mockCourseRepository: jest.Mocked<ICourseRepository>;
+  let mockCourseRepository: any;
   let getAllCoursesUseCase: GetAllCoursesUseCase;
 
   beforeEach(() => {
     mockCourseRepository = {
+      getActiveCourse: jest.fn(),
+      getCourseById: jest.fn(),
       createCourse: jest.fn(),
       getAllCourses: jest.fn(),
-      getCourseById: jest.fn(),
       updateCourse: jest.fn(),
       deleteCourse: jest.fn(),
-      assignTeacherToCourse: jest.fn(),
-      removeTeacherFromCourse: jest.fn(),
-      getCourseWithTeachers: jest.fn(),
+      assignTeacher: jest.fn(),
+      removeTeacher: jest.fn(),
+      getCourseTeachers: jest.fn(),
       getTeacherCourses: jest.fn(),
-    } as jest.Mocked<ICourseRepository>;
+    };
 
-    getAllCoursesUseCase = new GetAllCoursesUseCase(mockCourseRepository);
+    getAllCoursesUseCase = new GetAllCoursesUseCase(
+      mockCourseRepository as ICourseRepository
+    );
   });
 
   afterEach(() => {
@@ -28,26 +38,65 @@ describe("GetAllCoursesUseCase", () => {
 
   describe("execute", () => {
     it("should return all courses successfully", async () => {
+      const now = new Date();
       const mockCourses = [
-        new CourseEntity(
-          "course-1",
-          "Course 1",
-          "Description 1",
-          new Date("2025-01-01"),
-          new Date("2025-06-30"),
-          true,
-          new Date(),
-          new Date()
+        CourseEntity.fromDatabase(
+          {
+            id: "course-1",
+            title: "Course 1",
+            summary: "Summary 1",
+            description: "Description 1",
+            slug: "course-1",
+            visibility_override: false,
+            active_version_id: "version-1",
+            created_by: "admin-1",
+            created_at: now.toISOString(),
+            updated_at: now.toISOString(),
+          },
+          {
+            id: "version-1",
+            course_id: "course-1",
+            version_label: "v1.0.0",
+            summary: "Summary 1",
+            status: "published",
+            is_active: true,
+            is_published: true,
+            based_on_version_id: null,
+            created_by: "admin-1",
+            reviewed_by: null,
+            approved_at: now.toISOString(),
+            created_at: now.toISOString(),
+            updated_at: now.toISOString(),
+          }
         ),
-        new CourseEntity(
-          "course-2",
-          "Course 2",
-          "Description 2",
-          new Date("2025-07-01"),
-          new Date("2025-12-31"),
-          true,
-          new Date(),
-          new Date()
+        CourseEntity.fromDatabase(
+          {
+            id: "course-2",
+            title: "Course 2",
+            summary: "Summary 2",
+            description: "Description 2",
+            slug: "course-2",
+            visibility_override: false,
+            active_version_id: "version-2",
+            created_by: "admin-2",
+            created_at: now.toISOString(),
+            updated_at: now.toISOString(),
+          },
+          {
+            id: "version-2",
+            course_id: "course-2",
+            version_label: "v1.1.0",
+            summary: "Summary 2",
+            status: "published",
+            is_active: true,
+            is_published: true,
+            based_on_version_id: null,
+            created_by: "admin-2",
+            reviewed_by: null,
+            approved_at: now.toISOString(),
+            created_at: now.toISOString(),
+            updated_at: now.toISOString(),
+          }
         ),
       ];
 

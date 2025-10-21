@@ -61,19 +61,6 @@ export class UpdateCourseUseCase {
         }
       }
 
-      // Validate dates if provided
-      if (input.start_date && input.end_date) {
-        const startDate = new Date(input.start_date);
-        const endDate = new Date(input.end_date);
-
-        if (endDate <= startDate) {
-          return {
-            success: false,
-            error: "La fecha de fin debe ser posterior a la fecha de inicio",
-          };
-        }
-      }
-
       // Update course
       const course = await this.courseRepository.updateCourse(courseId, input);
 

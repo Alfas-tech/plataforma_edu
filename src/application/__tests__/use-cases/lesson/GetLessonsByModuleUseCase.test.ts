@@ -10,6 +10,7 @@ import { ProfileEntity } from "@/src/core/entities/Profile.entity";
 describe("GetLessonsByModuleUseCase", () => {
   let mockLessonRepository: jest.Mocked<ILessonRepository>;
   let mockModuleRepository: jest.Mocked<IModuleRepository>;
+  let mockCourseRepository: jest.Mocked<any>;
   let mockAuthRepository: jest.Mocked<IAuthRepository>;
   let mockProfileRepository: jest.Mocked<IProfileRepository>;
   let getLessonsByModuleUseCase: GetLessonsByModuleUseCase;
@@ -30,6 +31,22 @@ describe("GetLessonsByModuleUseCase", () => {
       getModuleById: jest.fn(),
       updateModule: jest.fn(),
       deleteModule: jest.fn(),
+    } as any;
+
+    mockCourseRepository = {
+      createCourse: jest.fn(),
+      getAllCourses: jest.fn(),
+      getCourseById: jest.fn(),
+      updateCourse: jest.fn(),
+      deleteCourse: jest.fn(),
+      assignTeacherToVersion: jest.fn(),
+      removeTeacherFromVersion: jest.fn(),
+      getCourseVersionById: jest.fn(),
+      getCourseVersionAssignments: jest.fn(),
+      isTeacherAssignedToVersion: jest.fn(),
+      getTeacherCourses: jest.fn(),
+      getCourseTeachers: jest.fn(),
+      getVersionTeachers: jest.fn(),
     } as any;
 
     mockAuthRepository = {
@@ -56,6 +73,7 @@ describe("GetLessonsByModuleUseCase", () => {
     getLessonsByModuleUseCase = new GetLessonsByModuleUseCase(
       mockLessonRepository,
       mockModuleRepository,
+      mockCourseRepository,
       mockAuthRepository,
       mockProfileRepository
     );
@@ -67,9 +85,10 @@ describe("GetLessonsByModuleUseCase", () => {
 
   describe("execute", () => {
     const moduleId = "module-123";
-    const mockModule = {
+    const mockModule: any = {
       id: moduleId,
       courseId: "course-123",
+      courseVersionId: "version-123",
       title: "Test Module",
       description: "Description",
       orderIndex: 1,
@@ -158,6 +177,7 @@ describe("GetLessonsByModuleUseCase", () => {
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         mockTeacherProfile
       );
+      mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(true);
       mockLessonRepository.getLessonsByModuleId.mockResolvedValue([
         publishedLesson,
         unpublishedLesson,
@@ -190,6 +210,7 @@ describe("GetLessonsByModuleUseCase", () => {
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         mockStudentProfile
       );
+      mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(true);
       mockLessonRepository.getLessonsByModuleId.mockResolvedValue([
         publishedLesson,
         unpublishedLesson,

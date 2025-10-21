@@ -5,12 +5,13 @@ import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileR
 import { CourseModuleEntity } from "@/src/core/entities/CourseModule.entity";
 
 export interface CreateModuleInput {
-  course_id: string;
+  courseId: string;
+  courseVersionId?: string;
   title: string;
   description: string | null;
-  order_index: number;
+  orderIndex: number;
   content: string | null;
-  is_published: boolean;
+  isPublished: boolean;
 }
 
 export interface CreateModuleResult {
@@ -56,21 +57,72 @@ export class CreateModuleUseCase {
         };
       }
 
-      // If teacher, check if assigned to the course
-      if (profile.isTeacher()) {
-        const assignedTeachers = await this.courseRepository.getCourseTeachers(
-          input.course_id
+      const course = await this.courseRepository.getCourseById(input.courseId);
+      if (!course) {
+        return {
+          success: false,
+          error: "Curso no encontrado",
+        };
+      }
+
+      let targetVersionId: string | null = null;
+
+      if (input.courseVersionId) {
+        const version = await this.courseRepository.getCourseVersionById(
+          input.courseVersionId
         );
-        if (!assignedTeachers.includes(currentUser.id)) {
+
+        if (!version) {
           return {
             success: false,
-            error: "No estás asignado a este curso",
+            error: "Versión del curso no encontrada",
+          };
+        }
+
+        if (version.courseId !== course.id) {
+          return {
+            success: false,
+            error: "La versión seleccionada no pertenece al curso",
+          };
+        }
+
+        targetVersionId = version.id;
+      } else {
+        targetVersionId = course.activeVersion?.id ?? null;
+      }
+
+      if (!targetVersionId) {
+        return {
+          success: false,
+          error: "El curso no tiene una versión activa",
+        };
+      }
+
+      if (profile.isTeacher()) {
+        const isAssigned =
+          await this.courseRepository.isTeacherAssignedToVersion(
+            targetVersionId,
+            currentUser.id
+          );
+
+        if (!isAssigned) {
+          return {
+            success: false,
+            error: "No estás asignado a esta versión del curso",
           };
         }
       }
 
       // Create module
-      const moduleData = await this.moduleRepository.createModule(input);
+      const moduleData = await this.moduleRepository.createModule({
+        course_id: input.courseId,
+        course_version_id: targetVersionId,
+        title: input.title,
+        description: input.description,
+        order_index: input.orderIndex,
+        content: input.content,
+        is_published: input.isPublished,
+      });
 
       return {
         success: true,

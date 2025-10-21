@@ -12,11 +12,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { GraduationCap, UserPlus, UserMinus, Mail } from "lucide-react";
 import Image from "next/image";
 import {
-  assignTeacherToCourse,
-  removeTeacherFromCourse,
+  assignTeacherToCourseVersion,
+  removeTeacherFromCourseVersion,
 } from "@/src/presentation/actions/course.actions";
 import { useRouter } from "next/navigation";
 
@@ -28,18 +35,36 @@ interface TeacherData {
   displayName: string;
 }
 
+interface VersionAssignment {
+  id: string;
+  label: string;
+  summary: string | null;
+  status: string;
+  isActive: boolean;
+  isPublished: boolean;
+  isTip: boolean;
+  createdAt: string;
+  updatedAt: string;
+  branchId: string | null;
+  branchName: string | null;
+  teachers: TeacherData[];
+}
+
 interface TeacherAssignmentClientProps {
   courseId: string;
-  assignedTeachers: TeacherData[];
+  versions: VersionAssignment[];
   allTeachers: TeacherData[];
 }
 
 export function TeacherAssignmentClient({
   courseId,
-  assignedTeachers,
+  versions,
   allTeachers,
 }: TeacherAssignmentClientProps) {
   const router = useRouter();
+  const [selectedVersionId, setSelectedVersionId] = useState<string>(
+    versions[0]?.id ?? ""
+  );
   const [selectedTeacher, setSelectedTeacher] = useState<TeacherData | null>(
     null
   );
@@ -47,26 +72,47 @@ export function TeacherAssignmentClient({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Filter available teachers (those not assigned yet)
-  const availableTeachers = allTeachers.filter(
-    (teacher) =>
-      !assignedTeachers.some((assigned) => assigned.id === teacher.id)
-  );
+  const selectedVersion =
+    versions.find((version) => version.id === selectedVersionId) ?? null;
+
+  const assignedTeachers = selectedVersion?.teachers ?? [];
+
+  const availableTeachers = selectedVersion
+    ? allTeachers.filter(
+        (teacher) =>
+          !assignedTeachers.some((assigned) => assigned.id === teacher.id)
+      )
+    : [];
+
+  const handleVersionChange = (value: string) => {
+    setSelectedVersionId(value);
+    setSelectedTeacher(null);
+    setAction(null);
+    setError(null);
+  };
 
   const handleAssignClick = (teacher: TeacherData) => {
+    if (!selectedVersion) {
+      return;
+    }
     setSelectedTeacher(teacher);
     setAction("assign");
     setError(null);
   };
 
   const handleRemoveClick = (teacher: TeacherData) => {
+    if (!selectedVersion) {
+      return;
+    }
     setSelectedTeacher(teacher);
     setAction("remove");
     setError(null);
   };
 
   const handleConfirm = async () => {
-    if (!selectedTeacher || !action) return;
+    if (!selectedTeacher || !action || !selectedVersion) {
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -74,9 +120,17 @@ export function TeacherAssignmentClient({
     try {
       let result;
       if (action === "assign") {
-        result = await assignTeacherToCourse(courseId, selectedTeacher.id);
+        result = await assignTeacherToCourseVersion(
+          courseId,
+          selectedVersion.id,
+          selectedTeacher.id
+        );
       } else {
-        result = await removeTeacherFromCourse(courseId, selectedTeacher.id);
+        result = await removeTeacherFromCourseVersion(
+          courseId,
+          selectedVersion.id,
+          selectedTeacher.id
+        );
       }
 
       if ("error" in result) {
@@ -99,15 +153,110 @@ export function TeacherAssignmentClient({
     setError(null);
   };
 
+  if (versions.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+        <GraduationCap className="mx-auto mb-3 h-12 w-12 text-slate-400" />
+        <p className="text-sm text-slate-600">
+          No hay versiones disponibles para asignar docentes.
+        </p>
+      </div>
+    );
+  }
+
+  const versionStatusLabel = selectedVersion
+    ? (() => {
+        switch (selectedVersion.status) {
+          case "published":
+            return "Publicada";
+          case "pending_review":
+            return "Pendiente de revisión";
+          case "draft":
+            return "En borrador";
+          case "archived":
+            return "Archivada";
+          default:
+            return selectedVersion.status;
+        }
+      })()
+    : "";
+
   return (
     <>
+      <Card className="mb-6 border-2">
+        <CardHeader>
+          <CardTitle className="text-base sm:text-lg">
+            Selecciona la versión a gestionar
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm text-slate-600">
+                Gestiona los docentes asignados por versión del curso.
+              </p>
+              {selectedVersion && (
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                  <Badge variant="outline" className="border-slate-300">
+                    Edición del curso: {selectedVersion.branchName ?? "General"}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className="border-emerald-300 text-emerald-700"
+                  >
+                    Estado: {versionStatusLabel}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className={
+                      selectedVersion.isPublished
+                        ? "border-green-300 text-green-700"
+                        : "border-amber-300 text-amber-700"
+                    }
+                  >
+                    {selectedVersion.isPublished ? "Publicada" : "Sin publicar"}
+                  </Badge>
+                  {selectedVersion.isActive && (
+                    <Badge className="bg-emerald-600 text-white">
+                      Versión activa
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </div>
+            <Select
+              value={selectedVersionId}
+              onValueChange={handleVersionChange}
+              disabled={versions.length === 0}
+            >
+              <SelectTrigger className="w-full md:w-64">
+                <SelectValue placeholder="Selecciona una versión" />
+              </SelectTrigger>
+              <SelectContent>
+                {versions.map((version) => (
+                  <SelectItem key={version.id} value={version.id}>
+                    {(version.branchName ?? "Edición principal") +
+                      " • " +
+                      version.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {selectedVersion?.summary && (
+            <p className="mt-4 text-sm text-slate-600">
+              {selectedVersion.summary}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Assigned Teachers Card */}
         <Card className="border-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <GraduationCap className="h-5 w-5 text-emerald-600" />
-              Docentes Asignados ({assignedTeachers.length})
+              Docentes asignados ({assignedTeachers.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -115,7 +264,7 @@ export function TeacherAssignmentClient({
               <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
                 <GraduationCap className="mx-auto mb-3 h-12 w-12 text-slate-400" />
                 <p className="text-sm text-slate-600">
-                  No hay docentes asignados a este curso
+                  No hay docentes asignados a esta versión.
                 </p>
               </div>
             ) : (
@@ -164,6 +313,7 @@ export function TeacherAssignmentClient({
                       variant="outline"
                       onClick={() => handleRemoveClick(teacher)}
                       className="flex-shrink-0 border-red-300 text-red-600 hover:bg-red-50"
+                      disabled={!selectedVersion}
                     >
                       <UserMinus className="mr-2 h-4 w-4" />
                       Remover
@@ -175,12 +325,11 @@ export function TeacherAssignmentClient({
           </CardContent>
         </Card>
 
-        {/* Available Teachers Card */}
         <Card className="border-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserPlus className="h-5 w-5 text-blue-600" />
-              Docentes Disponibles ({availableTeachers.length})
+              Docentes disponibles ({availableTeachers.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -189,8 +338,8 @@ export function TeacherAssignmentClient({
                 <UserPlus className="mx-auto mb-3 h-12 w-12 text-slate-400" />
                 <p className="text-sm text-slate-600">
                   {allTeachers.length === 0
-                    ? "No hay docentes registrados en la plataforma"
-                    : "Todos los docentes están asignados a este curso"}
+                    ? "No hay docentes registrados en la plataforma."
+                    : "Todos los docentes están asignados a esta versión."}
                 </p>
               </div>
             ) : (
@@ -230,6 +379,7 @@ export function TeacherAssignmentClient({
                       size="sm"
                       onClick={() => handleAssignClick(teacher)}
                       className="flex-shrink-0 bg-emerald-600 hover:bg-emerald-700"
+                      disabled={!selectedVersion}
                     >
                       <UserPlus className="mr-2 h-4 w-4" />
                       Asignar
@@ -242,19 +392,18 @@ export function TeacherAssignmentClient({
         </Card>
       </div>
 
-      {/* Confirmation Dialog */}
       <Dialog open={!!selectedTeacher && !!action} onOpenChange={handleCancel}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
               {action === "assign"
-                ? "Asignar Docente al Curso"
-                : "Remover Docente del Curso"}
+                ? "Asignar docente a la versión"
+                : "Remover docente de la versión"}
             </DialogTitle>
             <DialogDescription>
               {action === "assign"
-                ? "¿Estás seguro de que deseas asignar este docente al curso? Podrá editar el contenido del curso."
-                : "¿Estás seguro de que deseas remover este docente del curso? Perderá acceso para editar el contenido."}
+                ? `¿Estás seguro de que deseas asignar este docente a la versión ${selectedVersion?.label}? Podrá editar el contenido asociado.`
+                : `¿Estás seguro de que deseas remover este docente de la versión ${selectedVersion?.label}? Perderá acceso para editar su contenido.`}
             </DialogDescription>
           </DialogHeader>
 
@@ -304,7 +453,7 @@ export function TeacherAssignmentClient({
             </Button>
             <Button
               onClick={handleConfirm}
-              disabled={isLoading}
+              disabled={isLoading || !selectedVersion}
               className={
                 action === "assign"
                   ? "bg-emerald-600 hover:bg-emerald-700"

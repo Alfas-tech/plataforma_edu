@@ -31,7 +31,10 @@ const profileRepository = new SupabaseProfileRepository();
 // MODULE ACTIONS
 // ============================================
 
-export async function getModulesByCourse(courseId: string) {
+export async function getModulesByCourse(
+  courseId: string,
+  options?: { courseVersionId?: string }
+) {
   const getModulesUseCase = new GetModulesByCourseUseCase(
     moduleRepository,
     courseRepository,
@@ -39,7 +42,10 @@ export async function getModulesByCourse(courseId: string) {
     profileRepository
   );
 
-  const result = await getModulesUseCase.execute(courseId);
+  const result = await getModulesUseCase.execute(
+    courseId,
+    options?.courseVersionId
+  );
 
   if (!result.success || !result.modules) {
     return { error: result.error || "Error al obtener módulos" };
@@ -48,6 +54,7 @@ export async function getModulesByCourse(courseId: string) {
   const modules = result.modules.map((module) => ({
     id: module.id,
     courseId: module.courseId,
+    courseVersionId: module.courseVersionId,
     title: module.title,
     description: module.description,
     orderIndex: module.orderIndex,
@@ -131,6 +138,7 @@ export async function getLessonsByModule(moduleId: string) {
   const getLessonsUseCase = new GetLessonsByModuleUseCase(
     lessonRepository,
     moduleRepository,
+    courseRepository,
     authRepository,
     profileRepository
   );

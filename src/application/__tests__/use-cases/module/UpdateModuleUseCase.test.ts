@@ -7,11 +7,18 @@ import { CourseModuleEntity } from "@/src/core/entities/CourseModule.entity";
 import { UserEntity } from "@/src/core/entities/User.entity";
 import { ProfileEntity } from "@/src/core/entities/Profile.entity";
 
+declare const describe: any;
+declare const beforeEach: any;
+declare const afterEach: any;
+declare const it: any;
+declare const expect: any;
+declare const jest: any;
+
 describe("UpdateModuleUseCase", () => {
-  let mockModuleRepository: jest.Mocked<IModuleRepository>;
-  let mockAuthRepository: jest.Mocked<IAuthRepository>;
-  let mockProfileRepository: jest.Mocked<IProfileRepository>;
-  let mockCourseRepository: jest.Mocked<ICourseRepository>;
+  let mockModuleRepository: any;
+  let mockAuthRepository: any;
+  let mockProfileRepository: any;
+  let mockCourseRepository: any;
   let updateModuleUseCase: UpdateModuleUseCase;
 
   beforeEach(() => {
@@ -22,7 +29,7 @@ describe("UpdateModuleUseCase", () => {
       getModuleById: jest.fn(),
       updateModule: jest.fn(),
       deleteModule: jest.fn(),
-    } as any;
+    };
 
     mockAuthRepository = {
       login: jest.fn(),
@@ -32,37 +39,42 @@ describe("UpdateModuleUseCase", () => {
       signInWithGoogle: jest.fn(),
       resetPassword: jest.fn(),
       updatePassword: jest.fn(),
-    } as any;
+    };
 
     mockProfileRepository = {
       getProfileByUserId: jest.fn(),
-      getAllStudents: jest.fn(),
-      getAllTeachers: jest.fn(),
-      updateUserRole: jest.fn(),
-      createProfile: jest.fn(),
-      deleteProfile: jest.fn(),
+      getProfileByEmail: jest.fn(),
+      getAllProfiles: jest.fn(),
+      updateProfile: jest.fn(),
       promoteToTeacher: jest.fn(),
       demoteToStudent: jest.fn(),
-    } as any;
+      updateRole: jest.fn(),
+      getAllTeachers: jest.fn(),
+      getAllStudents: jest.fn(),
+    };
 
     mockCourseRepository = {
-      createCourse: jest.fn(),
-      getAllCourses: jest.fn(),
+      getActiveCourse: jest.fn(),
       getCourseById: jest.fn(),
+      getCourseVersionById: jest.fn(),
+      getAllCourses: jest.fn(),
+      createCourse: jest.fn(),
       updateCourse: jest.fn(),
       deleteCourse: jest.fn(),
-      assignTeacherToCourse: jest.fn(),
-      removeTeacherFromCourse: jest.fn(),
-      getCourseWithTeachers: jest.fn(),
+      assignTeacherToVersion: jest.fn(),
+      removeTeacherFromVersion: jest.fn(),
       getTeacherCourses: jest.fn(),
       getCourseTeachers: jest.fn(),
-    } as any;
+      getVersionTeachers: jest.fn(),
+      getCourseVersionAssignments: jest.fn(),
+      isTeacherAssignedToVersion: jest.fn(),
+    };
 
     updateModuleUseCase = new UpdateModuleUseCase(
-      mockModuleRepository,
-      mockCourseRepository,
-      mockAuthRepository,
-      mockProfileRepository
+      mockModuleRepository as IModuleRepository,
+      mockCourseRepository as ICourseRepository,
+      mockAuthRepository as IAuthRepository,
+      mockProfileRepository as IProfileRepository
     );
   });
 
@@ -97,6 +109,7 @@ describe("UpdateModuleUseCase", () => {
     const mockModule = {
       id: moduleId,
       courseId: "course-123",
+      courseVersionId: "version-123",
       title: "Old Module",
       description: "Old Description",
       orderIndex: 1,
@@ -110,6 +123,7 @@ describe("UpdateModuleUseCase", () => {
       const updatedModule = new CourseModuleEntity(
         moduleId,
         "course-123",
+        "version-123",
         "Updated Module",
         "Updated Description",
         1,
@@ -150,6 +164,7 @@ describe("UpdateModuleUseCase", () => {
       const updatedModule = new CourseModuleEntity(
         moduleId,
         "course-123",
+        "version-123",
         "Updated Module",
         "Updated Description",
         1,
@@ -164,13 +179,16 @@ describe("UpdateModuleUseCase", () => {
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         teacherProfile
       );
-      mockCourseRepository.getCourseTeachers.mockResolvedValue(["user-123"]);
+      mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(true);
       mockModuleRepository.updateModule.mockResolvedValue(updatedModule);
 
       const result = await updateModuleUseCase.execute(moduleId, validInput);
 
       expect(result.success).toBe(true);
       expect(result.module).toEqual(updatedModule);
+      expect(
+        mockCourseRepository.isTeacherAssignedToVersion
+      ).toHaveBeenCalledWith("version-123", mockUser.id);
     });
 
     it("should return error when module not found", async () => {
@@ -234,14 +252,12 @@ describe("UpdateModuleUseCase", () => {
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         teacherProfile
       );
-      mockCourseRepository.getCourseTeachers.mockResolvedValue([
-        "other-user-id",
-      ]);
+      mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(false);
 
       const result = await updateModuleUseCase.execute(moduleId, validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("No estás asignado a este curso");
+      expect(result.error).toBe("No estás asignado a esta versión del curso");
       expect(mockModuleRepository.updateModule).not.toHaveBeenCalled();
     });
 

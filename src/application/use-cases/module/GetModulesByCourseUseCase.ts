@@ -18,7 +18,10 @@ export class GetModulesByCourseUseCase {
     private readonly profileRepository: IProfileRepository
   ) {}
 
-  async execute(courseId: string): Promise<GetModulesByCourseResult> {
+  async execute(
+    courseId: string,
+    courseVersionId?: string
+  ): Promise<GetModulesByCourseResult> {
     try {
       // Verify course exists
       const course = await this.courseRepository.getCourseById(courseId);
@@ -48,22 +51,68 @@ export class GetModulesByCourseUseCase {
         };
       }
 
-      // Get all modules
-      const modules =
-        await this.moduleRepository.getModulesByCourseId(courseId);
+      let allowedVersionIds: Set<string> | null = null;
+
+      if (profile.isTeacher()) {
+        if (courseVersionId) {
+          const isAssigned =
+            await this.courseRepository.isTeacherAssignedToVersion(
+              courseVersionId,
+              currentUser.id
+            );
+
+          if (!isAssigned) {
+            return {
+              success: false,
+              error: "No estás asignado a esta versión del curso",
+            };
+          }
+
+          allowedVersionIds = new Set([courseVersionId]);
+        } else {
+          const assignments =
+            await this.courseRepository.getCourseVersionAssignments(courseId);
+
+          const teacherVersions = assignments
+            .filter((assignment) =>
+              assignment.teacherIds.includes(currentUser.id)
+            )
+            .map((assignment) => assignment.version.id);
+
+          if (teacherVersions.length === 0) {
+            return {
+              success: false,
+              error: "No estás asignado a ninguna versión de este curso",
+            };
+          }
+
+          allowedVersionIds = new Set(teacherVersions);
+        }
+      }
+
+      const modules = await this.moduleRepository.getModulesByCourseId(
+        courseId,
+        courseVersionId ? { courseVersionId } : undefined
+      );
+
+      const versionFilteredModules = allowedVersionIds
+        ? modules.filter((module) =>
+            allowedVersionIds?.has(module.courseVersionId)
+          )
+        : modules;
 
       // Filter based on user role
       if (profile.isStudent()) {
         // Students only see published modules
         return {
           success: true,
-          modules: modules.filter((m) => m.isPublished),
+          modules: versionFilteredModules.filter((m) => m.isPublished),
         };
       } else {
         // Admins and teachers see all modules
         return {
           success: true,
-          modules,
+          modules: versionFilteredModules,
         };
       }
     } catch (error) {

@@ -14,10 +14,19 @@ interface PageProps {
   params: {
     courseId: string;
   };
+  searchParams?: {
+    branchId?: string;
+    versionId?: string;
+  };
 }
 
-export default async function CourseContentPage({ params }: PageProps) {
+export default async function CourseContentPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { courseId } = params;
+  const requestedBranchId = searchParams?.branchId ?? null;
+  const requestedVersionId = searchParams?.versionId ?? null;
 
   const profileResult = await getCurrentProfile();
 
@@ -49,8 +58,37 @@ export default async function CourseContentPage({ params }: PageProps) {
 
   const { course } = courseResult;
 
+  const branchCandidates = [course.defaultBranch, ...course.branches].filter(
+    Boolean
+  ) as typeof course.branches;
+
+  const selectedBranch = requestedBranchId
+    ? (branchCandidates.find((branch) => branch.id === requestedBranchId) ??
+      null)
+    : (course.defaultBranch ?? null);
+
+  const effectiveBranch = selectedBranch ?? course.defaultBranch ?? null;
+
+  const effectiveVersionId = (() => {
+    if (requestedVersionId) {
+      return requestedVersionId;
+    }
+
+    if (effectiveBranch?.tipVersionId) {
+      return effectiveBranch.tipVersionId;
+    }
+
+    if (effectiveBranch?.isDefault) {
+      return course.activeVersion?.id ?? null;
+    }
+
+    return null;
+  })();
+
   // Obtener módulos
-  const modulesResult = await getModulesByCourse(courseId);
+  const modulesResult = await getModulesByCourse(courseId, {
+    courseVersionId: effectiveVersionId ?? undefined,
+  });
   const modules = "error" in modulesResult ? [] : modulesResult.modules || [];
 
   return (
@@ -175,6 +213,10 @@ export default async function CourseContentPage({ params }: PageProps) {
         {/* Module Management */}
         <ModuleManagementClient
           courseId={courseId}
+          branchId={effectiveBranch?.id ?? null}
+          courseVersionId={effectiveVersionId ?? null}
+          branchName={effectiveBranch?.name ?? "principal"}
+          isDefaultBranch={effectiveBranch?.isDefault ?? true}
           modules={modules}
           isAdmin={profile.isAdmin}
         />

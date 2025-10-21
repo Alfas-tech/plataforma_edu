@@ -6,26 +6,32 @@ import { CourseEntity } from "@/src/core/entities/Course.entity";
 import { UserEntity } from "@/src/core/entities/User.entity";
 import { ProfileEntity } from "@/src/core/entities/Profile.entity";
 
+declare const describe: any;
+declare const beforeEach: any;
+declare const afterEach: any;
+declare const it: any;
+declare const expect: any;
+declare const jest: any;
+
 describe("RemoveTeacherFromCourseUseCase", () => {
-  let mockCourseRepository: jest.Mocked<ICourseRepository>;
-  let mockAuthRepository: jest.Mocked<IAuthRepository>;
-  let mockProfileRepository: jest.Mocked<IProfileRepository>;
+  let mockCourseRepository: any;
+  let mockAuthRepository: any;
+  let mockProfileRepository: any;
   let removeTeacherFromCourseUseCase: RemoveTeacherFromCourseUseCase;
 
   beforeEach(() => {
     mockCourseRepository = {
+      getActiveCourse: jest.fn(),
+      getCourseById: jest.fn(),
       createCourse: jest.fn(),
       getAllCourses: jest.fn(),
-      getCourseById: jest.fn(),
       updateCourse: jest.fn(),
       deleteCourse: jest.fn(),
-      assignTeacher: jest.fn(),
-      removeTeacher: jest.fn(),
-      getCourseWithTeachers: jest.fn(),
+      assignTeacherToVersion: jest.fn(),
+      removeTeacherFromVersion: jest.fn(),
       getTeacherCourses: jest.fn(),
       getCourseTeachers: jest.fn(),
-      getActiveCourse: jest.fn(),
-    } as any;
+    };
 
     mockAuthRepository = {
       login: jest.fn(),
@@ -35,7 +41,7 @@ describe("RemoveTeacherFromCourseUseCase", () => {
       signInWithGoogle: jest.fn(),
       resetPassword: jest.fn(),
       updatePassword: jest.fn(),
-    } as any;
+    };
 
     mockProfileRepository = {
       getProfileByUserId: jest.fn(),
@@ -47,12 +53,12 @@ describe("RemoveTeacherFromCourseUseCase", () => {
       updateRole: jest.fn(),
       promoteToTeacher: jest.fn(),
       demoteToStudent: jest.fn(),
-    } as any;
+    };
 
     removeTeacherFromCourseUseCase = new RemoveTeacherFromCourseUseCase(
-      mockCourseRepository,
-      mockAuthRepository,
-      mockProfileRepository
+      mockCourseRepository as ICourseRepository,
+      mockAuthRepository as IAuthRepository,
+      mockProfileRepository as IProfileRepository
     );
   });
 
@@ -79,16 +85,41 @@ describe("RemoveTeacherFromCourseUseCase", () => {
       new Date()
     );
 
-    const mockCourse = new CourseEntity(
-      courseId,
-      "Test Course",
-      "Course Description",
-      new Date("2024-01-01"),
-      new Date("2024-12-31"),
-      true,
-      "admin-123",
-      new Date(),
-      new Date()
+    const now = new Date();
+    const mockCourse = CourseEntity.fromDatabase(
+      {
+        id: courseId,
+        title: "Test Course",
+        summary: "Course Summary",
+        description: "Course Description",
+        slug: "test-course",
+        visibility_override: false,
+        active_version_id: "version-123",
+        default_branch_id: null,
+        created_by: "admin-123",
+        created_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      },
+      {
+        id: "version-123",
+        course_id: courseId,
+        branch_id: null,
+        version_label: "v1.0.0",
+        summary: "Course Summary",
+        status: "published",
+        is_active: true,
+        is_published: true,
+        is_tip: true,
+        based_on_version_id: null,
+        parent_version_id: null,
+        merged_into_version_id: null,
+        merge_request_id: null,
+        created_by: "admin-123",
+        reviewed_by: null,
+        approved_at: now.toISOString(),
+        created_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      }
     );
 
     it("should remove teacher from course when user is admin", async () => {
@@ -97,7 +128,9 @@ describe("RemoveTeacherFromCourseUseCase", () => {
         mockAdminProfile
       );
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
-      mockCourseRepository.removeTeacher.mockResolvedValue(undefined);
+      mockCourseRepository.removeTeacherFromVersion.mockResolvedValue(
+        undefined
+      );
 
       const result = await removeTeacherFromCourseUseCase.execute(
         courseId,
@@ -105,10 +138,9 @@ describe("RemoveTeacherFromCourseUseCase", () => {
       );
 
       expect(result.success).toBe(true);
-      expect(mockCourseRepository.removeTeacher).toHaveBeenCalledWith(
-        courseId,
-        teacherId
-      );
+      expect(
+        mockCourseRepository.removeTeacherFromVersion
+      ).toHaveBeenCalledWith(courseId, "version-123", teacherId);
     });
 
     it("should return error when no user is authenticated", async () => {
@@ -121,7 +153,9 @@ describe("RemoveTeacherFromCourseUseCase", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("No hay usuario autenticado");
-      expect(mockCourseRepository.removeTeacher).not.toHaveBeenCalled();
+      expect(
+        mockCourseRepository.removeTeacherFromVersion
+      ).not.toHaveBeenCalled();
     });
 
     it("should return error when user is not admin", async () => {
@@ -149,7 +183,9 @@ describe("RemoveTeacherFromCourseUseCase", () => {
       expect(result.error).toBe(
         "Solo los administradores pueden remover docentes"
       );
-      expect(mockCourseRepository.removeTeacher).not.toHaveBeenCalled();
+      expect(
+        mockCourseRepository.removeTeacherFromVersion
+      ).not.toHaveBeenCalled();
     });
 
     it("should return error when course not found", async () => {
@@ -166,7 +202,9 @@ describe("RemoveTeacherFromCourseUseCase", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("Curso no encontrado");
-      expect(mockCourseRepository.removeTeacher).not.toHaveBeenCalled();
+      expect(
+        mockCourseRepository.removeTeacherFromVersion
+      ).not.toHaveBeenCalled();
     });
 
     it("should handle repository errors gracefully", async () => {
@@ -175,7 +213,7 @@ describe("RemoveTeacherFromCourseUseCase", () => {
         mockAdminProfile
       );
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
-      mockCourseRepository.removeTeacher.mockRejectedValue(
+      mockCourseRepository.removeTeacherFromVersion.mockRejectedValue(
         new Error("Database error")
       );
 
@@ -194,7 +232,9 @@ describe("RemoveTeacherFromCourseUseCase", () => {
         mockAdminProfile
       );
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
-      mockCourseRepository.removeTeacher.mockRejectedValue("Unknown error");
+      mockCourseRepository.removeTeacherFromVersion.mockRejectedValue(
+        "Unknown error"
+      );
 
       const result = await removeTeacherFromCourseUseCase.execute(
         courseId,

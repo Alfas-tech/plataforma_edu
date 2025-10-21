@@ -72,16 +72,53 @@ export class UpdateLessonUseCase {
         };
       }
 
-      // If teacher, check if assigned to the course
       if (profile.isTeacher()) {
-        const assignedTeachers = await this.courseRepository.getCourseTeachers(
-          moduleData.courseId
-        );
-        if (!assignedTeachers.includes(currentUser.id)) {
+        const isAssigned =
+          await this.courseRepository.isTeacherAssignedToVersion(
+            moduleData.courseVersionId,
+            currentUser.id
+          );
+
+        if (!isAssigned) {
           return {
             success: false,
-            error: "No estás asignado a este curso",
+            error: "No estás asignado a esta versión del curso",
           };
+        }
+      }
+
+      if (data.module_id && data.module_id !== lesson.moduleId) {
+        const targetModule = await this.moduleRepository.getModuleById(
+          data.module_id
+        );
+
+        if (!targetModule) {
+          return {
+            success: false,
+            error: "El módulo destino no existe",
+          };
+        }
+
+        if (targetModule.courseId !== moduleData.courseId) {
+          return {
+            success: false,
+            error: "El módulo destino pertenece a otro curso",
+          };
+        }
+
+        if (profile.isTeacher()) {
+          const isAssignedToTarget =
+            await this.courseRepository.isTeacherAssignedToVersion(
+              targetModule.courseVersionId,
+              currentUser.id
+            );
+
+          if (!isAssignedToTarget) {
+            return {
+              success: false,
+              error: "No estás asignado a la versión del módulo destino",
+            };
+          }
         }
       }
 

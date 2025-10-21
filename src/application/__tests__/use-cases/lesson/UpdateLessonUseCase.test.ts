@@ -46,6 +46,12 @@ describe("UpdateLessonUseCase", () => {
       getTeacherCourses: jest.fn(),
       getCourseTeachers: jest.fn(),
     } as any;
+    mockCourseRepository.assignTeacherToVersion = jest.fn();
+    mockCourseRepository.removeTeacherFromVersion = jest.fn();
+    mockCourseRepository.getCourseVersionById = jest.fn();
+    mockCourseRepository.getCourseVersionAssignments = jest.fn();
+    mockCourseRepository.isTeacherAssignedToVersion = jest.fn();
+    mockCourseRepository.getVersionTeachers = jest.fn();
 
     mockAuthRepository = {
       login: jest.fn(),
@@ -105,14 +111,17 @@ describe("UpdateLessonUseCase", () => {
       new Date()
     );
 
-    const mockModule = {
+    const mockModule: any = {
       id: moduleId,
       courseId,
+      courseVersionId: "version-123",
+      versionId: "version-123",
       title: "Test Module",
       description: "Description",
       orderIndex: 1,
       content: "Content",
       isPublished: true,
+      isAccessible: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -188,7 +197,7 @@ describe("UpdateLessonUseCase", () => {
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         teacherProfile
       );
-      mockCourseRepository.getCourseTeachers.mockResolvedValue(["user-123"]);
+      mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(true);
       mockLessonRepository.updateLesson.mockResolvedValue(updatedLesson);
 
       const result = await updateLessonUseCase.execute(lessonId, validInput);
@@ -268,14 +277,12 @@ describe("UpdateLessonUseCase", () => {
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         teacherProfile
       );
-      mockCourseRepository.getCourseTeachers.mockResolvedValue([
-        "other-user-id",
-      ]);
+      mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(false);
 
       const result = await updateLessonUseCase.execute(lessonId, validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("No estás asignado a este curso");
+      expect(result.error).toBe("No estás asignado a esta versión del curso");
     });
 
     it("should handle repository errors gracefully", async () => {

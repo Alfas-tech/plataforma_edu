@@ -38,6 +38,7 @@ interface LessonFormDialogProps {
   onClose: () => void;
   mode: "create" | "edit";
   moduleId: string;
+  courseVersionId: string | null;
   lesson?: LessonData | null;
   maxOrderIndex: number;
 }
@@ -47,6 +48,7 @@ export function LessonFormDialog({
   onClose,
   mode,
   moduleId,
+  courseVersionId,
   lesson,
   maxOrderIndex,
 }: LessonFormDialogProps) {
@@ -100,6 +102,14 @@ export function LessonFormDialog({
     setIsSubmitting(true);
     setError(null);
 
+    if (mode === "create" && !courseVersionId) {
+      setError(
+        "Esta edición no tiene una versión activa para vincular lecciones."
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       let result;
       if (mode === "create") {
@@ -137,7 +147,7 @@ export function LessonFormDialog({
   return (
     <Dialog
       open={isOpen}
-      onOpenChange={(open) => !open && !isSubmitting && onClose()}
+      onOpenChange={(open: boolean) => !open && !isSubmitting && onClose()}
     >
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
@@ -149,6 +159,11 @@ export function LessonFormDialog({
               ? "Completa la información de la nueva lección del módulo."
               : "Modifica la información de la lección."}
           </DialogDescription>
+          {!courseVersionId && (
+            <p className="mt-2 text-xs text-red-600">
+              Esta edición necesita una versión activa antes de crear lecciones.
+            </p>
+          )}
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
@@ -250,7 +265,7 @@ export function LessonFormDialog({
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || (mode === "create" && !courseVersionId)}
               className="bg-purple-600 hover:bg-purple-700"
             >
               {isSubmitting ? (

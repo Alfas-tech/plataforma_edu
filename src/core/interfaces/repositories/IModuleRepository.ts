@@ -2,7 +2,10 @@ import { CourseModuleEntity } from "../../entities/CourseModule.entity";
 import { CourseModuleData } from "../../types/course.types";
 
 export interface IModuleRepository {
-  getModulesByCourseId(courseId: string): Promise<CourseModuleEntity[]>;
+  getModulesByCourseId(
+    courseId: string,
+    options?: { courseVersionId?: string }
+  ): Promise<CourseModuleEntity[]>;
   getModuleById(id: string): Promise<CourseModuleEntity | null>;
   createModule(
     data: Omit<CourseModuleData, "id" | "created_at" | "updated_at">
