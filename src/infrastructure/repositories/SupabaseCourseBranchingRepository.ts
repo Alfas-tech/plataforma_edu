@@ -636,17 +636,17 @@ export class SupabaseCourseBranchingRepository
 
     const modules = (modulesData as CourseModuleData[]) ?? [];
 
-    for (const module of modules) {
+    for (const courseModule of modules) {
       const { data: createdModule, error: createModuleError } = await supabase
         .from("course_modules")
         .insert({
           course_id: courseId,
           course_version_id: newVersionId,
-          title: module.title,
-          description: module.description,
-          order_index: module.order_index,
-          content: module.content,
-          is_published: module.is_published,
+          title: courseModule.title,
+          description: courseModule.description,
+          order_index: courseModule.order_index,
+          content: courseModule.content,
+          is_published: courseModule.is_published,
         })
         .select()
         .single();
@@ -660,7 +660,7 @@ export class SupabaseCourseBranchingRepository
       const { data: lessonsData, error: lessonsError } = await supabase
         .from("lessons")
         .select("*")
-        .eq("module_id", module.id)
+        .eq("module_id", courseModule.id)
         .order("order_index", { ascending: true });
 
       if (lessonsError) {
@@ -673,7 +673,7 @@ export class SupabaseCourseBranchingRepository
         continue;
       }
 
-      const lessonsInsert = (lessonsData as LessonData[]).map((lesson) => ({
+  const lessonsInsert = (lessonsData as LessonData[]).map((lesson) => ({
         module_id: createdModule.id,
         title: lesson.title,
         content: lesson.content,

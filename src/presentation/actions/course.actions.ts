@@ -5,11 +5,12 @@ import { GetAllCoursesUseCase } from "@/src/application/use-cases/course/GetAllC
 import { CreateCourseUseCase } from "@/src/application/use-cases/course/CreateCourseUseCase";
 import { UpdateCourseUseCase } from "@/src/application/use-cases/course/UpdateCourseUseCase";
 import { DeleteCourseUseCase } from "@/src/application/use-cases/course/DeleteCourseUseCase";
-import { AssignTeacherToCourseUseCase } from "@/src/application/use-cases/course/AssignTeacherToCourseUseCase";
-import { RemoveTeacherFromCourseUseCase } from "@/src/application/use-cases/course/RemoveTeacherFromCourseUseCase";
-import { GetCourseWithTeachersUseCase } from "@/src/application/use-cases/course/GetCourseWithTeachersUseCase";
+import { AssignTeacherToCourseVersionUseCase } from "@/src/application/use-cases/course/AssignTeacherToCourseVersionUseCase";
+import { RemoveTeacherFromCourseVersionUseCase } from "@/src/application/use-cases/course/RemoveTeacherFromCourseVersionUseCase";
+import { GetCourseVersionAssignmentsUseCase } from "@/src/application/use-cases/course/GetCourseVersionAssignmentsUseCase";
 import { GetTeacherCoursesUseCase } from "@/src/application/use-cases/course/GetTeacherCoursesUseCase";
 import { CreateCourseBranchUseCase } from "@/src/application/use-cases/course/CreateCourseBranchUseCase";
+import { GetCourseWithTeachersUseCase } from "@/src/application/use-cases/course/GetCourseWithTeachersUseCase";
 import { CreateCourseMergeRequestUseCase } from "@/src/application/use-cases/course/CreateCourseMergeRequestUseCase";
 import { ReviewCourseMergeRequestUseCase } from "@/src/application/use-cases/course/ReviewCourseMergeRequestUseCase";
 import { MergeCourseBranchUseCase } from "@/src/application/use-cases/course/MergeCourseBranchUseCase";
@@ -478,79 +479,185 @@ export async function deleteCourseBranch(input: DeleteCourseBranchInput) {
   };
 }
 
-export async function assignTeacherToCourse(
-  courseId: string,
-  teacherId: string
-) {
-  const assignTeacherUseCase = new AssignTeacherToCourseUseCase(
-    courseRepository,
-    authRepository,
-    profileRepository
-  );
-
-  const result = await assignTeacherUseCase.execute(courseId, teacherId);
-
-  if (!result.success) {
-    return { error: result.error || "Error al asignar docente" };
-  }
-
-  revalidateTag("admin-courses");
-  revalidatePath("/dashboard/admin");
-  revalidatePath("/dashboard/admin/courses");
-  revalidatePath(`/dashboard/admin/courses/${courseId}`);
-
-  return { success: true };
-}
-
-export async function removeTeacherFromCourse(
-  courseId: string,
-  teacherId: string
-) {
-  const removeTeacherUseCase = new RemoveTeacherFromCourseUseCase(
-    courseRepository,
-    authRepository,
-    profileRepository
-  );
-
-  const result = await removeTeacherUseCase.execute(courseId, teacherId);
-
-  if (!result.success) {
-    return { error: result.error || "Error al remover docente" };
-  }
-
-  revalidateTag("admin-courses");
-  revalidatePath("/dashboard/admin");
-  revalidatePath("/dashboard/admin/courses");
-  revalidatePath(`/dashboard/admin/courses/${courseId}`);
-
-  return { success: true };
-}
-
 export async function getCourseWithTeachers(courseId: string) {
-  const getCourseWithTeachersUseCase = new GetCourseWithTeachersUseCase(
+  const useCase = new GetCourseWithTeachersUseCase(
     courseRepository,
     profileRepository
   );
 
-  const result = await getCourseWithTeachersUseCase.execute(courseId);
+  const result = await useCase.execute(courseId);
 
   if (!result.success || !result.data) {
-    return { error: result.error || "Error al obtener curso" };
+    return {
+      error: result.error || "Error al obtener el curso",
+    };
   }
 
-  const { course, teachers } = result.data;
+  const course = await enrichCourseMergeRequests(
+    mapCourseToPresentation(result.data.course)
+  );
+
+  const teachers = result.data.teachers.map((teacher) => ({
+    id: teacher.id,
+    email: teacher.email,
+    fullName: teacher.fullName,
+    avatarUrl: teacher.avatarUrl,
+    displayName: teacher.getDisplayName(),
+  }));
 
   return {
-    course: await enrichCourseMergeRequests(
-      mapCourseToPresentation(course)
-    ),
-    teachers: teachers.map((teacher) => ({
-      id: teacher.id,
-      email: teacher.email,
-      fullName: teacher.fullName,
-      avatarUrl: teacher.avatarUrl,
-      displayName: teacher.getDisplayName(),
-    })),
+    course,
+    teachers,
+  };
+}
+
+export async function assignTeacherToCourseVersion(
+  courseId: string,
+  courseVersionId: string,
+  teacherId: string
+) {
+  const assignTeacherUseCase = new AssignTeacherToCourseVersionUseCase(
+    courseRepository,
+    authRepository,
+    profileRepository
+  );
+
+  const result = await assignTeacherUseCase.execute(
+    courseId,
+    courseVersionId,
+    teacherId
+  );
+
+  if (!result.success) {
+    return {
+      error: result.error || "Error al asignar docente a la versión",
+    };
+  }
+
+  revalidateTag("admin-courses");
+  revalidatePath("/dashboard/admin");
+  revalidatePath("/dashboard/admin/courses");
+  revalidatePath(`/dashboard/admin/courses/${courseId}/teachers`);
+  revalidatePath(`/dashboard/admin/courses/${courseId}/content`);
+  revalidatePath("/dashboard/teacher");
+
+  return { success: true };
+}
+
+export async function removeTeacherFromCourseVersion(
+  courseId: string,
+  courseVersionId: string,
+  teacherId: string
+) {
+  const removeTeacherUseCase = new RemoveTeacherFromCourseVersionUseCase(
+    courseRepository,
+    authRepository,
+    profileRepository
+  );
+
+  const result = await removeTeacherUseCase.execute(
+    courseId,
+    courseVersionId,
+    teacherId
+  );
+
+  if (!result.success) {
+    return {
+      error: result.error || "Error al remover docente de la versión",
+    };
+  }
+
+  revalidateTag("admin-courses");
+  revalidatePath("/dashboard/admin");
+  revalidatePath("/dashboard/admin/courses");
+  revalidatePath(`/dashboard/admin/courses/${courseId}/teachers`);
+  revalidatePath(`/dashboard/admin/courses/${courseId}/content`);
+  revalidatePath("/dashboard/teacher");
+
+  return { success: true };
+}
+
+export async function getCourseVersionAssignments(courseId: string) {
+  const useCase = new GetCourseVersionAssignmentsUseCase(
+    courseRepository,
+    authRepository,
+    profileRepository
+  );
+
+  const result = await useCase.execute(courseId);
+
+  if (!result.success || !result.course || !result.assignments) {
+    return {
+      error: result.error || "Error al obtener las versiones del curso",
+    };
+  }
+
+  const courseOverview = await enrichCourseMergeRequests(
+    mapCourseToPresentation(result.course)
+  );
+
+  const branchNameById = new Map<string, string>();
+
+  if (courseOverview.defaultBranch) {
+    branchNameById.set(
+      courseOverview.defaultBranch.id,
+      courseOverview.defaultBranch.name
+    );
+  }
+
+  courseOverview.branches.forEach((branch) => {
+    branchNameById.set(branch.id, branch.name);
+  });
+
+  const teacherIdSet = new Set<string>();
+  result.assignments.forEach((assignment) => {
+    assignment.teacherIds.forEach((id) => teacherIdSet.add(id));
+  });
+
+  const teacherProfiles = await Promise.all(
+    Array.from(teacherIdSet).map(async (id) => {
+      const profile = await profileRepository.getProfileByUserId(id);
+      return profile ? { id, profile } : null;
+    })
+  );
+
+  const profileById = new Map<string, ProfileEntity>();
+  teacherProfiles.forEach((entry) => {
+    if (entry) {
+      profileById.set(entry.id, entry.profile);
+    }
+  });
+
+  const versions = result.assignments.map(({ version, teacherIds }) => ({
+    id: version.id,
+    label: version.versionLabel,
+    summary: version.summary,
+    status: version.status,
+    isActive: version.isActive,
+    isPublished: version.isPublished,
+    isTip: version.isTip,
+    createdAt: version.createdAt.toISOString(),
+    updatedAt: version.updatedAt.toISOString(),
+    branchId: version.branchId,
+    branchName: version.branchId
+      ? branchNameById.get(version.branchId) ?? null
+      : null,
+    teacherIds,
+    teachers: teacherIds
+      .map((id) => profileById.get(id))
+      .filter((profile): profile is ProfileEntity => Boolean(profile))
+      .map((profile) => ({
+        id: profile.id,
+        email: profile.email,
+        fullName: profile.fullName,
+        avatarUrl: profile.avatarUrl,
+        displayName: profile.getDisplayName(),
+      })),
+  }));
+
+  return {
+    course: courseOverview,
+    versions,
   };
 }
 

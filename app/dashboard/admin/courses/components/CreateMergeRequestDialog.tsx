@@ -80,7 +80,7 @@ export function CreateMergeRequestDialog({
     }
 
     if (!targetBranchId) {
-      setError("Selecciona la rama destino");
+      setError("Selecciona la edición destino");
       return;
     }
 
@@ -112,7 +112,7 @@ export function CreateMergeRequestDialog({
         <DialogHeader>
           <DialogTitle>Nueva solicitud de fusión</DialogTitle>
           <DialogDescription>
-            Compara tu trabajo en <span className="font-semibold">{sourceBranch?.name}</span> con otra rama y solicita la revisión del equipo.
+            Compara tu trabajo en <span className="font-semibold">{sourceBranch?.name}</span> con otra edición y solicita la revisión del equipo.
           </DialogDescription>
         </DialogHeader>
 
@@ -145,14 +145,14 @@ export function CreateMergeRequestDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Rama destino</Label>
+            <Label>Edición destino</Label>
             <Select
               value={targetBranchId}
               onValueChange={setTargetBranchId}
               disabled={isPending || availableTargets.length === 0}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecciona una rama" />
+                <SelectValue placeholder="Selecciona una edición" />
               </SelectTrigger>
               <SelectContent>
                 {availableTargets.map((branch: CourseOverview["branches"][number]) => (

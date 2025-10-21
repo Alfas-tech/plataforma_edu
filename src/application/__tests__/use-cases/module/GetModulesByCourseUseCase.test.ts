@@ -59,12 +59,16 @@ describe("GetModulesByCourseUseCase", () => {
       createCourse: jest.fn(),
       getAllCourses: jest.fn(),
       getCourseById: jest.fn(),
+      getCourseVersionById: jest.fn(),
       updateCourse: jest.fn(),
       deleteCourse: jest.fn(),
-      assignTeacher: jest.fn(),
-      removeTeacher: jest.fn(),
+      assignTeacherToVersion: jest.fn(),
+      removeTeacherFromVersion: jest.fn(),
       getTeacherCourses: jest.fn(),
       getCourseTeachers: jest.fn(),
+      getVersionTeachers: jest.fn(),
+      getCourseVersionAssignments: jest.fn(),
+      isTeacherAssignedToVersion: jest.fn(),
     };
 
     getModulesByCourseUseCase = new GetModulesByCourseUseCase(
@@ -96,6 +100,7 @@ describe("GetModulesByCourseUseCase", () => {
         slug: "test-course",
         visibility_override: false,
         active_version_id: "version-123",
+        default_branch_id: null,
         created_by: "admin-123",
         created_at: now.toISOString(),
         updated_at: now.toISOString(),
@@ -103,12 +108,17 @@ describe("GetModulesByCourseUseCase", () => {
       {
         id: "version-123",
         course_id: courseId,
+        branch_id: null,
         version_label: "v1.0.0",
         summary: "Version summary",
         status: "published",
         is_active: true,
         is_published: true,
+        is_tip: false,
         based_on_version_id: null,
+        parent_version_id: null,
+        merged_into_version_id: null,
+        merge_request_id: null,
         created_by: "admin-123",
         reviewed_by: null,
         approved_at: now.toISOString(),
@@ -116,6 +126,7 @@ describe("GetModulesByCourseUseCase", () => {
         updated_at: now.toISOString(),
       }
     );
+    const mockCourseVersion = mockCourse.activeVersion!;
 
     it("should return published modules for students", async () => {
       const studentProfile = new ProfileEntity(
@@ -249,12 +260,132 @@ describe("GetModulesByCourseUseCase", () => {
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         teacherProfile
       );
+      mockCourseRepository.getCourseVersionAssignments.mockResolvedValue([
+        {
+          version: mockCourseVersion,
+          teacherIds: [mockUser.id],
+        },
+      ]);
       mockModuleRepository.getModulesByCourseId.mockResolvedValue(mockModules);
 
       const result = await getModulesByCourseUseCase.execute(courseId);
 
       expect(result.success).toBe(true);
       expect(result.modules).toHaveLength(1);
+      expect(
+        mockCourseRepository.getCourseVersionAssignments
+      ).toHaveBeenCalledWith(courseId);
+    });
+
+    it("should return modules for teacher when specific version is assigned", async () => {
+      const teacherProfile = new ProfileEntity(
+        "profile-123",
+        "user-123",
+        "Teacher",
+        "User",
+        "teacher",
+        new Date(),
+        new Date()
+      );
+
+      const mockModules = [
+        new CourseModuleEntity(
+          "module-1",
+          courseId,
+          mockCourseVersion.id,
+          "Module 1",
+          "Description 1",
+          1,
+          "Content 1",
+          true,
+          new Date(),
+          new Date()
+        ),
+      ];
+
+      mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
+      mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        teacherProfile
+      );
+      mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(true);
+      mockModuleRepository.getModulesByCourseId.mockResolvedValue(mockModules);
+
+      const result = await getModulesByCourseUseCase.execute(
+        courseId,
+        mockCourseVersion.id
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.modules).toHaveLength(1);
+      expect(
+        mockCourseRepository.isTeacherAssignedToVersion
+      ).toHaveBeenCalledWith(mockCourseVersion.id, mockUser.id);
+      expect(mockModuleRepository.getModulesByCourseId).toHaveBeenCalledWith(
+        courseId,
+        { courseVersionId: mockCourseVersion.id }
+      );
+    });
+
+    it("should return error when teacher requests unassigned version", async () => {
+      const teacherProfile = new ProfileEntity(
+        "profile-123",
+        "user-123",
+        "Teacher",
+        "User",
+        "teacher",
+        new Date(),
+        new Date()
+      );
+
+      mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
+      mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        teacherProfile
+      );
+      mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(false);
+
+      const result = await getModulesByCourseUseCase.execute(
+        courseId,
+        mockCourseVersion.id
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe(
+        "No estás asignado a esta versión del curso"
+      );
+      expect(mockModuleRepository.getModulesByCourseId).not.toHaveBeenCalled();
+    });
+
+    it("should return error when teacher has no assigned versions", async () => {
+      const teacherProfile = new ProfileEntity(
+        "profile-123",
+        "user-123",
+        "Teacher",
+        "User",
+        "teacher",
+        new Date(),
+        new Date()
+      );
+
+      mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
+      mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        teacherProfile
+      );
+      mockCourseRepository.getCourseVersionAssignments.mockResolvedValue([
+        {
+          version: mockCourseVersion,
+          teacherIds: ["another-teacher"],
+        },
+      ]);
+
+      const result = await getModulesByCourseUseCase.execute(courseId);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe(
+        "No estás asignado a ninguna versión de este curso"
+      );
     });
 
     it("should return empty array when no modules exist", async () => {

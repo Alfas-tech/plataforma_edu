@@ -104,7 +104,7 @@ export function LessonFormDialog({
 
     if (mode === "create" && !courseVersionId) {
       setError(
-        "Esta rama no tiene una versión activa para vincular lecciones."
+        "Esta edición no tiene una versión activa para vincular lecciones."
       );
       setIsSubmitting(false);
       return;
@@ -161,7 +161,7 @@ export function LessonFormDialog({
           </DialogDescription>
           {!courseVersionId && (
             <p className="mt-2 text-xs text-red-600">
-              Esta rama necesita una versión activa antes de crear lecciones.
+              Esta edición necesita una versión activa antes de crear lecciones.
             </p>
           )}
         </DialogHeader>

@@ -55,26 +55,26 @@ export function LessonManagementClient({
   );
 
   const canMutateContent = Boolean(courseVersionId);
-  const branchLabel = isDefaultBranch ? "rama principal" : `rama ${branchName}`;
+  const branchLabel = isDefaultBranch ? "edición principal" : `edición ${branchName}`;
 
   return (
     <>
       <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
         <p className="font-semibold text-slate-800">
-          Estás gestionando las lecciones de la {branchLabel}.
+          Estás gestionando las lecciones de la {branchLabel} del curso.
         </p>
         {isDefaultBranch ? (
           <p>
-            Los cambios publicados se reflejan de inmediato para los estudiantes. Utiliza ramas alternas para trabajar cambios antes de fusionarlos.
+            Los cambios publicados se reflejan de inmediato para los estudiantes. Utiliza ediciones de trabajo para preparar cambios antes de fusionarlos.
           </p>
         ) : (
           <p>
-            Todo lo que modifiques o crees permanecerá aislado en esta rama hasta que lo fusiones con la rama principal.
+            Todo lo que modifiques o crees permanecerá aislado en esta edición hasta que lo fusiones con la edición principal.
           </p>
         )}
         {!canMutateContent && (
           <p className="mt-2 rounded-md border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-700">
-            Esta rama no tiene una versión activa. Regresa al panel del curso para activar una versión antes de agregar lecciones.
+            Esta edición del curso no tiene una versión activa. Regresa al panel del curso para activar una versión antes de agregar lecciones.
           </p>
         )}
       </div>

@@ -68,15 +68,16 @@ export class CreateLessonUseCase {
         };
       }
 
-      // If teacher, check if assigned to the course
       if (profile.isTeacher()) {
-        const assignedTeachers = await this.courseRepository.getCourseTeachers(
-          moduleData.courseId
+        const isAssigned = await this.courseRepository.isTeacherAssignedToVersion(
+          moduleData.courseVersionId,
+          currentUser.id
         );
-        if (!assignedTeachers.includes(currentUser.id)) {
+
+        if (!isAssigned) {
           return {
             success: false,
-            error: "No estás asignado a este curso",
+            error: "No estás asignado a esta versión del curso",
           };
         }
       }

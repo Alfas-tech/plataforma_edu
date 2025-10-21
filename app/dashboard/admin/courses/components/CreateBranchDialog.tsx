@@ -137,12 +137,12 @@ export function CreateBranchDialog({
     }
 
     if (!branchName.trim()) {
-      setError("El nombre de la rama es obligatorio");
+      setError("El nombre de la edición es obligatorio");
       return;
     }
 
     if (!baseVersionId) {
-      setError("Selecciona la versión base para la rama");
+      setError("Selecciona la versión base para la edición");
       return;
     }
 
@@ -178,7 +178,7 @@ export function CreateBranchDialog({
   <Dialog open={isOpen} onOpenChange={(open: boolean) => !isPending && !open && onClose()}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>Crear nueva rama</DialogTitle>
+          <DialogTitle>Crear nueva edición</DialogTitle>
           <DialogDescription>
             Duplica la versión seleccionada para trabajar cambios sin afectar a los estudiantes.
           </DialogDescription>
@@ -186,7 +186,7 @@ export function CreateBranchDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="branchName">Nombre de la rama</Label>
+            <Label htmlFor="branchName">Nombre de la edición</Label>
             <Input
               id="branchName"
               placeholder="ej. rediseño-front"
@@ -235,7 +235,7 @@ export function CreateBranchDialog({
             <Label htmlFor="description">Descripción (opcional)</Label>
             <Textarea
               id="description"
-              placeholder="Describe el objetivo de esta rama"
+              placeholder="Describe el objetivo de esta edición"
               value={description}
               onChange={(event: ChangeEvent<HTMLTextAreaElement>) =>
                 setDescription(event.target.value)
@@ -267,7 +267,7 @@ export function CreateBranchDialog({
                   Creando...
                 </>
               ) : (
-                "Crear rama"
+        "Crear edición"
               )}
             </Button>
           </DialogFooter>

@@ -60,15 +60,52 @@ export class UpdateModuleUseCase {
         };
       }
 
-      // If teacher, check if assigned to the course
       if (profile.isTeacher()) {
-        const assignedTeachers = await this.courseRepository.getCourseTeachers(
-          moduleData.courseId
+        const isAssigned = await this.courseRepository.isTeacherAssignedToVersion(
+          moduleData.courseVersionId,
+          currentUser.id
         );
-        if (!assignedTeachers.includes(currentUser.id)) {
+
+        if (!isAssigned) {
           return {
             success: false,
-            error: "No estás asignado a este curso",
+            error: "No estás asignado a esta versión del curso",
+          };
+        }
+      }
+
+      if (
+        data.course_version_id &&
+        data.course_version_id !== moduleData.courseVersionId
+      ) {
+        const version = await this.courseRepository.getCourseVersionById(
+          data.course_version_id
+        );
+
+        if (!version) {
+          return {
+            success: false,
+            error: "Versión del curso no encontrada",
+          };
+        }
+
+        if (version.courseId !== moduleData.courseId) {
+          return {
+            success: false,
+            error: "La versión seleccionada no pertenece al curso",
+          };
+        }
+
+        if (
+          profile.isTeacher() &&
+          !(await this.courseRepository.isTeacherAssignedToVersion(
+            version.id,
+            currentUser.id
+          ))
+        ) {
+          return {
+            success: false,
+            error: "No estás asignado a la versión destino del curso",
           };
         }
       }

@@ -110,12 +110,17 @@ export interface StudentProgressData {
   time_spent_minutes: number;
 }
 
-export interface CourseTeacherData {
+export interface CourseVersionTeacherData {
   id: string;
-  course_id: string;
+  course_version_id: string;
   teacher_id: string;
   assigned_by: string | null;
   assigned_at: string;
+}
+
+export interface CourseVersionAssignmentData {
+  version: CourseVersionData;
+  teacherIds: string[];
 }
 
 export interface CourseVersionEditorData {

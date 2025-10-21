@@ -47,7 +47,7 @@ export function DeleteBranchDialog({
       });
 
       if ("error" in result) {
-        setError(result.error || "Error al eliminar la rama");
+        setError(result.error || "Error al eliminar la edición");
         return;
       }
 
@@ -55,7 +55,7 @@ export function DeleteBranchDialog({
       router.refresh();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Error inesperado al eliminar la rama"
+        err instanceof Error ? err.message : "Error inesperado al eliminar la edición"
       );
     } finally {
       setIsLoading(false);
@@ -68,10 +68,10 @@ export function DeleteBranchDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-red-600">
             <AlertTriangle className="h-5 w-5" />
-            Eliminar rama
+            Eliminar edición
           </DialogTitle>
           <DialogDescription>
-            Esta acción elimina de forma permanente la rama seleccionada, incluyendo
+            Esta acción elimina de forma permanente la edición seleccionada, incluyendo
             sus versiones, módulos y lecciones asociados.
           </DialogDescription>
         </DialogHeader>
@@ -91,7 +91,7 @@ export function DeleteBranchDialog({
         <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm text-orange-800">
           <p className="font-semibold text-orange-900">Se eliminará:</p>
           <ul className="mt-2 list-inside list-disc space-y-1">
-            <li>El historial de versiones de la rama</li>
+            <li>El historial de versiones de la edición</li>
             <li>Módulos y lecciones asociados</li>
             <li>Solicitudes de fusión en curso</li>
           </ul>
@@ -112,7 +112,7 @@ export function DeleteBranchDialog({
             disabled={isLoading}
             className="bg-red-600 hover:bg-red-700"
           >
-            {isLoading ? "Eliminando..." : "Eliminar rama"}
+            {isLoading ? "Eliminando..." : "Eliminar edición"}
           </Button>
         </DialogFooter>
       </DialogContent>

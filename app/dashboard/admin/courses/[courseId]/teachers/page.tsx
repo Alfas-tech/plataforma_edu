@@ -3,7 +3,7 @@ import {
   getCurrentProfile,
   getAllUsers,
 } from "@/src/presentation/actions/profile.actions";
-import { getCourseWithTeachers } from "@/src/presentation/actions/course.actions";
+import { getCourseVersionAssignments } from "@/src/presentation/actions/course.actions";
 import { signout } from "@/src/presentation/actions/auth.actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,8 +34,8 @@ export default async function CourseTeachersPage({ params }: PageProps) {
     redirect("/dashboard");
   }
 
-  // Obtener curso con docentes asignados
-  const courseResult = await getCourseWithTeachers(courseId);
+  // Obtener curso con versiones y docentes asignados
+  const courseResult = await getCourseVersionAssignments(courseId);
 
   if ("error" in courseResult) {
     return (
@@ -49,7 +49,7 @@ export default async function CourseTeachersPage({ params }: PageProps) {
     );
   }
 
-  const { course, teachers: assignedTeachers } = courseResult;
+  const { course, versions } = courseResult;
 
   // Obtener todos los docentes disponibles
   const usersResult = await getAllUsers();
@@ -67,6 +67,17 @@ export default async function CourseTeachersPage({ params }: PageProps) {
   }
 
   const allTeachers = usersResult.teachers || [];
+
+  const assignedTeacherIds = new Set<string>();
+  versions.forEach((version) => {
+    version.teachers.forEach((teacher) => assignedTeacherIds.add(teacher.id));
+  });
+
+  const totalAssignedTeachers = assignedTeacherIds.size;
+  const totalAvailableTeachers = Math.max(
+    0,
+    allTeachers.length - totalAssignedTeachers
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
@@ -161,7 +172,7 @@ export default async function CourseTeachersPage({ params }: PageProps) {
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-bold text-emerald-600">
-                {assignedTeachers.length}
+                {totalAssignedTeachers}
               </p>
             </CardContent>
           </Card>
@@ -175,7 +186,7 @@ export default async function CourseTeachersPage({ params }: PageProps) {
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-bold text-blue-600">
-                {allTeachers.length - assignedTeachers.length}
+                {totalAvailableTeachers}
               </p>
             </CardContent>
           </Card>
@@ -184,7 +195,7 @@ export default async function CourseTeachersPage({ params }: PageProps) {
         {/* Teacher Assignment Client Component */}
         <TeacherAssignmentClient
           courseId={courseId}
-          assignedTeachers={assignedTeachers}
+          versions={versions}
           allTeachers={allTeachers}
         />
       </main>

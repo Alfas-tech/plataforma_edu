@@ -58,27 +58,27 @@ export function ModuleManagementClient({
   );
 
   const canMutateContent = Boolean(courseVersionId);
-  const branchLabel = isDefaultBranch ? "rama principal" : `rama ${branchName}`;
+  const branchLabel = isDefaultBranch ? "edición principal" : `edición ${branchName}`;
 
   return (
     <>
       <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
         <p className="font-semibold text-slate-800">
-          Estás gestionando el contenido de la {branchLabel}.
+          Estás gestionando el contenido de la {branchLabel} del curso.
         </p>
         {isDefaultBranch ? (
           <p>
-            Los cambios publicados impactan a los estudiantes de forma inmediata. Usa ramas para preparar
+            Los cambios publicados impactan a los estudiantes de forma inmediata. Usa ediciones de trabajo para preparar
             modificaciones sin afectar la experiencia vigente.
           </p>
         ) : (
           <p>
-            Todo lo que crees o edites aquí solo afectará a esta rama hasta que apruebes una fusión hacia la rama principal.
+            Todo lo que crees o edites aquí solo afectará a esta edición hasta que apruebes una fusión hacia la edición principal.
           </p>
         )}
         {!canMutateContent && (
           <p className="mt-2 rounded-md border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-700">
-            Esta rama no tiene una versión activa. Crea una versión desde el panel del curso antes de agregar módulos.
+            Esta edición del curso no tiene una versión activa. Crea una versión desde el panel del curso antes de agregar módulos.
           </p>
         )}
       </div>

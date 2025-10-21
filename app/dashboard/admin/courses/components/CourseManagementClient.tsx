@@ -79,7 +79,7 @@ const reviewSteps = [
   {
     Icon: GitMerge,
     title: "Paso 3 · Publicar",
-    description: "Fusiona a la rama principal cuando confirmes que todo luce bien.",
+    description: "Fusiona con la edición principal cuando confirmes que todo luce bien.",
   },
 ];
 
@@ -96,7 +96,8 @@ function getMergeRequestCallout(status: MergeRequestStatus): MergeRequestCallout
   if (status === "approved") {
     return {
       title: "Listo para fusionar",
-      message: "Esta solicitud ya fue aprobada. Fusiona cuando quieras publicar los cambios en main.",
+      message:
+        "Esta solicitud ya fue aprobada. Fusiona cuando quieras publicar los cambios en la edición principal.",
       classes: "border-emerald-200 bg-emerald-50 text-emerald-700",
       Icon: GitMerge,
     };
@@ -105,7 +106,8 @@ function getMergeRequestCallout(status: MergeRequestStatus): MergeRequestCallout
   if (status === "merged") {
     return {
       title: "Cambios integrados",
-      message: "Los contenidos ya están en la rama principal. Usa el historial de versiones si necesitas revisar detalles.",
+      message:
+        "Los contenidos ya están en la edición principal. Usa el historial de versiones si necesitas revisar detalles.",
       classes: "border-indigo-200 bg-indigo-50 text-indigo-700",
       Icon: Sparkles,
     };
@@ -418,7 +420,7 @@ export function CourseManagementClient({
         setActionError(
           error instanceof Error
             ? error.message
-            : "Error al fusionar la rama"
+            : "Error al fusionar la edición"
         );
       } finally {
         setProcessingMergeRequestId(null);
@@ -444,8 +446,8 @@ export function CourseManagementClient({
         <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
           <p className="font-semibold text-slate-800">Curso principal</p>
           <p>
-            Esta cuenta administra un único curso base. Usa ramas para preparar
-            nuevas versiones sin afectar la experiencia publicada en <span className="font-semibold">main</span>.
+            Esta cuenta administra un único curso base. Usa ediciones de trabajo para preparar
+            nuevas versiones sin afectar la experiencia publicada en la edición principal.
           </p>
         </div>
       )}
@@ -560,8 +562,8 @@ export function CourseManagementClient({
 
             const activeVersionBranchName =
               course.activeVersion?.branchId
-                ? branchNameMap.get(course.activeVersion.branchId) ?? "Sin rama"
-                : course.defaultBranch?.name ?? "Sin rama";
+                ? branchNameMap.get(course.activeVersion.branchId) ?? "Sin edición"
+                : course.defaultBranch?.name ?? "Sin edición";
 
             const activeVersionAssociatedWithSelection = course.activeVersion
               ? course.activeVersion.branchId
@@ -587,7 +589,7 @@ export function CourseManagementClient({
                         {course.defaultBranch && (
                           <Badge className="bg-indigo-100 text-indigo-700">
                             <GitBranch className="mr-1 h-3 w-3" />
-                            Rama principal: {course.defaultBranch.name}
+                            Edición principal: {course.defaultBranch.name}
                           </Badge>
                         )}
                       </div>
@@ -643,16 +645,16 @@ export function CourseManagementClient({
                             : "Sin versión"}
                         </p>
                         <p className="text-xs text-slate-500">
-                          Rama: {activeVersionBranchName}
+                          Edición: {activeVersionBranchName}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 rounded-lg border bg-slate-50 p-3">
                       <Layers className="mt-0.5 h-5 w-5 flex-shrink-0 text-purple-600" />
                       <div>
-                        <p className="text-xs font-medium text-slate-600">Ramas & fusiones</p>
+                        <p className="text-xs font-medium text-slate-600">Ediciones & fusiones</p>
                         <p className="text-sm font-semibold text-slate-800">
-                          {allBranches.length} ramas · {course.pendingMergeRequests.length} fusiones
+                          {allBranches.length} ediciones · {course.pendingMergeRequests.length} fusiones
                         </p>
                       </div>
                     </div>
@@ -661,12 +663,12 @@ export function CourseManagementClient({
                   <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex flex-col gap-2">
                       <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Rama seleccionada
+                        Edición seleccionada
                       </span>
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                         <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
                           <GitBranch className="h-4 w-4 text-indigo-600" />
-                          {selectedBranch?.name ?? "Sin rama"}
+                          {selectedBranch?.name ?? "Sin edición"}
                         </div>
                         <Select
                           value={selectedBranchId ?? undefined}
@@ -675,7 +677,7 @@ export function CourseManagementClient({
                           }
                         >
                           <SelectTrigger className="w-full sm:w-[230px]">
-                            <SelectValue placeholder="Selecciona una rama" />
+                            <SelectValue placeholder="Selecciona una edición" />
                           </SelectTrigger>
                           <SelectContent>
                             {allBranches.map((branch) => (
@@ -694,8 +696,8 @@ export function CourseManagementClient({
                         onClick={() => setBranchDialogCourse(course)}
                       >
                         <PlusCircle className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Nueva rama</span>
-                        <span className="sm:hidden">Rama</span>
+                        <span className="hidden sm:inline">Nueva edición</span>
+                        <span className="sm:hidden">Edición</span>
                       </Button>
                       {selectedBranchId && !isDefaultBranchSelected && (
                         <Button
@@ -739,7 +741,7 @@ export function CourseManagementClient({
                             ¿Cómo revisar?
                           </p>
                           <p className="mt-1 leading-5">
-                            Previsualiza los contenidos, registra tu decisión y finalmente fusiona cuando estés seguro. Todo sucede sin afectar a la rama principal hasta el paso final.
+                            Previsualiza los contenidos, registra tu decisión y finalmente fusiona cuando estés seguro. Todo sucede sin afectar a la edición principal hasta el paso final.
                           </p>
                         </div>
 
@@ -784,7 +786,7 @@ export function CourseManagementClient({
                                 )}
                                 <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
                                   <GitBranch className="h-3 w-3 text-slate-500" />
-                                  {mr.sourceBranchName} ({mr.sourceVersionLabel}) → {mr.targetBranchName}
+                                  Edición origen: {mr.sourceBranchName} ({mr.sourceVersionLabel}) → Edición destino: {mr.targetBranchName}
                                   {mr.targetVersionLabel && (
                                     <span>({mr.targetVersionLabel})</span>
                                   )}
@@ -896,7 +898,7 @@ export function CourseManagementClient({
                                       ) : (
                                         <GitMerge className="mr-2 h-4 w-4" />
                                       )}
-                                      Fusionar a principal
+                                      Fusionar con la edición principal
                                     </Button>
                                   )}
                                 </div>
@@ -911,7 +913,7 @@ export function CourseManagementClient({
                       <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                         <div>
                           <p className="text-sm font-semibold text-slate-900">
-                            {selectedBranch?.name ?? "No hay rama seleccionada"}
+                            {selectedBranch?.name ?? "No hay edición seleccionada"}
                           </p>
                           <div className="mt-1 flex flex-wrap gap-2 text-xs text-slate-600">
                             {selectedBranch?.isDefault && (
@@ -973,7 +975,7 @@ export function CourseManagementClient({
                             }
                           >
                             <Trash2 className="h-4 w-4 sm:mr-2" />
-                            <span className="hidden sm:inline">Eliminar rama</span>
+                            <span className="hidden sm:inline">Eliminar edición</span>
                             <span className="sm:hidden">Eliminar</span>
                           </Button>
                         )}
@@ -988,17 +990,17 @@ export function CourseManagementClient({
                           <p>{selectedBranch?.tipVersionLabel ?? "Sin versiones"}</p>
                         </div>
                         <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-                          <p className="font-semibold text-slate-800">Rama padre</p>
+                          <p className="font-semibold text-slate-800">Edición de origen</p>
                           <p>
                             {selectedBranch?.parentBranchId
                               ? branchNameMap.get(selectedBranch.parentBranchId) ?? "Desconocida"
-                              : "Sin rama padre"}
+                              : "Sin edición de origen"}
                           </p>
                         </div>
                       </div>
                       {!isDefaultBranchSelected && selectedBranch && (
                         <div className="mt-4 rounded-md border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-900">
-                          Esta rama es una copia aislada de <span className="font-semibold">{course.defaultBranch?.name ?? "main"}</span>.
+                          Esta edición es una copia aislada de <span className="font-semibold">{course.defaultBranch?.name ?? "la edición principal"}</span>.
                           Puedes crear, editar o borrar módulos y lecciones sin afectar al contenido publicado hasta que envíes y fusiones una solicitud.
                         </div>
                       )}
@@ -1035,7 +1037,7 @@ export function CourseManagementClient({
                           <div className="flex items-center gap-2 text-sm text-slate-700">
                             <AlertTriangle className="h-4 w-4 text-amber-600" />
                             <span>
-                              La versión activa vive en {activeVersionBranchName}. Cambia de rama para revisarla.
+                              La versión activa vive en {activeVersionBranchName}. Cambia de edición para revisarla.
                             </span>
                           </div>
                         )
@@ -1052,7 +1054,7 @@ export function CourseManagementClient({
                         <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                           <GitPullRequest className="h-4 w-4 text-emerald-600" />
                           {isDefaultBranchSelected
-                            ? "Solicitudes de esta rama"
+                            ? "Solicitudes en esta edición"
                             : "Solicitudes enviadas"}
                         </h3>
                         <span className="text-xs text-slate-500">
@@ -1062,17 +1064,17 @@ export function CourseManagementClient({
                               : "Sin solicitudes entrantes"
                             : outgoingRequests.length
                             ? `${outgoingRequests.length} pendiente(s)`
-                            : "Sin solicitudes desde esta rama"}
+                            : "Sin solicitudes desde esta edición"}
                         </span>
                       </div>
 
                       {isDefaultBranchSelected ? (
                         <div className="rounded-lg border border-dashed border-slate-300 bg-white p-4 text-xs text-slate-600">
-                          Usa el panel de revisión superior para aprobar o fusionar los cambios que llegan a la rama principal.
+                          Usa el panel de revisión superior para aprobar o fusionar los cambios que llegan a la edición principal.
                         </div>
                       ) : outgoingRequests.length === 0 ? (
                         <div className="rounded-lg border border-dashed border-slate-300 bg-white p-4 text-xs text-slate-600">
-                          Aún no has creado solicitudes de fusión desde esta rama. Prepara tus cambios y envía una revisión cuando estén listos.
+                          Aún no has creado solicitudes de fusión desde esta edición. Prepara tus cambios y envía una revisión cuando estén listos.
                         </div>
                       ) : (
                         <div className="space-y-3">
@@ -1104,7 +1106,7 @@ export function CourseManagementClient({
                                 )}
                                 <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
                                   <GitBranch className="h-3 w-3 text-slate-500" />
-                                  {mr.sourceBranchName} ({mr.sourceVersionLabel}) → {mr.targetBranchName}
+                                  Edición origen: {mr.sourceBranchName} ({mr.sourceVersionLabel}) → Edición destino: {mr.targetBranchName}
                                   {mr.targetVersionLabel && (
                                     <span>({mr.targetVersionLabel})</span>
                                   )}
@@ -1143,7 +1145,7 @@ export function CourseManagementClient({
                                   </p>
                                 )}
                                 <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-                                  Espera la revisión del administrador. Puedes seguir editando esta rama sin afectar a main.
+                                  Espera la revisión del administrador. Puedes seguir editando esta edición sin afectar a la edición principal.
                                 </div>
                               </div>
                             );

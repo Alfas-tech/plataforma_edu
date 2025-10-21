@@ -1,5 +1,6 @@
 import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
 import { CourseEntity } from "@/src/core/entities/Course.entity";
+import { CourseVersionEntity } from "@/src/core/entities/CourseVersion.entity";
 import {
   CourseBranchData,
   CourseData,
@@ -151,6 +152,24 @@ export class SupabaseCourseRepository implements ICourseRepository {
     };
 
     return CourseEntity.fromDatabase(courseRow, activeVersion, extras);
+  }
+
+  async getCourseVersionById(
+    versionId: string
+  ): Promise<CourseVersionEntity | null> {
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+      .from("course_versions")
+      .select("*")
+      .eq("id", versionId)
+      .single();
+
+    if (error || !data) {
+      return null;
+    }
+
+    return CourseVersionEntity.fromDatabase(data as CourseVersionData);
   }
 
   async getAllCourses(): Promise<CourseEntity[]> {
@@ -516,66 +535,224 @@ export class SupabaseCourseRepository implements ICourseRepository {
     }
   }
 
-  async assignTeacher(courseId: string, teacherId: string): Promise<void> {
+  async assignTeacherToVersion(
+    _courseId: string,
+    courseVersionId: string,
+    teacherId: string
+  ): Promise<void> {
     const supabase = createClient();
+    const authUser = (await supabase.auth.getUser()).data.user;
 
-    const { error } = await supabase.from("course_teachers").insert({
-      course_id: courseId,
+    const { error } = await supabase.from("course_version_teachers").insert({
+      course_version_id: courseVersionId,
       teacher_id: teacherId,
-      assigned_by: (await supabase.auth.getUser()).data.user?.id,
+      assigned_by: authUser?.id ?? null,
     });
 
     if (error) {
-      throw new Error("Error al asignar docente");
+      throw new Error(
+        error.message || "Error al asignar docente a la versión del curso"
+      );
     }
   }
 
-  async removeTeacher(courseId: string, teacherId: string): Promise<void> {
+  async removeTeacherFromVersion(
+    _courseId: string,
+    courseVersionId: string,
+    teacherId: string
+  ): Promise<void> {
     const supabase = createClient();
 
     const { error } = await supabase
-      .from("course_teachers")
+      .from("course_version_teachers")
       .delete()
-      .eq("course_id", courseId)
+      .eq("course_version_id", courseVersionId)
       .eq("teacher_id", teacherId);
 
     if (error) {
-      throw new Error("Error al remover docente");
+      throw new Error(
+        error.message || "Error al remover docente de la versión del curso"
+      );
     }
   }
 
   async getCourseTeachers(courseId: string): Promise<string[]> {
     const supabase = createClient();
 
-    const { data, error } = await supabase
-      .from("course_teachers")
-      .select("teacher_id")
+    const { data: versionsData, error: versionsError } = await supabase
+      .from("course_versions")
+      .select("id")
       .eq("course_id", courseId);
+
+    if (versionsError) {
+      throw new Error(
+        versionsError.message || "Error al obtener versiones del curso"
+      );
+    }
+
+    const versionIds = (versionsData ?? []).map((row) => row.id);
+
+    if (versionIds.length === 0) {
+      return [];
+    }
+
+    const { data: assignmentsData, error: assignmentsError } = await supabase
+      .from("course_version_teachers")
+      .select("teacher_id")
+      .in("course_version_id", versionIds);
+
+    if (assignmentsError) {
+      throw new Error(
+        assignmentsError.message || "Error al obtener docentes del curso"
+      );
+    }
+
+    const teacherIds = new Set<string>();
+
+    (assignmentsData ?? []).forEach((row) => {
+      if (row.teacher_id) {
+        teacherIds.add(row.teacher_id);
+      }
+    });
+
+    return Array.from(teacherIds);
+  }
+
+  async getVersionTeachers(courseVersionId: string): Promise<string[]> {
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+      .from("course_version_teachers")
+      .select("teacher_id")
+      .eq("course_version_id", courseVersionId);
 
     if (error || !data) {
       return [];
     }
 
-    return data.map((ct) => ct.teacher_id);
+    return data.map((row) => row.teacher_id);
+  }
+
+  async getCourseVersionAssignments(
+    courseId: string
+  ): Promise<Array<{ version: CourseVersionEntity; teacherIds: string[] }>> {
+    const supabase = createClient();
+
+    const { data: versionsData, error: versionsError } = await supabase
+      .from("course_versions")
+      .select("*")
+      .eq("course_id", courseId)
+      .order("created_at", { ascending: true });
+
+    if (versionsError) {
+      throw new Error(
+        versionsError.message ||
+          "Error al obtener las versiones del curso para las asignaciones"
+      );
+    }
+
+    const versionRows = (versionsData as CourseVersionData[]) ?? [];
+
+    if (versionRows.length === 0) {
+      return [];
+    }
+
+    const versionIds = versionRows.map((version) => version.id);
+
+    const { data: assignmentsData, error: assignmentsError } = await supabase
+      .from("course_version_teachers")
+      .select("course_version_id, teacher_id")
+      .in("course_version_id", versionIds);
+
+    if (assignmentsError) {
+      throw new Error(
+        assignmentsError.message ||
+          "Error al obtener las asignaciones de docentes por versión"
+      );
+    }
+
+    const assignmentMap = new Map<string, string[]>();
+
+    (assignmentsData as { course_version_id: string; teacher_id: string }[] | null)?.forEach(
+      (row) => {
+        if (!assignmentMap.has(row.course_version_id)) {
+          assignmentMap.set(row.course_version_id, []);
+        }
+        assignmentMap.get(row.course_version_id)!.push(row.teacher_id);
+      }
+    );
+
+    return versionRows.map((version) => ({
+      version: CourseVersionEntity.fromDatabase(version),
+      teacherIds: assignmentMap.get(version.id) ?? [],
+    }));
+  }
+
+  async isTeacherAssignedToVersion(
+    courseVersionId: string,
+    teacherId: string
+  ): Promise<boolean> {
+    const supabase = createClient();
+
+    const { count, error } = await supabase
+      .from("course_version_teachers")
+      .select("id", { count: "exact", head: true })
+      .eq("course_version_id", courseVersionId)
+      .eq("teacher_id", teacherId);
+
+    if (error) {
+      throw new Error(
+        error.message ||
+          "Error al verificar la asignación del docente en la versión"
+      );
+    }
+
+    return (count ?? 0) > 0;
   }
 
   async getTeacherCourses(teacherId: string): Promise<CourseEntity[]> {
     const supabase = createClient();
 
-    const { data: courseTeachersData, error: ctError } = await supabase
-      .from("course_teachers")
-      .select("course_id")
-      .eq("teacher_id", teacherId);
+    const { data: versionAssignments, error: assignmentsError } =
+      await supabase
+        .from("course_version_teachers")
+        .select("course_version_id")
+        .eq("teacher_id", teacherId);
 
-    if (ctError) {
-      throw new Error("Error al obtener cursos del docente");
+    if (assignmentsError) {
+      throw new Error(
+        assignmentsError.message ||
+          "Error al obtener asignaciones de versiones para el docente"
+      );
     }
 
-    if (!courseTeachersData || courseTeachersData.length === 0) {
+    const assignedVersionIds = (versionAssignments ?? []).map(
+      (row) => row.course_version_id
+    );
+
+    if (assignedVersionIds.length === 0) {
       return [];
     }
 
-    const courseIds = courseTeachersData.map((item) => item.course_id);
+    const { data: versionRows, error: versionsError } = await supabase
+      .from("course_versions")
+      .select("id, course_id")
+      .in("id", assignedVersionIds);
+
+    if (versionsError) {
+      throw new Error(
+        versionsError.message ||
+          "Error al obtener información de las versiones asignadas"
+      );
+    }
+
+    const courseIds = Array.from(
+      new Set((versionRows as { id: string; course_id: string }[]).map((row) => row.course_id))
+    );
+
+    if (courseIds.length === 0) {
+      return [];
+    }
 
     const { data, error } = await supabase
       .from("courses")

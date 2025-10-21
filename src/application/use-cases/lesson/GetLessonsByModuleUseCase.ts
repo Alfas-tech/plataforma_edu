@@ -1,5 +1,6 @@
 import { ILessonRepository } from "@/src/core/interfaces/repositories/ILessonRepository";
 import { IModuleRepository } from "@/src/core/interfaces/repositories/IModuleRepository";
+import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
 import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
 import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
 import { LessonEntity } from "@/src/core/entities/Lesson.entity";
@@ -14,6 +15,7 @@ export class GetLessonsByModuleUseCase {
   constructor(
     private readonly lessonRepository: ILessonRepository,
     private readonly moduleRepository: IModuleRepository,
+    private readonly courseRepository: ICourseRepository,
     private readonly authRepository: IAuthRepository,
     private readonly profileRepository: IProfileRepository
   ) {}
@@ -46,6 +48,20 @@ export class GetLessonsByModuleUseCase {
           success: false,
           error: "Perfil no encontrado",
         };
+      }
+
+      if (profile.isTeacher()) {
+        const isAssigned = await this.courseRepository.isTeacherAssignedToVersion(
+          moduleData.courseVersionId,
+          currentUser.id
+        );
+
+        if (!isAssigned) {
+          return {
+            success: false,
+            error: "No estás asignado a esta versión del curso",
+          };
+        }
       }
 
       // Get all lessons

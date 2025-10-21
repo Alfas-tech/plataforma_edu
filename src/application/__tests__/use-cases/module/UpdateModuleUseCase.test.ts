@@ -56,14 +56,18 @@ describe("UpdateModuleUseCase", () => {
     mockCourseRepository = {
       getActiveCourse: jest.fn(),
       getCourseById: jest.fn(),
+      getCourseVersionById: jest.fn(),
       getAllCourses: jest.fn(),
       createCourse: jest.fn(),
       updateCourse: jest.fn(),
       deleteCourse: jest.fn(),
-      assignTeacher: jest.fn(),
-      removeTeacher: jest.fn(),
+      assignTeacherToVersion: jest.fn(),
+      removeTeacherFromVersion: jest.fn(),
       getTeacherCourses: jest.fn(),
       getCourseTeachers: jest.fn(),
+      getVersionTeachers: jest.fn(),
+      getCourseVersionAssignments: jest.fn(),
+      isTeacherAssignedToVersion: jest.fn(),
     };
 
     updateModuleUseCase = new UpdateModuleUseCase(
@@ -175,13 +179,16 @@ describe("UpdateModuleUseCase", () => {
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         teacherProfile
       );
-      mockCourseRepository.getCourseTeachers.mockResolvedValue(["user-123"]);
+      mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(true);
       mockModuleRepository.updateModule.mockResolvedValue(updatedModule);
 
       const result = await updateModuleUseCase.execute(moduleId, validInput);
 
       expect(result.success).toBe(true);
       expect(result.module).toEqual(updatedModule);
+      expect(
+        mockCourseRepository.isTeacherAssignedToVersion
+      ).toHaveBeenCalledWith("version-123", mockUser.id);
     });
 
     it("should return error when module not found", async () => {
@@ -245,14 +252,12 @@ describe("UpdateModuleUseCase", () => {
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         teacherProfile
       );
-      mockCourseRepository.getCourseTeachers.mockResolvedValue([
-        "other-user-id",
-      ]);
+      mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(false);
 
       const result = await updateModuleUseCase.execute(moduleId, validInput);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("No estás asignado a este curso");
+      expect(result.error).toBe("No estás asignado a esta versión del curso");
       expect(mockModuleRepository.updateModule).not.toHaveBeenCalled();
     });
 

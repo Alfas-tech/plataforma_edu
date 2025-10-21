@@ -57,7 +57,7 @@ export class CreateModuleUseCase {
         };
       }
 
-  const course = await this.courseRepository.getCourseById(input.courseId);
+      const course = await this.courseRepository.getCourseById(input.courseId);
       if (!course) {
         return {
           success: false,
@@ -65,27 +65,51 @@ export class CreateModuleUseCase {
         };
       }
 
-      // If teacher, check if assigned to the course
-      if (profile.isTeacher()) {
-        const assignedTeachers = await this.courseRepository.getCourseTeachers(
-          input.courseId
+      let targetVersionId: string | null = null;
+
+      if (input.courseVersionId) {
+        const version = await this.courseRepository.getCourseVersionById(
+          input.courseVersionId
         );
-        if (!assignedTeachers.includes(currentUser.id)) {
+
+        if (!version) {
           return {
             success: false,
-            error: "No estás asignado a este curso",
+            error: "Versión del curso no encontrada",
           };
         }
-      }
 
-      const targetVersionId =
-        input.courseVersionId ?? course.activeVersion?.id ?? null;
+        if (version.courseId !== course.id) {
+          return {
+            success: false,
+            error: "La versión seleccionada no pertenece al curso",
+          };
+        }
+
+        targetVersionId = version.id;
+      } else {
+        targetVersionId = course.activeVersion?.id ?? null;
+      }
 
       if (!targetVersionId) {
         return {
           success: false,
           error: "El curso no tiene una versión activa",
         };
+      }
+
+      if (profile.isTeacher()) {
+        const isAssigned = await this.courseRepository.isTeacherAssignedToVersion(
+          targetVersionId,
+          currentUser.id
+        );
+
+        if (!isAssigned) {
+          return {
+            success: false,
+            error: "No estás asignado a esta versión del curso",
+          };
+        }
       }
 
       // Create module

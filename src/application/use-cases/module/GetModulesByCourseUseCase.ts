@@ -51,14 +51,54 @@ export class GetModulesByCourseUseCase {
         };
       }
 
-      // Get all modules
+      let allowedVersionIds: Set<string> | null = null;
+
+      if (profile.isTeacher()) {
+        if (courseVersionId) {
+          const isAssigned =
+            await this.courseRepository.isTeacherAssignedToVersion(
+              courseVersionId,
+              currentUser.id
+            );
+
+          if (!isAssigned) {
+            return {
+              success: false,
+              error: "No estás asignado a esta versión del curso",
+            };
+          }
+
+          allowedVersionIds = new Set([courseVersionId]);
+        } else {
+          const assignments =
+            await this.courseRepository.getCourseVersionAssignments(courseId);
+
+          const teacherVersions = assignments
+            .filter((assignment) =>
+              assignment.teacherIds.includes(currentUser.id)
+            )
+            .map((assignment) => assignment.version.id);
+
+          if (teacherVersions.length === 0) {
+            return {
+              success: false,
+              error: "No estás asignado a ninguna versión de este curso",
+            };
+          }
+
+          allowedVersionIds = new Set(teacherVersions);
+        }
+      }
+
       const modules = await this.moduleRepository.getModulesByCourseId(
         courseId,
         courseVersionId ? { courseVersionId } : undefined
       );
 
-      const versionFilteredModules = courseVersionId
-        ? modules.filter((module) => module.courseVersionId === courseVersionId)
+      const versionFilteredModules = allowedVersionIds
+        ? modules.filter((module) =>
+            allowedVersionIds?.has(module.courseVersionId)
+          )
         : modules;
 
       // Filter based on user role

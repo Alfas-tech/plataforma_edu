@@ -104,7 +104,9 @@ export function ModuleFormDialog({
     setError(null);
 
     if (mode === "create" && !courseVersionId) {
-      setError("Esta rama no tiene una versión activa para vincular módulos.");
+      setError(
+        "Esta edición del curso no tiene una versión activa para vincular módulos."
+      );
       setIsSubmitting(false);
       return;
     }
@@ -161,7 +163,7 @@ export function ModuleFormDialog({
           </DialogDescription>
           {!courseVersionId && (
             <p className="mt-2 text-xs text-red-600">
-              Esta rama necesita una versión activa antes de crear módulos.
+              Esta edición del curso necesita una versión activa antes de crear módulos.
             </p>
           )}
         </DialogHeader>

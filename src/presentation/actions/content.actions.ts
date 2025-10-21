@@ -138,6 +138,7 @@ export async function getLessonsByModule(moduleId: string) {
   const getLessonsUseCase = new GetLessonsByModuleUseCase(
     lessonRepository,
     moduleRepository,
+    courseRepository,
     authRepository,
     profileRepository
   );

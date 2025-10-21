@@ -41,7 +41,7 @@ export default async function AdminDashboardPage() {
               Gestión de Cursos
             </h1>
             <p className="text-pretty text-sm text-slate-600 sm:text-base md:text-lg">
-              Itera el curso principal usando ramas y solicitudes de fusión sin interrumpir a los estudiantes.
+              Itera el curso principal usando ediciones de trabajo y solicitudes de fusión sin interrumpir a los estudiantes.
             </p>
           </div>
           <Link href="/dashboard/admin/users">
@@ -146,7 +146,7 @@ function CoursesOverview({ courses }: CoursesOverviewProps) {
           <CardContent>
             <p className="text-3xl font-bold text-emerald-600">{readyToMerge}</p>
             <p className="mt-2 text-sm text-slate-500">
-              Solicitudes ya aprobadas esperando ser fusionadas a la rama principal.
+              Solicitudes ya aprobadas esperando ser fusionadas a la edición principal.
             </p>
           </CardContent>
         </Card>
@@ -155,13 +155,13 @@ function CoursesOverview({ courses }: CoursesOverviewProps) {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
               <GitBranch className="h-5 w-5 text-slate-600" />
-              Ramas con trabajo pendiente
+              Ediciones con trabajo pendiente
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-slate-600">{draftBranches}</p>
             <p className="mt-2 text-sm text-slate-500">
-              Cursos con contenido nuevo en ramas secundarias listo para revisión.
+              Cursos con contenido nuevo en ediciones alternativas listo para revisión.
             </p>
           </CardContent>
         </Card>
