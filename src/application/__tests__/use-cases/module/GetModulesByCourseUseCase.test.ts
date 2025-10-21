@@ -8,11 +8,18 @@ import { CourseEntity } from "@/src/core/entities/Course.entity";
 import { UserEntity } from "@/src/core/entities/User.entity";
 import { ProfileEntity } from "@/src/core/entities/Profile.entity";
 
+declare const describe: any;
+declare const beforeEach: any;
+declare const afterEach: any;
+declare const it: any;
+declare const expect: any;
+declare const jest: any;
+
 describe("GetModulesByCourseUseCase", () => {
-  let mockModuleRepository: jest.Mocked<IModuleRepository>;
-  let mockAuthRepository: jest.Mocked<IAuthRepository>;
-  let mockProfileRepository: jest.Mocked<IProfileRepository>;
-  let mockCourseRepository: jest.Mocked<ICourseRepository>;
+  let mockModuleRepository: any;
+  let mockAuthRepository: any;
+  let mockProfileRepository: any;
+  let mockCourseRepository: any;
   let getModulesByCourseUseCase: GetModulesByCourseUseCase;
 
   beforeEach(() => {
@@ -23,7 +30,7 @@ describe("GetModulesByCourseUseCase", () => {
       getModuleById: jest.fn(),
       updateModule: jest.fn(),
       deleteModule: jest.fn(),
-    } as any;
+    };
 
     mockAuthRepository = {
       login: jest.fn(),
@@ -33,35 +40,38 @@ describe("GetModulesByCourseUseCase", () => {
       signInWithGoogle: jest.fn(),
       resetPassword: jest.fn(),
       updatePassword: jest.fn(),
-    } as any;
+    };
 
     mockProfileRepository = {
       getProfileByUserId: jest.fn(),
-      getAllStudents: jest.fn(),
+      getProfileByEmail: jest.fn(),
+      getAllProfiles: jest.fn(),
+      updateProfile: jest.fn(),
+      promoteToTeacher: jest.fn(),
+      demoteToStudent: jest.fn(),
+      updateRole: jest.fn(),
       getAllTeachers: jest.fn(),
-      updateUserRole: jest.fn(),
-      createProfile: jest.fn(),
-      deleteProfile: jest.fn(),
-    } as any;
+      getAllStudents: jest.fn(),
+    };
 
     mockCourseRepository = {
+      getActiveCourse: jest.fn(),
       createCourse: jest.fn(),
       getAllCourses: jest.fn(),
       getCourseById: jest.fn(),
       updateCourse: jest.fn(),
       deleteCourse: jest.fn(),
-      assignTeacherToCourse: jest.fn(),
-      removeTeacherFromCourse: jest.fn(),
-      getCourseWithTeachers: jest.fn(),
+      assignTeacher: jest.fn(),
+      removeTeacher: jest.fn(),
       getTeacherCourses: jest.fn(),
       getCourseTeachers: jest.fn(),
-    } as any;
+    };
 
     getModulesByCourseUseCase = new GetModulesByCourseUseCase(
-      mockModuleRepository,
-      mockCourseRepository,
-      mockAuthRepository,
-      mockProfileRepository
+      mockModuleRepository as IModuleRepository,
+      mockCourseRepository as ICourseRepository,
+      mockAuthRepository as IAuthRepository,
+      mockProfileRepository as IProfileRepository
     );
   });
 
@@ -76,15 +86,35 @@ describe("GetModulesByCourseUseCase", () => {
       "student@example.com",
       "Student User"
     );
-    const mockCourse = new CourseEntity(
-      courseId,
-      "Test Course",
-      "Description",
-      new Date(),
-      new Date(),
-      true,
-      new Date(),
-      new Date()
+    const now = new Date();
+    const mockCourse = CourseEntity.fromDatabase(
+      {
+        id: courseId,
+        title: "Test Course",
+        summary: "Description",
+        description: "Detailed description",
+        slug: "test-course",
+        visibility_override: false,
+        active_version_id: "version-123",
+        created_by: "admin-123",
+        created_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      },
+      {
+        id: "version-123",
+        course_id: courseId,
+        version_label: "v1.0.0",
+        summary: "Version summary",
+        status: "published",
+        is_active: true,
+        is_published: true,
+        based_on_version_id: null,
+        created_by: "admin-123",
+        reviewed_by: null,
+        approved_at: now.toISOString(),
+        created_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      }
     );
 
     it("should return published modules for students", async () => {
@@ -102,6 +132,7 @@ describe("GetModulesByCourseUseCase", () => {
         new CourseModuleEntity(
           "module-1",
           courseId,
+          "version-123",
           "Module 1",
           "Description 1",
           1,
@@ -113,6 +144,7 @@ describe("GetModulesByCourseUseCase", () => {
         new CourseModuleEntity(
           "module-2",
           courseId,
+          "version-123",
           "Module 2",
           "Description 2",
           2,
@@ -152,6 +184,7 @@ describe("GetModulesByCourseUseCase", () => {
         new CourseModuleEntity(
           "module-1",
           courseId,
+          "version-123",
           "Module 1",
           "Description 1",
           1,
@@ -163,6 +196,7 @@ describe("GetModulesByCourseUseCase", () => {
         new CourseModuleEntity(
           "module-2",
           courseId,
+          "version-123",
           "Module 2",
           "Description 2",
           2,
@@ -199,6 +233,7 @@ describe("GetModulesByCourseUseCase", () => {
         new CourseModuleEntity(
           "module-1",
           courseId,
+          "version-123",
           "Module 1",
           "Description 1",
           1,

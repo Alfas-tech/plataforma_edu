@@ -4,14 +4,22 @@ import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthReposit
 import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
 import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
 import { CourseModuleEntity } from "@/src/core/entities/CourseModule.entity";
+import { CourseEntity } from "@/src/core/entities/Course.entity";
 import { UserEntity } from "@/src/core/entities/User.entity";
 import { ProfileEntity } from "@/src/core/entities/Profile.entity";
 
+declare const describe: any;
+declare const beforeEach: any;
+declare const afterEach: any;
+declare const it: any;
+declare const expect: any;
+declare const jest: any;
+
 describe("CreateModuleUseCase", () => {
-  let mockModuleRepository: jest.Mocked<IModuleRepository>;
-  let mockAuthRepository: jest.Mocked<IAuthRepository>;
-  let mockProfileRepository: jest.Mocked<IProfileRepository>;
-  let mockCourseRepository: jest.Mocked<ICourseRepository>;
+  let mockModuleRepository: any;
+  let mockAuthRepository: any;
+  let mockProfileRepository: any;
+  let mockCourseRepository: any;
   let createModuleUseCase: CreateModuleUseCase;
 
   beforeEach(() => {
@@ -22,7 +30,7 @@ describe("CreateModuleUseCase", () => {
       getModuleById: jest.fn(),
       updateModule: jest.fn(),
       deleteModule: jest.fn(),
-    } as any;
+    };
 
     mockAuthRepository = {
       login: jest.fn(),
@@ -32,35 +40,38 @@ describe("CreateModuleUseCase", () => {
       signInWithGoogle: jest.fn(),
       resetPassword: jest.fn(),
       updatePassword: jest.fn(),
-    } as any;
+    };
 
     mockProfileRepository = {
       getProfileByUserId: jest.fn(),
-      getAllStudents: jest.fn(),
+      getProfileByEmail: jest.fn(),
+      getAllProfiles: jest.fn(),
+      updateProfile: jest.fn(),
+      promoteToTeacher: jest.fn(),
+      demoteToStudent: jest.fn(),
+      updateRole: jest.fn(),
       getAllTeachers: jest.fn(),
-      updateUserRole: jest.fn(),
-      createProfile: jest.fn(),
-      deleteProfile: jest.fn(),
-    } as any;
+      getAllStudents: jest.fn(),
+    };
 
     mockCourseRepository = {
-      createCourse: jest.fn(),
-      getAllCourses: jest.fn(),
+      getActiveCourse: jest.fn(),
       getCourseById: jest.fn(),
+      getAllCourses: jest.fn(),
+      createCourse: jest.fn(),
       updateCourse: jest.fn(),
       deleteCourse: jest.fn(),
-      assignTeacherToCourse: jest.fn(),
-      removeTeacherFromCourse: jest.fn(),
-      getCourseWithTeachers: jest.fn(),
+      assignTeacher: jest.fn(),
+      removeTeacher: jest.fn(),
       getTeacherCourses: jest.fn(),
       getCourseTeachers: jest.fn(),
-    } as any;
+    };
 
     createModuleUseCase = new CreateModuleUseCase(
-      mockModuleRepository,
-      mockCourseRepository,
-      mockAuthRepository,
-      mockProfileRepository
+      mockModuleRepository as IModuleRepository,
+      mockCourseRepository as ICourseRepository,
+      mockAuthRepository as IAuthRepository,
+      mockProfileRepository as IProfileRepository
     );
   });
 
@@ -69,13 +80,15 @@ describe("CreateModuleUseCase", () => {
   });
 
   describe("execute", () => {
+    const courseId = "course-123";
     const validInput = {
-      course_id: "course-123",
+      courseId,
+      courseVersionId: "version-123",
       title: "Test Module",
       description: "Test Description",
-      order_index: 1,
+      orderIndex: 1,
       content: "Test Content",
-      is_published: false,
+      isPublished: false,
     };
 
     const mockUser = new UserEntity(
@@ -92,11 +105,43 @@ describe("CreateModuleUseCase", () => {
       new Date(),
       new Date()
     );
+    const now = new Date();
+    const mockCourse = CourseEntity.fromDatabase(
+      {
+        id: courseId,
+        title: "Course",
+        summary: "Summary",
+        description: "Description",
+        slug: "course",
+        visibility_override: false,
+        active_version_id: "version-123",
+  default_branch_id: null,
+        created_by: "admin-1",
+        created_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      },
+      {
+        id: "version-123",
+        course_id: courseId,
+        version_label: "v1.0.0",
+        summary: "Summary",
+        status: "published",
+        is_active: true,
+        is_published: true,
+        based_on_version_id: null,
+        created_by: "admin-1",
+        reviewed_by: null,
+        approved_at: now.toISOString(),
+        created_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      }
+    );
 
     it("should create module successfully when user is admin", async () => {
       const mockModule = new CourseModuleEntity(
         "module-123",
         "course-123",
+        "version-123",
         "Test Module",
         "Test Description",
         1,
@@ -106,6 +151,7 @@ describe("CreateModuleUseCase", () => {
         new Date()
       );
 
+      mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         mockAdminProfile
@@ -118,7 +164,15 @@ describe("CreateModuleUseCase", () => {
       expect(result.module).toEqual(mockModule);
       expect(result.error).toBeUndefined();
       expect(mockModuleRepository.createModule).toHaveBeenCalledWith(
-        validInput
+        expect.objectContaining({
+          course_id: courseId,
+          course_version_id: "version-123",
+          title: "Test Module",
+          description: "Test Description",
+          order_index: 1,
+          content: "Test Content",
+          is_published: false,
+        })
       );
     });
 
@@ -136,6 +190,7 @@ describe("CreateModuleUseCase", () => {
       const mockModule = new CourseModuleEntity(
         "module-123",
         "course-123",
+        "version-123",
         "Test Module",
         "Test Description",
         1,
@@ -146,6 +201,7 @@ describe("CreateModuleUseCase", () => {
       );
 
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
+      mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         teacherProfile
       );
@@ -157,7 +213,7 @@ describe("CreateModuleUseCase", () => {
       expect(result.success).toBe(true);
       expect(result.module).toEqual(mockModule);
       expect(mockCourseRepository.getCourseTeachers).toHaveBeenCalledWith(
-        "course-123"
+        courseId
       );
     });
 
@@ -205,6 +261,20 @@ describe("CreateModuleUseCase", () => {
       expect(mockModuleRepository.createModule).not.toHaveBeenCalled();
     });
 
+    it("should return error when course is not found", async () => {
+      mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
+      mockCourseRepository.getCourseById.mockResolvedValue(null);
+
+      const result = await createModuleUseCase.execute(validInput);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Curso no encontrado");
+      expect(mockModuleRepository.createModule).not.toHaveBeenCalled();
+    });
+
     it("should return error when teacher is not assigned to course", async () => {
       const teacherProfile = new ProfileEntity(
         "profile-123",
@@ -217,9 +287,8 @@ describe("CreateModuleUseCase", () => {
       );
 
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(
-        teacherProfile
-      );
+      mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(teacherProfile);
       mockCourseRepository.getCourseTeachers.mockResolvedValue([
         "other-user-id",
       ]);
@@ -231,8 +300,45 @@ describe("CreateModuleUseCase", () => {
       expect(mockModuleRepository.createModule).not.toHaveBeenCalled();
     });
 
+    it("should return error when course has no active version and none provided", async () => {
+      const courseWithoutActiveVersion = CourseEntity.fromDatabase(
+        {
+          id: courseId,
+          title: "Course",
+          summary: "Summary",
+          description: "Description",
+          slug: "course",
+          visibility_override: false,
+          active_version_id: null,
+          default_branch_id: null,
+          created_by: "admin-1",
+          created_at: now.toISOString(),
+          updated_at: now.toISOString(),
+        },
+        null
+      );
+
+      mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        mockAdminProfile
+      );
+      mockCourseRepository.getCourseById.mockResolvedValue(
+        courseWithoutActiveVersion
+      );
+
+      const result = await createModuleUseCase.execute({
+  ...validInput,
+  courseVersionId: undefined,
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("El curso no tiene una versión activa");
+      expect(mockModuleRepository.createModule).not.toHaveBeenCalled();
+    });
+
     it("should handle repository errors gracefully", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
+      mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         mockAdminProfile
       );
@@ -248,6 +354,7 @@ describe("CreateModuleUseCase", () => {
 
     it("should handle unknown errors", async () => {
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
+      mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         mockAdminProfile
       );

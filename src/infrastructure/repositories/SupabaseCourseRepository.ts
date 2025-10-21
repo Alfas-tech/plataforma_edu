@@ -1,23 +1,45 @@
 import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
 import { CourseEntity } from "@/src/core/entities/Course.entity";
 import {
+  CourseBranchData,
+  CourseData,
+  CourseMergeRequestData,
+  CourseVersionData,
   CreateCourseInput,
   UpdateCourseInput,
-  CourseData,
 } from "@/src/core/types/course.types";
 import { createClient } from "@/src/infrastructure/supabase/server";
 
 export class SupabaseCourseRepository implements ICourseRepository {
+  private slugify(value: string): string {
+    return value
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .substring(0, 80);
+  }
+
   async getActiveCourse(): Promise<CourseEntity | null> {
     const supabase = createClient();
 
-    const { data, error } = await supabase.rpc("get_active_course");
+    const { data, error } = await supabase
+      .from("course_versions")
+      .select("*, course:courses(*)")
+      .eq("is_active", true)
+      .eq("is_published", true)
+      .order("updated_at", { ascending: false })
+      .limit(1);
 
     if (error || !data || data.length === 0) {
       return null;
     }
 
-    return CourseEntity.fromDatabase(data[0]);
+    const versionRow = data[0] as CourseVersionData & {
+      course: CourseData;
+    };
+
+    return CourseEntity.fromDatabase(versionRow.course, versionRow);
   }
 
   async getCourseById(id: string): Promise<CourseEntity | null> {
@@ -33,7 +55,102 @@ export class SupabaseCourseRepository implements ICourseRepository {
       return null;
     }
 
-    return CourseEntity.fromDatabase(data);
+    let activeVersion: CourseVersionData | null = null;
+
+    if (data.active_version_id) {
+      const { data: versionData } = await supabase
+        .from("course_versions")
+        .select("*")
+        .eq("id", data.active_version_id)
+        .single();
+
+      activeVersion = (versionData as CourseVersionData) ?? null;
+    }
+
+    const courseRow = data as CourseData;
+
+    const { data: branchesData } = await supabase
+      .from("course_branches")
+      .select("*")
+      .eq("course_id", id);
+
+    const branchRows = (branchesData as CourseBranchData[]) ?? [];
+
+    const branchIds = branchRows.map((branch) => branch.id);
+    const baseVersionIds = branchRows
+      .map((branch) => branch.base_version_id)
+      .filter((versionId): versionId is string => Boolean(versionId));
+
+    let branchBaseVersions = new Map<string, CourseVersionData>();
+
+    if (baseVersionIds.length > 0) {
+      const { data: baseVersionsData } = await supabase
+        .from("course_versions")
+        .select("*")
+        .in("id", baseVersionIds);
+
+      if (baseVersionsData) {
+        branchBaseVersions = new Map(
+          (baseVersionsData as CourseVersionData[]).map((version) => [
+            version.id,
+            version,
+          ])
+        );
+      }
+    }
+
+    let branchTipVersions = new Map<string, CourseVersionData>();
+
+    if (branchIds.length > 0) {
+      const { data: tipVersionsData } = await supabase
+        .from("course_versions")
+        .select("*")
+        .in("branch_id", branchIds)
+        .eq("is_tip", true);
+
+      if (tipVersionsData) {
+        branchTipVersions = new Map(
+          (tipVersionsData as CourseVersionData[])
+            .filter((version) => Boolean(version.branch_id))
+            .map((version) => [
+              version.branch_id as string,
+              version,
+            ])
+        );
+      }
+    }
+
+    const defaultBranch = branchRows.find((branch) => branch.is_default) ?? null;
+
+    const { data: mergeRequestsData } = await supabase
+      .from("course_merge_requests")
+      .select("*")
+      .eq("course_id", id)
+      .in("status", ["open", "approved"]);
+
+    const mergeRequestRows = (mergeRequestsData as CourseMergeRequestData[]) ?? [];
+
+    const extras = {
+      defaultBranch,
+      branches: branchRows,
+      branchBaseVersions: Object.fromEntries(
+        branchRows.map((branch) => [
+          branch.id,
+          branch.base_version_id
+            ? branchBaseVersions.get(branch.base_version_id) ?? null
+            : null,
+        ])
+      ),
+      branchTipVersions: Object.fromEntries(
+        branchRows.map((branch) => [
+          branch.id,
+          branchTipVersions.get(branch.id) ?? null,
+        ])
+      ),
+      mergeRequests: mergeRequestRows,
+    };
+
+    return CourseEntity.fromDatabase(courseRow, activeVersion, extras);
   }
 
   async getAllCourses(): Promise<CourseEntity[]> {
@@ -42,35 +159,260 @@ export class SupabaseCourseRepository implements ICourseRepository {
     const { data, error } = await supabase
       .from("courses")
       .select("*")
-      .order("start_date", { ascending: false });
+      .order("created_at", { ascending: false });
 
-    if (error || !data) {
+    if (error) {
+      console.error("Supabase getAllCourses error", error);
+      throw new Error(error.message || "Error al obtener cursos");
+    }
+
+    if (!data) {
       return [];
     }
 
-    return data.map((course) => CourseEntity.fromDatabase(course));
+    const courses = data as CourseData[];
+    const courseIds = courses.map((course) => course.id);
+    const activeVersionIds = courses
+      .map((course) => course.active_version_id)
+      .filter((id): id is string => Boolean(id));
+
+    let versionsMap = new Map<string, CourseVersionData>();
+
+    if (activeVersionIds.length > 0) {
+      const { data: versionsData } = await supabase
+        .from("course_versions")
+        .select("*")
+        .in("id", activeVersionIds);
+
+      if (versionsData) {
+        versionsMap = new Map(
+          (versionsData as CourseVersionData[]).map((version) => [
+            version.id,
+            version,
+          ])
+        );
+      }
+    }
+
+    const branchesByCourse = new Map<string, CourseBranchData[]>();
+    const branchBaseVersionByBranch = new Map<string, CourseVersionData | null>();
+    const branchTipVersionByBranch = new Map<string, CourseVersionData | null>();
+    const defaultBranchByCourse = new Map<string, CourseBranchData>();
+    const mergeRequestsByCourse = new Map<string, CourseMergeRequestData[]>();
+
+    if (courseIds.length > 0) {
+      const { data: branchesData } = await supabase
+        .from("course_branches")
+        .select("*")
+        .in("course_id", courseIds);
+
+      const branchRows = (branchesData as CourseBranchData[]) ?? [];
+
+      if (branchRows.length > 0) {
+        const branchIds = branchRows.map((branch) => branch.id);
+        const baseVersionIds = branchRows
+          .map((branch) => branch.base_version_id)
+          .filter((id): id is string => Boolean(id));
+
+        let baseVersionsMap = new Map<string, CourseVersionData>();
+
+        if (baseVersionIds.length > 0) {
+          const { data: baseVersionsData } = await supabase
+            .from("course_versions")
+            .select("*")
+            .in("id", baseVersionIds);
+
+          if (baseVersionsData) {
+            baseVersionsMap = new Map(
+              (baseVersionsData as CourseVersionData[]).map((version) => [
+                version.id,
+                version,
+              ])
+            );
+          }
+        }
+
+        let tipVersionsMap = new Map<string, CourseVersionData>();
+
+        if (branchIds.length > 0) {
+          const { data: tipVersionsData } = await supabase
+            .from("course_versions")
+            .select("*")
+            .in("branch_id", branchIds)
+            .eq("is_tip", true);
+
+          if (tipVersionsData) {
+            tipVersionsMap = new Map(
+              (tipVersionsData as CourseVersionData[])
+                .filter((version) => Boolean(version.branch_id))
+                .map((version) => [
+                  version.branch_id as string,
+                  version,
+                ])
+            );
+          }
+        }
+
+        branchRows.forEach((branch) => {
+          if (!branchesByCourse.has(branch.course_id)) {
+            branchesByCourse.set(branch.course_id, []);
+          }
+
+          branchesByCourse.get(branch.course_id)!.push(branch);
+
+          if (branch.is_default) {
+            defaultBranchByCourse.set(branch.course_id, branch);
+          }
+
+          branchBaseVersionByBranch.set(
+            branch.id,
+            branch.base_version_id
+              ? baseVersionsMap.get(branch.base_version_id) ?? null
+              : null
+          );
+
+          branchTipVersionByBranch.set(
+            branch.id,
+            tipVersionsMap.get(branch.id) ?? null
+          );
+        });
+      }
+
+      const { data: mergeRequestsData } = await supabase
+        .from("course_merge_requests")
+        .select("*")
+        .in("course_id", courseIds)
+        .in("status", ["open", "approved"]);
+
+      if (mergeRequestsData) {
+        (mergeRequestsData as CourseMergeRequestData[]).forEach((mr) => {
+          if (!mergeRequestsByCourse.has(mr.course_id)) {
+            mergeRequestsByCourse.set(mr.course_id, []);
+          }
+
+          mergeRequestsByCourse.get(mr.course_id)!.push(mr);
+        });
+      }
+    }
+
+    return courses.map((course) => {
+      const branches = branchesByCourse.get(course.id) ?? [];
+
+      const branchBaseVersionsRecord = Object.fromEntries(
+        branches.map((branch) => [
+          branch.id,
+          branchBaseVersionByBranch.get(branch.id) ?? null,
+        ])
+      );
+
+      const branchTipVersionsRecord = Object.fromEntries(
+        branches.map((branch) => [
+          branch.id,
+          branchTipVersionByBranch.get(branch.id) ?? null,
+        ])
+      );
+
+      const defaultBranch =
+        defaultBranchByCourse.get(course.id) ??
+        branches.find((branch) => branch.id === course.default_branch_id) ??
+        null;
+
+      return CourseEntity.fromDatabase(
+        course,
+        course.active_version_id
+          ? versionsMap.get(course.active_version_id) ?? null
+          : null,
+        {
+          defaultBranch,
+          branches,
+          branchBaseVersions: branchBaseVersionsRecord,
+          branchTipVersions: branchTipVersionsRecord,
+          mergeRequests: mergeRequestsByCourse.get(course.id) ?? [],
+        }
+      );
+    });
   }
 
   async createCourse(input: CreateCourseInput): Promise<CourseEntity> {
     const supabase = createClient();
+    const authUser = (await supabase.auth.getUser()).data.user;
+    const userId = authUser?.id ?? null;
 
-    const { data, error } = await supabase
-      .from("courses")
+    const summary = input.summary ?? input.description ?? null;
+
+    const slugBase = this.slugify(input.title);
+    let slug = slugBase;
+    let attempt = 1;
+    let courseRow: CourseData | null = null;
+
+    while (!courseRow) {
+      const { data, error } = await supabase
+        .from("courses")
+        .insert({
+          title: input.title,
+          summary,
+          description: input.description ?? null,
+          slug,
+          created_by: userId,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === "23505") {
+          slug = `${slugBase}-${attempt}`;
+          attempt += 1;
+          continue;
+        }
+        throw new Error(error.message || "Error al crear el curso");
+      }
+
+      if (!data) {
+        throw new Error("Error al crear el curso");
+      }
+
+      courseRow = data as CourseData;
+    }
+
+    const initialLabel = input.initialVersionLabel ?? "v1.0.0";
+    const { data: versionData, error: versionError } = await supabase
+      .from("course_versions")
       .insert({
-        title: input.title,
-        description: input.description,
-        start_date: input.start_date,
-        end_date: input.end_date,
-        created_by: (await supabase.auth.getUser()).data.user?.id,
+        course_id: courseRow.id,
+        version_label: initialLabel,
+        summary: input.initialVersionSummary ?? summary,
+        status: "published",
+        is_active: true,
+        is_published: true,
+        created_by: userId,
       })
       .select()
       .single();
 
-    if (error || !data) {
-      throw new Error("Error al crear el curso");
+    if (versionError || !versionData) {
+      throw new Error(
+        versionError?.message || "Error al crear la versión inicial"
+      );
     }
 
-    return CourseEntity.fromDatabase(data);
+    const versionRow = versionData as CourseVersionData;
+
+    const { error: updateError } = await supabase
+      .from("courses")
+      .update({ active_version_id: versionRow.id })
+      .eq("id", courseRow.id);
+
+    if (updateError) {
+      throw new Error(updateError.message || "Error al vincular versión");
+    }
+
+    const updatedCourse: CourseData = {
+      ...courseRow,
+      active_version_id: versionRow.id,
+      updated_at: new Date().toISOString(),
+    };
+
+    return CourseEntity.fromDatabase(updatedCourse, versionRow);
   }
 
   async updateCourse(
@@ -89,35 +431,79 @@ export class SupabaseCourseRepository implements ICourseRepository {
       throw new Error("Curso no encontrado");
     }
 
+    const original = existingData as CourseData;
+
+    let slug = original.slug;
     const updates: Partial<CourseData> = {
       ...(input.title !== undefined ? { title: input.title } : {}),
+      ...(input.summary !== undefined ? { summary: input.summary } : {}),
       ...(input.description !== undefined
         ? { description: input.description }
         : {}),
-      ...(input.start_date !== undefined
-        ? { start_date: input.start_date }
+      ...(input.visibility_override !== undefined
+        ? { visibility_override: input.visibility_override }
         : {}),
-      ...(input.end_date !== undefined ? { end_date: input.end_date } : {}),
-      ...(input.is_active !== undefined ? { is_active: input.is_active } : {}),
-      updated_at: new Date().toISOString(),
     };
 
-    const { error } = await supabase
-      .from("courses")
-      .update(updates)
-      .eq("id", id);
+    if (input.title && input.title !== original.title) {
+      const slugBase = this.slugify(input.title);
+      slug = slugBase;
+      let attempt = 1;
 
-    if (error) {
-      throw new Error(error.message || "Error al actualizar el curso");
+      while (true) {
+        const { data: slugCheck, error: slugError } = await supabase
+          .from("courses")
+          .select("id")
+          .eq("slug", slug)
+          .neq("id", id)
+          .maybeSingle();
+
+        if (slugError) {
+          throw new Error(slugError.message || "Error al validar slug");
+        }
+
+        if (!slugCheck) {
+          break;
+        }
+
+        slug = `${slugBase}-${attempt}`;
+        attempt += 1;
+      }
+
+      updates.slug = slug;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      updates.updated_at = new Date().toISOString();
+      const { error } = await supabase
+        .from("courses")
+        .update(updates)
+        .eq("id", id);
+
+      if (error) {
+        throw new Error(error.message || "Error al actualizar el curso");
+      }
     }
 
     const mergedCourse: CourseData = {
-      ...existingData,
+      ...original,
       ...updates,
-      updated_at: updates.updated_at ?? existingData.updated_at,
-    } as CourseData;
+      updated_at: updates.updated_at ?? original.updated_at,
+    };
 
-    return CourseEntity.fromDatabase(mergedCourse);
+    let activeVersion: CourseVersionData | null = null;
+
+    if (mergedCourse.active_version_id) {
+      const { data: versionData } = await supabase
+        .from("course_versions")
+        .select("*")
+        .eq("id", mergedCourse.active_version_id)
+        .single();
+
+      activeVersion = (versionData as CourseVersionData) ?? null;
+    }
+
+    return CourseEntity.fromDatabase(mergedCourse, activeVersion);
   }
 
   async deleteCourse(id: string): Promise<void> {
@@ -176,7 +562,6 @@ export class SupabaseCourseRepository implements ICourseRepository {
   async getTeacherCourses(teacherId: string): Promise<CourseEntity[]> {
     const supabase = createClient();
 
-    // Get course IDs where teacher is assigned
     const { data: courseTeachersData, error: ctError } = await supabase
       .from("course_teachers")
       .select("course_id")
@@ -192,12 +577,11 @@ export class SupabaseCourseRepository implements ICourseRepository {
 
     const courseIds = courseTeachersData.map((item) => item.course_id);
 
-    // Get courses
     const { data, error } = await supabase
       .from("courses")
       .select("*")
       .in("id", courseIds)
-      .order("start_date", { ascending: false });
+      .order("created_at", { ascending: false });
 
     if (error) {
       throw new Error("Error al obtener cursos");
@@ -205,8 +589,36 @@ export class SupabaseCourseRepository implements ICourseRepository {
 
     if (!data) return [];
 
-    return data.map((courseData: CourseData) =>
-      CourseEntity.fromDatabase(courseData)
+    const courses = data as CourseData[];
+    const versionIds = courses
+      .map((course) => course.active_version_id)
+      .filter((id): id is string => Boolean(id));
+
+    let versionMap = new Map<string, CourseVersionData>();
+
+    if (versionIds.length > 0) {
+      const { data: versionData } = await supabase
+        .from("course_versions")
+        .select("*")
+        .in("id", versionIds);
+
+      if (versionData) {
+        versionMap = new Map(
+          (versionData as CourseVersionData[]).map((version) => [
+            version.id,
+            version,
+          ])
+        );
+      }
+    }
+
+    return courses.map((course) =>
+      CourseEntity.fromDatabase(
+        course,
+        course.active_version_id
+          ? versionMap.get(course.active_version_id) ?? null
+          : null
+      )
     );
   }
 }

@@ -6,25 +6,32 @@ import { UserEntity } from "@/src/core/entities/User.entity";
 import { ProfileEntity } from "@/src/core/entities/Profile.entity";
 import { CourseEntity } from "@/src/core/entities/Course.entity";
 
+declare const describe: any;
+declare const beforeEach: any;
+declare const afterEach: any;
+declare const it: any;
+declare const expect: any;
+declare const jest: any;
+
 describe("AssignTeacherToCourseUseCase", () => {
-  let mockCourseRepository: jest.Mocked<ICourseRepository>;
-  let mockAuthRepository: jest.Mocked<IAuthRepository>;
-  let mockProfileRepository: jest.Mocked<IProfileRepository>;
+  let mockCourseRepository: any;
+  let mockAuthRepository: any;
+  let mockProfileRepository: any;
   let assignTeacherToCourseUseCase: AssignTeacherToCourseUseCase;
 
   beforeEach(() => {
     mockCourseRepository = {
-      createCourse: jest.fn(),
-      getAllCourses: jest.fn(),
+      getActiveCourse: jest.fn(),
       getCourseById: jest.fn(),
+      getAllCourses: jest.fn(),
+      createCourse: jest.fn(),
       updateCourse: jest.fn(),
       deleteCourse: jest.fn(),
       assignTeacher: jest.fn(),
       removeTeacher: jest.fn(),
       getCourseTeachers: jest.fn(),
       getTeacherCourses: jest.fn(),
-      getActiveCourse: jest.fn(),
-    } as any;
+    };
 
     mockAuthRepository = {
       login: jest.fn(),
@@ -34,24 +41,24 @@ describe("AssignTeacherToCourseUseCase", () => {
       signInWithGoogle: jest.fn(),
       resetPassword: jest.fn(),
       updatePassword: jest.fn(),
-    } as any;
+    };
 
     mockProfileRepository = {
       getProfileByUserId: jest.fn(),
       getProfileByEmail: jest.fn(),
-      getAllStudents: jest.fn(),
-      getAllTeachers: jest.fn(),
       getAllProfiles: jest.fn(),
       updateProfile: jest.fn(),
-      updateRole: jest.fn(),
       promoteToTeacher: jest.fn(),
       demoteToStudent: jest.fn(),
-    } as any;
+      updateRole: jest.fn(),
+      getAllTeachers: jest.fn(),
+      getAllStudents: jest.fn(),
+    };
 
     assignTeacherToCourseUseCase = new AssignTeacherToCourseUseCase(
-      mockCourseRepository,
-      mockAuthRepository,
-      mockProfileRepository
+      mockCourseRepository as ICourseRepository,
+      mockAuthRepository as IAuthRepository,
+      mockProfileRepository as IProfileRepository
     );
   });
 
@@ -83,16 +90,35 @@ describe("AssignTeacherToCourseUseCase", () => {
       new Date(),
       new Date()
     );
-    const mockCourse = new CourseEntity(
-      "course-123",
-      "Test Course",
-      "Description",
-      new Date(),
-      new Date(),
-      true,
-      "admin-123",
-      new Date(),
-      new Date()
+    const now = new Date();
+    const mockCourse = CourseEntity.fromDatabase(
+      {
+        id: "course-123",
+        title: "Test Course",
+        summary: "Description",
+        description: "Long description",
+        slug: "test-course",
+        visibility_override: false,
+        active_version_id: "version-1",
+        created_by: "admin-123",
+        created_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      },
+      {
+        id: "version-1",
+        course_id: "course-123",
+        version_label: "v1.0.0",
+        summary: "Version summary",
+        status: "published",
+        is_active: true,
+        is_published: true,
+        based_on_version_id: null,
+        created_by: "admin-123",
+        reviewed_by: null,
+        approved_at: now.toISOString(),
+        created_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      }
     );
 
     it("should assign teacher to course when user is admin", async () => {

@@ -38,6 +38,7 @@ interface ModuleFormDialogProps {
   onClose: () => void;
   mode: "create" | "edit";
   courseId: string;
+  courseVersionId: string | null;
   module?: ModuleData | null;
   maxOrderIndex: number;
 }
@@ -47,6 +48,7 @@ export function ModuleFormDialog({
   onClose,
   mode,
   courseId,
+  courseVersionId,
   module,
   maxOrderIndex,
 }: ModuleFormDialogProps) {
@@ -101,16 +103,23 @@ export function ModuleFormDialog({
     setIsSubmitting(true);
     setError(null);
 
+    if (mode === "create" && !courseVersionId) {
+      setError("Esta rama no tiene una versión activa para vincular módulos.");
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       let result;
       if (mode === "create") {
         result = await createModule({
-          course_id: courseId,
+          courseId,
+          courseVersionId: courseVersionId ?? undefined,
           title: data.title,
           description: data.description || null,
-          order_index: data.orderIndex,
+          orderIndex: data.orderIndex,
           content: data.content || null,
-          is_published: data.isPublished || false,
+          isPublished: data.isPublished || false,
         });
       } else if (module) {
         result = await updateModule(module.id, {
@@ -138,7 +147,7 @@ export function ModuleFormDialog({
   return (
     <Dialog
       open={isOpen}
-      onOpenChange={(open) => !open && !isSubmitting && onClose()}
+      onOpenChange={(open: boolean) => !open && !isSubmitting && onClose()}
     >
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
@@ -150,6 +159,11 @@ export function ModuleFormDialog({
               ? "Completa la información del nuevo módulo del curso."
               : "Modifica la información del módulo."}
           </DialogDescription>
+          {!courseVersionId && (
+            <p className="mt-2 text-xs text-red-600">
+              Esta rama necesita una versión activa antes de crear módulos.
+            </p>
+          )}
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
@@ -245,7 +259,9 @@ export function ModuleFormDialog({
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={
+                isSubmitting || (mode === "create" && !courseVersionId)
+              }
               className="bg-purple-600 hover:bg-purple-700"
             >
               {isSubmitting ? (

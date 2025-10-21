@@ -1,8 +1,11 @@
 import { SupabaseCourseRepository } from "@/src/infrastructure/repositories/SupabaseCourseRepository";
 import { createClient } from "@/src/infrastructure/supabase/server";
 import { CourseEntity } from "@/src/core/entities/Course.entity";
+import type {
+  CourseData,
+  CourseVersionData,
+} from "@/src/core/types/course.types";
 
-// Mock Supabase client
 jest.mock("@/src/infrastructure/supabase/server", () => ({
   createClient: jest.fn(),
 }));
@@ -11,28 +14,94 @@ describe("SupabaseCourseRepository", () => {
   let repository: SupabaseCourseRepository;
   let mockSupabase: any;
 
-  beforeEach(() => {
-    // Create a proper chain mock
-    const mockChain = {
-      from: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      insert: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      delete: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      in: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
-      order: jest.fn().mockReturnThis(),
-      rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
-      auth: {
-        getUser: jest.fn().mockResolvedValue({
-          data: { user: { id: "user-123" } },
-          error: null,
-        }),
+  const success = <T>(data: T) => ({ data, error: null });
+  const failure = (message: string) => ({
+    data: null,
+    error: { message },
+  });
+
+  const createChainableBuilder = () => {
+    const builder: any = {
+      __result: success(null),
+      select: jest.fn().mockImplementation(() => builder),
+      insert: jest.fn().mockImplementation(() => builder),
+      update: jest.fn().mockImplementation(() => builder),
+      delete: jest.fn().mockImplementation(() => builder),
+      eq: jest.fn().mockImplementation(() => builder),
+      neq: jest.fn().mockImplementation(() => builder),
+      in: jest.fn().mockImplementation(() => builder),
+      order: jest.fn().mockImplementation(() => builder),
+      limit: jest.fn().mockImplementation(() =>
+        Promise.resolve(builder.__result)
+      ),
+      single: jest.fn().mockImplementation(() =>
+        Promise.resolve(builder.__result)
+      ),
+      maybeSingle: jest.fn().mockImplementation(() =>
+        Promise.resolve(builder.__result)
+      ),
+      then: (resolve: any, reject?: any) =>
+        Promise.resolve(builder.__result).then(resolve, reject),
+      setResult: (result: any) => {
+        builder.__result = result;
+        return builder;
       },
     };
 
-    mockSupabase = mockChain;
+    return builder;
+  };
+
+  const createCourseRow = (overrides: Partial<CourseData> = {}): CourseData => ({
+    id: "course-1",
+    title: "Course 1",
+    summary: "Summary",
+    description: "Description",
+    slug: "course-1",
+    visibility_override: false,
+    active_version_id: "version-1",
+    default_branch_id: null,
+    created_by: "admin-1",
+    created_at: "2024-01-01T00:00:00.000Z",
+    updated_at: "2024-01-01T00:00:00.000Z",
+    ...overrides,
+  });
+
+  const createVersionRow = (
+    overrides: Partial<CourseVersionData> = {}
+  ): CourseVersionData => ({
+    id: "version-1",
+    course_id: "course-1",
+    branch_id: null,
+    version_label: "v1.0.0",
+    summary: "Initial version",
+    status: "published",
+    is_active: true,
+    is_published: true,
+    is_tip: true,
+    parent_version_id: null,
+    merged_into_version_id: null,
+    merge_request_id: null,
+    based_on_version_id: null,
+    created_by: "admin-1",
+    reviewed_by: null,
+    approved_at: null,
+    created_at: "2024-01-01T00:00:00.000Z",
+    updated_at: "2024-01-01T00:00:00.000Z",
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    mockSupabase = {
+      from: jest.fn().mockImplementation(() => {
+        throw new Error("Unexpected table call");
+      }),
+      auth: {
+        getUser: jest.fn().mockResolvedValue(
+          success({ user: { id: "user-123" } })
+        ),
+      },
+    };
+
     (createClient as jest.Mock).mockReturnValue(mockSupabase);
     repository = new SupabaseCourseRepository();
   });
@@ -42,170 +111,325 @@ describe("SupabaseCourseRepository", () => {
   });
 
   describe("getAllCourses", () => {
-    it("should return all courses", async () => {
-      const mockCourses = [
-        {
-          id: "course-1",
-          title: "Course 1",
-          description: "Description 1",
-          start_date: "2024-01-01",
-          end_date: "2024-12-31",
-          is_active: true,
-          created_by: "admin-1",
-          created_at: "2024-01-01",
-          updated_at: "2024-01-01",
-        },
-      ];
+    it("returns mapped courses", async () => {
+      const courseRow = createCourseRow();
+      const versionRow = createVersionRow();
 
-      mockSupabase.order.mockResolvedValue({ data: mockCourses, error: null });
+      const coursesBuilder = createChainableBuilder();
+      coursesBuilder.select.mockReturnValue(coursesBuilder);
+      coursesBuilder.order.mockImplementation(() =>
+        coursesBuilder.setResult(success([courseRow]))
+      );
+
+      const versionsBuilder = createChainableBuilder();
+      versionsBuilder.select.mockReturnValue(versionsBuilder);
+      versionsBuilder.in.mockImplementation(() =>
+        versionsBuilder.setResult(success([versionRow]))
+      );
+
+      const branchesBuilder = createChainableBuilder();
+      branchesBuilder.select.mockReturnValue(branchesBuilder);
+      branchesBuilder.in.mockImplementation(() =>
+        branchesBuilder.setResult(success([]))
+      );
+
+      const mergeRequestsBuilder = createChainableBuilder();
+      mergeRequestsBuilder.select.mockReturnValue(mergeRequestsBuilder);
+      mergeRequestsBuilder.in.mockImplementation(() =>
+        mergeRequestsBuilder.setResult(success([]))
+      );
+
+      mockSupabase.from
+        .mockImplementationOnce((table: string) => {
+          expect(table).toBe("courses");
+          return coursesBuilder;
+        })
+        .mockImplementationOnce((table: string) => {
+          expect(table).toBe("course_versions");
+          return versionsBuilder;
+        })
+        .mockImplementationOnce((table: string) => {
+          expect(table).toBe("course_branches");
+          return branchesBuilder;
+        })
+        .mockImplementationOnce((table: string) => {
+          expect(table).toBe("course_merge_requests");
+          return mergeRequestsBuilder;
+        });
 
       const result = await repository.getAllCourses();
 
       expect(result).toHaveLength(1);
       expect(result[0]).toBeInstanceOf(CourseEntity);
-      expect(result[0].title).toBe("Course 1");
-      expect(mockSupabase.from).toHaveBeenCalledWith("courses");
+      expect(result[0].activeVersion?.id).toBe("version-1");
     });
 
-    it("should return empty array when database query fails", async () => {
-      mockSupabase.order.mockResolvedValue({
-        data: null,
-        error: { message: "Database error" },
-      });
+    it("throws when supabase returns an error", async () => {
+      const coursesBuilder = createChainableBuilder();
+      coursesBuilder.select.mockReturnValue(coursesBuilder);
+      coursesBuilder.order.mockImplementation(() =>
+        coursesBuilder.setResult(failure("Database error"))
+      );
 
-      const result = await repository.getAllCourses();
-      expect(result).toEqual([]);
+      mockSupabase.from.mockImplementationOnce(() => coursesBuilder);
+
+      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+
+      await expect(repository.getAllCourses()).rejects.toThrow("Database error");
+
+      consoleSpy.mockRestore();
     });
   });
 
   describe("getCourseById", () => {
-    it("should return course by id", async () => {
-      const mockCourse = {
-        id: "course-1",
-        title: "Course 1",
-        description: "Description 1",
-        start_date: "2024-01-01",
-        end_date: "2024-12-31",
-        is_active: true,
-        created_by: "admin-1",
-        created_at: "2024-01-01",
-        updated_at: "2024-01-01",
-      };
+    it("returns a course when found", async () => {
+      const courseRow = createCourseRow();
+      const versionRow = createVersionRow();
 
-      mockSupabase.single.mockResolvedValue({ data: mockCourse, error: null });
-
-      const result = await repository.getCourseById("course-1");
-
-      expect(result).toBeInstanceOf(CourseEntity);
-      expect(result?.id).toBe("course-1");
-      expect(mockSupabase.eq).toHaveBeenCalledWith("id", "course-1");
-    });
-
-    it("should return null when course not found", async () => {
-      mockSupabase.single.mockResolvedValue({ data: null, error: null });
-
-      const result = await repository.getCourseById("non-existent");
-
-      expect(result).toBeNull();
-    });
-
-    it("should return null when error occurs", async () => {
-      mockSupabase.single.mockResolvedValue({
-        data: null,
-        error: { message: "Not found" },
+      const coursesBuilder = createChainableBuilder();
+      coursesBuilder.select.mockReturnValue(coursesBuilder);
+      coursesBuilder.eq.mockImplementation((column: string, value: string) => {
+        expect(column).toBe("id");
+        expect(value).toBe(courseRow.id);
+        return coursesBuilder.setResult(success(courseRow));
       });
 
-      const result = await repository.getCourseById("course-1");
+      const versionsBuilder = createChainableBuilder();
+      versionsBuilder.select.mockReturnValue(versionsBuilder);
+      versionsBuilder.eq.mockImplementation((column: string, value: string) => {
+        expect(column).toBe("id");
+        expect(value).toBe(courseRow.active_version_id);
+        return versionsBuilder.setResult(success(versionRow));
+      });
 
-      expect(result).toBeNull();
+      const branchesBuilder = createChainableBuilder();
+      branchesBuilder.select.mockReturnValue(branchesBuilder);
+      branchesBuilder.eq.mockImplementation((column: string, value: string) => {
+        expect(column).toBe("course_id");
+        expect(value).toBe(courseRow.id);
+        return branchesBuilder.setResult(success([]));
+      });
+
+      const mergeRequestsBuilder = createChainableBuilder();
+      mergeRequestsBuilder.select.mockReturnValue(mergeRequestsBuilder);
+      mergeRequestsBuilder.eq.mockImplementation(() => mergeRequestsBuilder);
+      mergeRequestsBuilder.in.mockImplementation(() =>
+        mergeRequestsBuilder.setResult(success([]))
+      );
+
+      mockSupabase.from
+        .mockImplementationOnce((table: string) => {
+          expect(table).toBe("courses");
+          return coursesBuilder;
+        })
+        .mockImplementationOnce((table: string) => {
+          expect(table).toBe("course_versions");
+          return versionsBuilder;
+        })
+        .mockImplementationOnce((table: string) => {
+          expect(table).toBe("course_branches");
+          return branchesBuilder;
+        })
+        .mockImplementationOnce((table: string) => {
+          expect(table).toBe("course_merge_requests");
+          return mergeRequestsBuilder;
+        });
+
+      const course = await repository.getCourseById(courseRow.id);
+
+      expect(course).toBeInstanceOf(CourseEntity);
+      expect(course?.id).toBe(courseRow.id);
+      expect(course?.activeVersion?.versionLabel).toBe("v1.0.0");
+    });
+
+    it("returns null when course is not found", async () => {
+      const coursesBuilder = createChainableBuilder();
+      coursesBuilder.select.mockReturnValue(coursesBuilder);
+      coursesBuilder.eq.mockImplementation(() =>
+        coursesBuilder.setResult(success(null))
+      );
+
+      mockSupabase.from.mockImplementationOnce(() => coursesBuilder);
+
+      const course = await repository.getCourseById("missing-course");
+
+      expect(course).toBeNull();
     });
   });
 
   describe("createCourse", () => {
-    it("should create a new course", async () => {
-      const courseData = {
+    it("creates a course with initial version", async () => {
+      const initialCourseRow = createCourseRow({
+        id: "course-new",
         title: "New Course",
-        description: "Description",
-        start_date: "2024-01-01",
-        end_date: "2024-12-31",
-        is_active: true,
-        created_by: "admin-1",
-      };
-
-      const mockCreatedCourse = {
-        id: "course-1",
-        ...courseData,
-        created_at: "2024-01-01",
-        updated_at: "2024-01-01",
-      };
-
-      mockSupabase.single.mockResolvedValue({
-        data: mockCreatedCourse,
-        error: null,
+        slug: "new-course",
+        active_version_id: null,
       });
 
-      const result = await repository.createCourse(courseData);
+      const createdVersionRow = createVersionRow({
+        id: "version-new",
+        course_id: "course-new",
+      });
 
-      expect(result).toBeInstanceOf(CourseEntity);
-      expect(result.title).toBe("New Course");
+      const coursesInsertBuilder = createChainableBuilder();
+      coursesInsertBuilder.insert = jest
+        .fn()
+        .mockImplementation((payload: Record<string, unknown>) => {
+          expect(payload.title).toBe("New Course");
+          expect(payload.slug).toBe("new-course");
+          return coursesInsertBuilder;
+        });
+      coursesInsertBuilder.select.mockReturnValue(coursesInsertBuilder);
+      coursesInsertBuilder.single.mockImplementation(() =>
+        Promise.resolve(success(initialCourseRow))
+      );
+
+      const versionInsertBuilder = createChainableBuilder();
+      versionInsertBuilder.insert = jest.fn().mockReturnValue(versionInsertBuilder);
+      versionInsertBuilder.select.mockReturnValue(versionInsertBuilder);
+      versionInsertBuilder.single.mockImplementation(() =>
+        Promise.resolve(success(createdVersionRow))
+      );
+
+      const coursesUpdateBuilder = createChainableBuilder();
+      coursesUpdateBuilder.update.mockReturnValue(coursesUpdateBuilder);
+      coursesUpdateBuilder.eq.mockImplementation((column: string, value: string) => {
+        expect(column).toBe("id");
+        expect(value).toBe("course-new");
+        return coursesUpdateBuilder.setResult(success(null));
+      });
+
+      mockSupabase.from
+        .mockImplementationOnce((table: string) => {
+          expect(table).toBe("courses");
+          return coursesInsertBuilder;
+        })
+        .mockImplementationOnce((table: string) => {
+          expect(table).toBe("course_versions");
+          return versionInsertBuilder;
+        })
+        .mockImplementationOnce((table: string) => {
+          expect(table).toBe("courses");
+          return coursesUpdateBuilder;
+        });
+
+      const course = await repository.createCourse({
+        title: "New Course",
+        summary: "Summary",
+        description: "Description",
+        initialVersionLabel: "v1.0.0",
+      });
+
+      expect(course).toBeInstanceOf(CourseEntity);
+      expect(course.slug).toBe("new-course");
+      expect(course.activeVersion?.id).toBe("version-new");
+    });
+
+    it("throws when initial version cannot be created", async () => {
+      const initialCourseRow = createCourseRow({
+        id: "course-new",
+        slug: "new-course",
+        active_version_id: null,
+      });
+
+      const coursesInsertBuilder = createChainableBuilder();
+      coursesInsertBuilder.insert = jest.fn().mockReturnValue(coursesInsertBuilder);
+      coursesInsertBuilder.select.mockReturnValue(coursesInsertBuilder);
+      coursesInsertBuilder.single.mockImplementation(() =>
+        Promise.resolve(success(initialCourseRow))
+      );
+
+      const versionInsertBuilder = createChainableBuilder();
+      versionInsertBuilder.insert = jest.fn().mockReturnValue(versionInsertBuilder);
+      versionInsertBuilder.select.mockReturnValue(versionInsertBuilder);
+      versionInsertBuilder.single.mockImplementation(() =>
+        Promise.resolve(failure("version failed"))
+      );
+
+      mockSupabase.from
+        .mockImplementationOnce(() => coursesInsertBuilder)
+        .mockImplementationOnce(() => versionInsertBuilder);
+
+      await expect(
+        repository.createCourse({
+          title: "New Course",
+        })
+      ).rejects.toThrow("version failed");
     });
   });
 
-  describe("getCourseTeachers", () => {
-    it("should return list of teacher IDs for a course", async () => {
-      const mockTeachers = [
-        { teacher_id: "teacher-1" },
-        { teacher_id: "teacher-2" },
-      ];
+  describe("updateCourse", () => {
+    it("throws when course does not exist", async () => {
+      const coursesBuilder = createChainableBuilder();
+      coursesBuilder.select.mockReturnValue(coursesBuilder);
+      coursesBuilder.eq.mockImplementation(() =>
+        coursesBuilder.setResult(failure("Not found"))
+      );
 
-      mockSupabase.eq.mockResolvedValue({ data: mockTeachers, error: null });
+      mockSupabase.from.mockImplementationOnce(() => coursesBuilder);
 
-      const result = await repository.getCourseTeachers("course-1");
+      await expect(
+        repository.updateCourse("missing", { title: "New" })
+      ).rejects.toThrow("Curso no encontrado");
+    });
+  });
 
-      expect(result).toEqual(["teacher-1", "teacher-2"]);
-      expect(mockSupabase.from).toHaveBeenCalledWith("course_teachers");
+  describe("deleteCourse", () => {
+    it("removes course", async () => {
+      const deleteBuilder = createChainableBuilder();
+      deleteBuilder.delete.mockReturnValue(deleteBuilder);
+      deleteBuilder.eq.mockImplementation(() =>
+        deleteBuilder.setResult(success(null))
+      );
+
+      mockSupabase.from.mockImplementationOnce(() => deleteBuilder);
+
+      await expect(repository.deleteCourse("course-1")).resolves.not.toThrow();
     });
 
-    it("should return empty array when no teachers assigned", async () => {
-      mockSupabase.eq.mockResolvedValue({ data: [], error: null });
+    it("throws when deletion fails", async () => {
+      const deleteBuilder = createChainableBuilder();
+      deleteBuilder.delete.mockReturnValue(deleteBuilder);
+      deleteBuilder.eq.mockImplementation(() =>
+        deleteBuilder.setResult(failure("Cannot delete"))
+      );
 
-      const result = await repository.getCourseTeachers("course-1");
+      mockSupabase.from.mockImplementationOnce(() => deleteBuilder);
 
-      expect(result).toEqual([]);
-    });
-
-    it("should return empty array when query fails", async () => {
-      mockSupabase.eq.mockResolvedValue({
-        data: null,
-        error: { message: "Query failed" },
-      });
-
-      const result = await repository.getCourseTeachers("course-1");
-      expect(result).toEqual([]);
+      await expect(repository.deleteCourse("course-1")).rejects.toThrow(
+        "Error al eliminar el curso"
+      );
     });
   });
 
   describe("assignTeacher", () => {
-    it("should assign teacher to course", async () => {
-      mockSupabase.insert.mockResolvedValue({ data: {}, error: null });
+    it("assigns teacher to course", async () => {
+      const insertBuilder = {
+        insert: jest.fn().mockResolvedValue(success(null)),
+      };
+
+      mockSupabase.from.mockImplementationOnce((table: string) => {
+        expect(table).toBe("course_teachers");
+        return insertBuilder;
+      });
 
       await expect(
         repository.assignTeacher("course-1", "teacher-1")
       ).resolves.not.toThrow();
 
-      expect(mockSupabase.from).toHaveBeenCalledWith("course_teachers");
-      expect(mockSupabase.insert).toHaveBeenCalledWith({
+      expect(insertBuilder.insert).toHaveBeenCalledWith({
         course_id: "course-1",
         teacher_id: "teacher-1",
         assigned_by: "user-123",
       });
     });
 
-    it("should throw error when assignment fails", async () => {
-      mockSupabase.insert.mockResolvedValue({
-        data: null,
-        error: { message: "Assignment failed" },
-      });
+    it("throws when assignment fails", async () => {
+      const insertBuilder = {
+        insert: jest.fn().mockResolvedValue(failure("Insert failed")),
+      };
+
+      mockSupabase.from.mockImplementationOnce(() => insertBuilder);
 
       await expect(
         repository.assignTeacher("course-1", "teacher-1")
@@ -214,28 +438,24 @@ describe("SupabaseCourseRepository", () => {
   });
 
   describe("removeTeacher", () => {
-    it("should remove teacher from course", async () => {
-      // Mock the chain: delete().eq().eq()
-      const mockEqChain = {
-        eq: jest.fn().mockResolvedValue({ data: {}, error: null }),
-      };
-      mockSupabase.eq.mockReturnValue(mockEqChain);
+    it("removes teacher from course", async () => {
+      const deleteBuilder = createChainableBuilder().setResult(success(null));
+      deleteBuilder.delete.mockReturnValue(deleteBuilder);
+      deleteBuilder.eq.mockImplementation(() => deleteBuilder);
+
+      mockSupabase.from.mockImplementationOnce(() => deleteBuilder);
 
       await expect(
         repository.removeTeacher("course-1", "teacher-1")
       ).resolves.not.toThrow();
-
-      expect(mockSupabase.from).toHaveBeenCalledWith("course_teachers");
     });
 
-    it("should throw error when removal fails", async () => {
-      const mockEqChain = {
-        eq: jest.fn().mockResolvedValue({
-          data: null,
-          error: { message: "Removal failed" },
-        }),
-      };
-      mockSupabase.eq.mockReturnValue(mockEqChain);
+    it("throws when removal fails", async () => {
+      const deleteBuilder = createChainableBuilder().setResult(failure("fail"));
+      deleteBuilder.delete.mockReturnValue(deleteBuilder);
+      deleteBuilder.eq.mockImplementation(() => deleteBuilder);
+
+      mockSupabase.from.mockImplementationOnce(() => deleteBuilder);
 
       await expect(
         repository.removeTeacher("course-1", "teacher-1")
@@ -243,254 +463,145 @@ describe("SupabaseCourseRepository", () => {
     });
   });
 
-  describe("updateCourse", () => {
-    it("should update course", async () => {
-      const updateData = {
-        title: "Updated Course",
-        description: "Updated Description",
-        is_active: false,
-      };
-
-      const existingCourse = {
-        id: "course-1",
-        title: "Original Course",
-        description: "Original Description",
-        start_date: "2024-01-01",
-        end_date: "2024-12-31",
-        is_active: true,
-        created_by: "admin-1",
-        created_at: "2024-01-01",
-        updated_at: "2024-01-02",
-      };
-
-      mockSupabase.single.mockResolvedValueOnce({
-        data: existingCourse,
-        error: null,
-      });
-
-      mockSupabase.eq
-        .mockImplementationOnce(() => mockSupabase) // for initial select
-        .mockImplementationOnce(() =>
-          Promise.resolve({ data: null, error: null })
-        );
-
-      const result = await repository.updateCourse("course-1", updateData);
-
-      expect(result).toBeInstanceOf(CourseEntity);
-      expect(result.title).toBe("Updated Course");
-      expect(result.description).toBe("Updated Description");
-      expect(result.isActive).toBe(false);
-      expect(mockSupabase.from).toHaveBeenCalledWith("courses");
-    });
-
-    it("should throw error when update fails", async () => {
-      mockSupabase.single.mockResolvedValueOnce({
-        data: {
-          id: "course-1",
-          title: "Original Course",
-          description: "Original Description",
-          start_date: "2024-01-01",
-          end_date: "2024-12-31",
-          is_active: true,
-          created_by: "admin-1",
-          created_at: "2024-01-01",
-          updated_at: "2024-01-02",
-        },
-        error: null,
-      });
-
-      mockSupabase.eq
-        .mockImplementationOnce(() => mockSupabase)
-        .mockImplementationOnce(() =>
-          Promise.resolve({
-            data: null,
-            error: { message: "Update failed" },
-          })
-        );
-
-      await expect(
-        repository.updateCourse("course-1", { title: "New Title" })
-      ).rejects.toThrow("Update failed");
-    });
-
-    it("should throw error when course does not exist", async () => {
-      mockSupabase.single.mockResolvedValueOnce({
-        data: null,
-        error: { message: "Not found" },
-      });
-
-      await expect(
-        repository.updateCourse("course-404", { title: "Ghost" })
-      ).rejects.toThrow("Curso no encontrado");
-    });
-  });
-
-  describe("deleteCourse", () => {
-    it("should delete course", async () => {
-      mockSupabase.eq.mockResolvedValue({ data: {}, error: null });
-
-      await expect(repository.deleteCourse("course-1")).resolves.not.toThrow();
-      expect(mockSupabase.from).toHaveBeenCalledWith("courses");
-    });
-
-    it("should throw error when delete fails", async () => {
-      mockSupabase.eq.mockResolvedValue({
-        data: null,
-        error: { message: "Delete failed" },
-      });
-
-      await expect(repository.deleteCourse("course-1")).rejects.toThrow(
-        "Error al eliminar el curso"
+  describe("getCourseTeachers", () => {
+    it("returns teacher ids", async () => {
+      const selectBuilder = createChainableBuilder();
+      selectBuilder.select.mockReturnValue(selectBuilder);
+      selectBuilder.eq.mockImplementation(() =>
+        selectBuilder.setResult(success([
+          { teacher_id: "t1" },
+          { teacher_id: "t2" },
+        ]))
       );
+
+      mockSupabase.from.mockImplementationOnce(() => selectBuilder);
+
+      const teachers = await repository.getCourseTeachers("course-1");
+
+      expect(teachers).toEqual(["t1", "t2"]);
+    });
+
+    it("returns empty array on error", async () => {
+      const selectBuilder = createChainableBuilder();
+      selectBuilder.select.mockReturnValue(selectBuilder);
+      selectBuilder.eq.mockImplementation(() =>
+        selectBuilder.setResult(failure("boom"))
+      );
+
+      mockSupabase.from.mockImplementationOnce(() => selectBuilder);
+
+      const teachers = await repository.getCourseTeachers("course-1");
+
+      expect(teachers).toEqual([]);
     });
   });
 
   describe("getActiveCourse", () => {
-    it("should return active course when found", async () => {
-      const mockCourse = {
-        id: "course-1",
-        title: "Active Course",
-        description: "Description",
-        start_date: "2024-01-01",
-        end_date: "2024-12-31",
-        is_active: true,
-        created_by: "admin-1",
-        created_at: "2024-01-01",
-        updated_at: "2024-01-01",
-      };
+    it("returns active course when available", async () => {
+      const courseRow = createCourseRow();
+      const versionRow = createVersionRow();
 
-      mockSupabase.rpc.mockResolvedValue({ data: [mockCourse], error: null });
+      const builder = createChainableBuilder();
+      builder.select.mockReturnValue(builder);
+      builder.eq.mockImplementation(() => builder);
+      builder.order.mockImplementation(() => builder);
+      builder.limit.mockImplementation(() =>
+        Promise.resolve(
+          success([
+            {
+              ...versionRow,
+              course: courseRow,
+            },
+          ])
+        )
+      );
 
-      const result = await repository.getActiveCourse();
-
-      expect(result).toBeInstanceOf(CourseEntity);
-      expect(result?.id).toBe("course-1");
-      expect(mockSupabase.rpc).toHaveBeenCalledWith("get_active_course");
-    });
-
-    it("should return null when no active course found", async () => {
-      mockSupabase.rpc.mockResolvedValue({ data: [], error: null });
-
-      const result = await repository.getActiveCourse();
-
-      expect(result).toBeNull();
-    });
-
-    it("should return null when rpc fails", async () => {
-      mockSupabase.rpc.mockResolvedValue({
-        data: null,
-        error: { message: "RPC failed" },
+      mockSupabase.from.mockImplementationOnce((table: string) => {
+        expect(table).toBe("course_versions");
+        return builder;
       });
 
-      const result = await repository.getActiveCourse();
+      const course = await repository.getActiveCourse();
 
-      expect(result).toBeNull();
+      expect(course).toBeInstanceOf(CourseEntity);
+      expect(course?.id).toBe(courseRow.id);
+    });
+
+    it("returns null when no active course is found", async () => {
+      const builder = createChainableBuilder();
+      builder.select.mockReturnValue(builder);
+      builder.eq.mockImplementation(() => builder);
+      builder.order.mockImplementation(() => builder);
+      builder.limit.mockImplementation(() => Promise.resolve(success([])));
+
+      mockSupabase.from.mockImplementationOnce(() => builder);
+
+      const course = await repository.getActiveCourse();
+
+      expect(course).toBeNull();
     });
   });
 
   describe("getTeacherCourses", () => {
-    it("should return courses for a teacher", async () => {
-      const mockCourseTeachers = [
-        { course_id: "course-1" },
-        { course_id: "course-2" },
-      ];
+    it("returns courses assigned to teacher", async () => {
+      const courseRow = createCourseRow();
+      const versionRow = createVersionRow();
 
-      const mockCourses = [
-        {
-          id: "course-1",
-          title: "Course 1",
-          description: "Description 1",
-          start_date: "2024-01-01",
-          end_date: "2024-12-31",
-          is_active: true,
-          created_by: "admin-1",
-          created_at: "2024-01-01",
-          updated_at: "2024-01-01",
-        },
-        {
-          id: "course-2",
-          title: "Course 2",
-          description: "Description 2",
-          start_date: "2024-01-01",
-          end_date: "2024-12-31",
-          is_active: true,
-          created_by: "admin-1",
-          created_at: "2024-01-01",
-          updated_at: "2024-01-01",
-        },
-      ];
-
-      // First call for course_teachers
-      mockSupabase.eq.mockResolvedValueOnce({
-        data: mockCourseTeachers,
-        error: null,
+      const teacherCoursesBuilder = createChainableBuilder();
+      teacherCoursesBuilder.select.mockReturnValue(teacherCoursesBuilder);
+      teacherCoursesBuilder.eq.mockImplementation((column: string, value: string) => {
+        expect(column).toBe("teacher_id");
+        expect(value).toBe("teacher-1");
+        return teacherCoursesBuilder.setResult(
+          success([{ course_id: courseRow.id }])
+        );
       });
 
-      // Second call for courses
-      mockSupabase.order.mockResolvedValueOnce({
-        data: mockCourses,
-        error: null,
-      });
-
-      const result = await repository.getTeacherCourses("teacher-1");
-
-      expect(result).toHaveLength(2);
-      expect(result[0]).toBeInstanceOf(CourseEntity);
-      expect(result[0].title).toBe("Course 1");
-    });
-
-    it("should return empty array when teacher has no courses", async () => {
-      mockSupabase.eq.mockResolvedValue({
-        data: [],
-        error: null,
-      });
-
-      const result = await repository.getTeacherCourses("teacher-1");
-
-      expect(result).toEqual([]);
-    });
-
-    it("should throw error when fetching course_teachers fails", async () => {
-      mockSupabase.eq.mockResolvedValue({
-        data: null,
-        error: { message: "Query failed" },
-      });
-
-      await expect(repository.getTeacherCourses("teacher-1")).rejects.toThrow(
-        "Error al obtener cursos del docente"
+      const coursesBuilder = createChainableBuilder();
+      coursesBuilder.select.mockReturnValue(coursesBuilder);
+      coursesBuilder.in.mockImplementation(() => coursesBuilder);
+      coursesBuilder.order.mockImplementation(() =>
+        coursesBuilder.setResult(success([courseRow]))
       );
-    });
 
-    it("should throw error when fetching courses fails", async () => {
-      mockSupabase.eq.mockResolvedValueOnce({
-        data: [{ course_id: "course-1" }],
-        error: null,
-      });
-
-      mockSupabase.order.mockResolvedValueOnce({
-        data: null,
-        error: { message: "Courses query failed" },
-      });
-
-      await expect(repository.getTeacherCourses("teacher-1")).rejects.toThrow(
-        "Error al obtener cursos"
+      const versionsBuilder = createChainableBuilder();
+      versionsBuilder.select.mockReturnValue(versionsBuilder);
+      versionsBuilder.in.mockImplementation(() =>
+        versionsBuilder.setResult(success([versionRow]))
       );
+
+      mockSupabase.from
+        .mockImplementationOnce((table: string) => {
+          expect(table).toBe("course_teachers");
+          return teacherCoursesBuilder;
+        })
+        .mockImplementationOnce((table: string) => {
+          expect(table).toBe("courses");
+          return coursesBuilder;
+        })
+        .mockImplementationOnce((table: string) => {
+          expect(table).toBe("course_versions");
+          return versionsBuilder;
+        });
+
+      const courses = await repository.getTeacherCourses("teacher-1");
+
+      expect(courses).toHaveLength(1);
+      expect(courses[0]).toBeInstanceOf(CourseEntity);
     });
 
-    it("should return empty array when courses data is null", async () => {
-      mockSupabase.eq.mockResolvedValueOnce({
-        data: [{ course_id: "course-1" }],
-        error: null,
-      });
+    it("throws when course teacher query fails", async () => {
+      const teacherCoursesBuilder = createChainableBuilder();
+      teacherCoursesBuilder.select.mockReturnValue(teacherCoursesBuilder);
+      teacherCoursesBuilder.eq.mockImplementation(() =>
+        teacherCoursesBuilder.setResult(failure("boom"))
+      );
 
-      mockSupabase.order.mockResolvedValueOnce({
-        data: null,
-        error: null,
-      });
+      mockSupabase.from.mockImplementationOnce(() => teacherCoursesBuilder);
 
-      const result = await repository.getTeacherCourses("teacher-1");
-
-      expect(result).toEqual([]);
+      await expect(
+        repository.getTeacherCourses("teacher-1")
+      ).rejects.toThrow("Error al obtener cursos del docente");
     });
   });
 });

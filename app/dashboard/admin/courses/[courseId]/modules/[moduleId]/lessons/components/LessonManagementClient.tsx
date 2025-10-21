@@ -13,7 +13,6 @@ import {
   EyeOff,
   Clock,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { LessonFormDialog } from "./LessonFormDialog";
 import { DeleteLessonDialog } from "./DeleteLessonDialog";
 
@@ -32,16 +31,21 @@ interface LessonData {
 
 interface LessonManagementClientProps {
   moduleId: string;
+  branchName: string;
+  isDefaultBranch: boolean;
+  courseVersionId: string | null;
   lessons: LessonData[];
   isAdmin: boolean;
 }
 
 export function LessonManagementClient({
   moduleId,
+  branchName,
+  isDefaultBranch,
+  courseVersionId,
   lessons,
   isAdmin,
 }: LessonManagementClientProps) {
-  const router = useRouter();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<LessonData | null>(null);
   const [deletingLesson, setDeletingLesson] = useState<LessonData | null>(null);
@@ -50,13 +54,37 @@ export function LessonManagementClient({
     (a, b) => a.orderIndex - b.orderIndex
   );
 
+  const canMutateContent = Boolean(courseVersionId);
+  const branchLabel = isDefaultBranch ? "rama principal" : `rama ${branchName}`;
+
   return (
     <>
+      <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <p className="font-semibold text-slate-800">
+          Estás gestionando las lecciones de la {branchLabel}.
+        </p>
+        {isDefaultBranch ? (
+          <p>
+            Los cambios publicados se reflejan de inmediato para los estudiantes. Utiliza ramas alternas para trabajar cambios antes de fusionarlos.
+          </p>
+        ) : (
+          <p>
+            Todo lo que modifiques o crees permanecerá aislado en esta rama hasta que lo fusiones con la rama principal.
+          </p>
+        )}
+        {!canMutateContent && (
+          <p className="mt-2 rounded-md border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-700">
+            Esta rama no tiene una versión activa. Regresa al panel del curso para activar una versión antes de agregar lecciones.
+          </p>
+        )}
+      </div>
+
       {/* Create Button */}
       <div className="mb-6">
         <Button
-          onClick={() => setIsCreateDialogOpen(true)}
+          onClick={() => canMutateContent && setIsCreateDialogOpen(true)}
           className="bg-blue-600 hover:bg-blue-700"
+          disabled={!canMutateContent}
         >
           <PlusCircle className="mr-2 h-4 w-4" />
           Crear Nueva Lección
@@ -76,8 +104,9 @@ export function LessonManagementClient({
                 Comienza creando la primera lección del módulo
               </p>
               <Button
-                onClick={() => setIsCreateDialogOpen(true)}
+                onClick={() => canMutateContent && setIsCreateDialogOpen(true)}
                 variant="outline"
+                disabled={!canMutateContent}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Crear primera lección
@@ -126,7 +155,8 @@ export function LessonManagementClient({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setEditingLesson(lesson)}
+                      onClick={() => canMutateContent && setEditingLesson(lesson)}
+                      disabled={!canMutateContent}
                     >
                       <Edit className="h-4 w-4 sm:mr-2" />
                       <span className="hidden sm:inline">Editar</span>
@@ -135,8 +165,9 @@ export function LessonManagementClient({
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setDeletingLesson(lesson)}
+                        onClick={() => canMutateContent && setDeletingLesson(lesson)}
                         className="border-red-300 text-red-600 hover:bg-red-50"
+                        disabled={!canMutateContent}
                       >
                         <Trash2 className="h-4 w-4 sm:mr-2" />
                         <span className="hidden sm:inline">Eliminar</span>
@@ -156,6 +187,7 @@ export function LessonManagementClient({
         onClose={() => setIsCreateDialogOpen(false)}
         mode="create"
         moduleId={moduleId}
+        courseVersionId={courseVersionId}
         maxOrderIndex={lessons.length}
       />
 
@@ -164,6 +196,7 @@ export function LessonManagementClient({
         onClose={() => setEditingLesson(null)}
         mode="edit"
         moduleId={moduleId}
+        courseVersionId={courseVersionId}
         lesson={editingLesson}
         maxOrderIndex={lessons.length}
       />

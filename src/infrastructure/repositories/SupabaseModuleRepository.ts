@@ -4,14 +4,24 @@ import { CourseModuleData } from "@/src/core/types/course.types";
 import { createClient } from "@/src/infrastructure/supabase/server";
 
 export class SupabaseModuleRepository implements IModuleRepository {
-  async getModulesByCourseId(courseId: string): Promise<CourseModuleEntity[]> {
+  async getModulesByCourseId(
+    courseId: string,
+    options?: { courseVersionId?: string }
+  ): Promise<CourseModuleEntity[]> {
     const supabase = createClient();
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("course_modules")
       .select("*")
-      .eq("course_id", courseId)
-      .order("order_index", { ascending: true });
+      .eq("course_id", courseId);
+
+    if (options?.courseVersionId) {
+      query = query.eq("course_version_id", options.courseVersionId);
+    }
+
+    query = query.order("order_index", { ascending: true });
+
+    const { data, error } = await query;
 
     if (error || !data) {
       return [];

@@ -5,12 +5,13 @@ import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileR
 import { CourseModuleEntity } from "@/src/core/entities/CourseModule.entity";
 
 export interface CreateModuleInput {
-  course_id: string;
+  courseId: string;
+  courseVersionId?: string;
   title: string;
   description: string | null;
-  order_index: number;
+  orderIndex: number;
   content: string | null;
-  is_published: boolean;
+  isPublished: boolean;
 }
 
 export interface CreateModuleResult {
@@ -56,10 +57,18 @@ export class CreateModuleUseCase {
         };
       }
 
+  const course = await this.courseRepository.getCourseById(input.courseId);
+      if (!course) {
+        return {
+          success: false,
+          error: "Curso no encontrado",
+        };
+      }
+
       // If teacher, check if assigned to the course
       if (profile.isTeacher()) {
         const assignedTeachers = await this.courseRepository.getCourseTeachers(
-          input.course_id
+          input.courseId
         );
         if (!assignedTeachers.includes(currentUser.id)) {
           return {
@@ -69,8 +78,26 @@ export class CreateModuleUseCase {
         }
       }
 
+      const targetVersionId =
+        input.courseVersionId ?? course.activeVersion?.id ?? null;
+
+      if (!targetVersionId) {
+        return {
+          success: false,
+          error: "El curso no tiene una versión activa",
+        };
+      }
+
       // Create module
-      const moduleData = await this.moduleRepository.createModule(input);
+      const moduleData = await this.moduleRepository.createModule({
+        course_id: input.courseId,
+        course_version_id: targetVersionId,
+        title: input.title,
+        description: input.description,
+        order_index: input.orderIndex,
+        content: input.content,
+        is_published: input.isPublished,
+      });
 
       return {
         success: true,

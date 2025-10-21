@@ -6,3 +6,8 @@ export * from "./AssignTeacherToCourseUseCase";
 export * from "./RemoveTeacherFromCourseUseCase";
 export * from "./GetCourseWithTeachersUseCase";
 export * from "./GetTeacherCoursesUseCase";
+export * from "./CreateCourseBranchUseCase";
+export * from "./CreateCourseMergeRequestUseCase";
+export * from "./ReviewCourseMergeRequestUseCase";
+export * from "./MergeCourseBranchUseCase";
+export * from "./DeleteCourseBranchUseCase";

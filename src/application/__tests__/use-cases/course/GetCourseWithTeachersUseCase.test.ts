@@ -4,9 +4,16 @@ import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileR
 import { CourseEntity } from "@/src/core/entities/Course.entity";
 import { ProfileEntity } from "@/src/core/entities/Profile.entity";
 
+declare const describe: any;
+declare const beforeEach: any;
+declare const afterEach: any;
+declare const it: any;
+declare const expect: any;
+declare const jest: any;
+
 describe("GetCourseWithTeachersUseCase", () => {
-  let mockCourseRepository: jest.Mocked<ICourseRepository>;
-  let mockProfileRepository: jest.Mocked<IProfileRepository>;
+  let mockCourseRepository: any;
+  let mockProfileRepository: any;
   let getCourseWithTeachersUseCase: GetCourseWithTeachersUseCase;
 
   beforeEach(() => {
@@ -18,11 +25,10 @@ describe("GetCourseWithTeachersUseCase", () => {
       deleteCourse: jest.fn(),
       assignTeacher: jest.fn(),
       removeTeacher: jest.fn(),
-      getCourseWithTeachers: jest.fn(),
       getTeacherCourses: jest.fn(),
       getCourseTeachers: jest.fn(),
       getActiveCourse: jest.fn(),
-    } as any;
+    };
 
     mockProfileRepository = {
       getProfileByUserId: jest.fn(),
@@ -34,11 +40,11 @@ describe("GetCourseWithTeachersUseCase", () => {
       updateRole: jest.fn(),
       promoteToTeacher: jest.fn(),
       demoteToStudent: jest.fn(),
-    } as any;
+    };
 
     getCourseWithTeachersUseCase = new GetCourseWithTeachersUseCase(
-      mockCourseRepository,
-      mockProfileRepository
+      mockCourseRepository as ICourseRepository,
+      mockProfileRepository as IProfileRepository
     );
   });
 
@@ -48,16 +54,35 @@ describe("GetCourseWithTeachersUseCase", () => {
 
   describe("execute", () => {
     const courseId = "course-123";
-    const mockCourse = new CourseEntity(
-      courseId,
-      "Test Course",
-      "Course Description",
-      new Date("2024-01-01"),
-      new Date("2024-12-31"),
-      true,
-      "admin-123",
-      new Date(),
-      new Date()
+    const now = new Date();
+    const mockCourse = CourseEntity.fromDatabase(
+      {
+        id: courseId,
+        title: "Test Course",
+        summary: "Course Summary",
+        description: "Course Description",
+        slug: "test-course",
+        visibility_override: false,
+        active_version_id: "version-123",
+        created_by: "admin-123",
+        created_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      },
+      {
+        id: "version-123",
+        course_id: courseId,
+        version_label: "v1.0.0",
+        summary: "Course Summary",
+        status: "published",
+        is_active: true,
+        is_published: true,
+        based_on_version_id: null,
+        created_by: "admin-123",
+        reviewed_by: null,
+        approved_at: now.toISOString(),
+        created_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      }
     );
 
     const mockTeacher1 = new ProfileEntity(

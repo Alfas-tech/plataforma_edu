@@ -1,9 +1,14 @@
 import { CourseModuleEntity } from "@/src/core/entities/CourseModule.entity";
 
+declare const describe: any;
+declare const it: any;
+declare const expect: any;
+
 describe("CourseModuleEntity", () => {
   const mockModuleData = {
     id: "module-123",
     courseId: "course-123",
+    courseVersionId: "version-123",
     title: "Test Module",
     description: "Test Description",
     orderIndex: 1,
@@ -18,6 +23,7 @@ describe("CourseModuleEntity", () => {
       const courseModule = new CourseModuleEntity(
         mockModuleData.id,
         mockModuleData.courseId,
+        mockModuleData.courseVersionId,
         mockModuleData.title,
         mockModuleData.description,
         mockModuleData.orderIndex,
@@ -29,6 +35,10 @@ describe("CourseModuleEntity", () => {
 
       expect(courseModule.id).toBe(mockModuleData.id);
       expect(courseModule.courseId).toBe(mockModuleData.courseId);
+      expect(courseModule.courseVersionId).toBe(
+        mockModuleData.courseVersionId
+      );
+      expect(courseModule.versionId).toBe(mockModuleData.courseVersionId);
       expect(courseModule.title).toBe(mockModuleData.title);
       expect(courseModule.description).toBe(mockModuleData.description);
       expect(courseModule.orderIndex).toBe(mockModuleData.orderIndex);
@@ -42,6 +52,7 @@ describe("CourseModuleEntity", () => {
       const courseModule = new CourseModuleEntity(
         "module-1",
         "course-1",
+        "version-1",
         "Module Title",
         null,
         1,
@@ -58,6 +69,7 @@ describe("CourseModuleEntity", () => {
       const courseModule = new CourseModuleEntity(
         "module-1",
         "course-1",
+        "version-1",
         "Module Title",
         "Description",
         1,
@@ -76,6 +88,7 @@ describe("CourseModuleEntity", () => {
       const courseModule = new CourseModuleEntity(
         "module-1",
         "course-1",
+        "version-1",
         "Published Module",
         "Description",
         1,
@@ -92,6 +105,7 @@ describe("CourseModuleEntity", () => {
       const courseModule = new CourseModuleEntity(
         "module-1",
         "course-1",
+        "version-1",
         "Unpublished Module",
         "Description",
         1,
@@ -110,6 +124,7 @@ describe("CourseModuleEntity", () => {
       const module1 = new CourseModuleEntity(
         "module-1",
         "course-1",
+        "version-1",
         "Module 1",
         "Description",
         1,
@@ -122,6 +137,7 @@ describe("CourseModuleEntity", () => {
       const module2 = new CourseModuleEntity(
         "module-2",
         "course-1",
+        "version-1",
         "Module 2",
         "Description",
         5,

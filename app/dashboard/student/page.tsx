@@ -45,16 +45,24 @@ export default async function StudentDashboardPage() {
     "error" in coursesResult ? [] : coursesResult.courses || [];
 
   // Filtrar cursos activos
-  const activeCourses = allCourses.filter((c) => c.status === "active");
-  const upcomingCourses = allCourses.filter((c) => c.status === "upcoming");
+  const visibleCourses = allCourses.filter((c) => c.isVisibleForStudents);
+  const upcomingCourses = allCourses.filter(
+    (c) =>
+      !c.isVisibleForStudents &&
+      c.hasActiveVersion &&
+      (c.activeVersion?.status === "pending_review" ||
+        c.activeVersion?.status === "draft")
+  );
 
   // Obtener datos completos del primer curso activo
   let courseData: any = null;
   let totalLessons = 0;
   let completedLessons = 0;
 
-  if (activeCourses.length > 0) {
-    const result = await getCourseWithModulesAndLessons(activeCourses[0].id);
+  const currentCourse = visibleCourses[0] ?? null;
+
+  if (currentCourse) {
+    const result = await getCourseWithModulesAndLessons(currentCourse.id);
     if (!("error" in result)) {
       courseData = result;
 
@@ -92,6 +100,21 @@ export default async function StudentDashboardPage() {
       month: "long",
       day: "numeric",
     });
+  }
+
+  function formatVersionStatus(status?: string): string {
+    switch (status) {
+      case "published":
+        return "Publicada";
+      case "pending_review":
+        return "Pendiente de revisión";
+      case "draft":
+        return "En borrador";
+      case "archived":
+        return "Archivada";
+      default:
+        return "Sin versión activa";
+    }
   }
 
   return (
@@ -175,10 +198,10 @@ export default async function StudentDashboardPage() {
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <p className="mb-1 text-xs text-slate-600 sm:text-sm">
-                    Cursos Activos
+                    Cursos visibles
                   </p>
                   <p className="text-xl font-bold text-slate-800 sm:text-2xl md:text-3xl">
-                    {activeCourses.length}
+                    {visibleCourses.length}
                   </p>
                 </div>
                 <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100 sm:h-12 sm:w-12">
@@ -247,7 +270,7 @@ export default async function StudentDashboardPage() {
         <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
           {/* Course Content */}
           <div className="space-y-4 sm:space-y-6 lg:col-span-2">
-            {activeCourses.length === 0 ? (
+            {visibleCourses.length === 0 ? (
               <Card className="border-2">
                 <CardContent className="py-12 text-center">
                   <BookOpen className="mx-auto mb-4 h-16 w-16 text-slate-300" />
@@ -259,7 +282,7 @@ export default async function StudentDashboardPage() {
                   </p>
                 </CardContent>
               </Card>
-            ) : (
+            ) : currentCourse ? (
               <>
                 {/* Current Course */}
                 <Card className="border-2">
@@ -267,22 +290,43 @@ export default async function StudentDashboardPage() {
                     <div className="flex items-start justify-between">
                       <div>
                         <CardTitle className="text-lg sm:text-xl md:text-2xl">
-                          {activeCourses[0].title}
+                          {currentCourse.title}
                         </CardTitle>
-                        <CardDescription className="mt-2">
-                          {activeCourses[0].description}
-                        </CardDescription>
+                        {(currentCourse.summary || currentCourse.description) && (
+                          <CardDescription className="mt-2">
+                            {currentCourse.summary ?? currentCourse.description}
+                          </CardDescription>
+                        )}
                       </div>
-                      <Badge className="ml-2 bg-green-600">Activo</Badge>
+                      <div className="flex flex-col items-end gap-2 text-right">
+                        <Badge className="ml-2 bg-green-600">Disponible</Badge>
+                        {currentCourse.activeVersion && (
+                          <Badge variant="outline">
+                            {formatVersionStatus(currentCourse.activeVersion.status)}
+                          </Badge>
+                        )}
+                        {currentCourse.visibilityOverride && (
+                          <Badge className="bg-purple-600">
+                            Visibilidad forzada
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                    <div className="mt-4 flex items-center gap-4 text-sm text-slate-600">
+                    <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
                         <span>
-                          {formatDate(activeCourses[0].startDate)} -{" "}
-                          {formatDate(activeCourses[0].endDate)}
+                          Actualizado el {formatDate(currentCourse.lastUpdatedAt)}
                         </span>
                       </div>
+                      {currentCourse.activeVersion?.label && (
+                        <Badge
+                          variant="outline"
+                          className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-50"
+                        >
+                          Versión: {currentCourse.activeVersion.label}
+                        </Badge>
+                      )}
                     </div>
                   </CardHeader>
                 </Card>
@@ -336,7 +380,7 @@ export default async function StudentDashboardPage() {
                                   return (
                                     <Link
                                       key={lesson.id}
-                                      href={`/courses/${activeCourses[0].id}/modules/${module.id}/lessons/${lesson.id}`}
+                                      href={`/courses/${currentCourse.id}/modules/${module.id}/lessons/${lesson.id}`}
                                       className="block"
                                     >
                                       <div className="flex items-center justify-between rounded-lg border bg-white p-3 transition-all hover:border-blue-300 hover:shadow-md">
@@ -399,7 +443,7 @@ export default async function StudentDashboardPage() {
                   </Card>
                 )}
               </>
-            )}
+            ) : null}
           </div>
 
           {/* Sidebar */}
@@ -458,24 +502,32 @@ export default async function StudentDashboardPage() {
                       <p className="mb-1 font-medium text-slate-800">
                         {course.title}
                       </p>
-                      <div className="flex items-center gap-1 text-xs text-slate-500">
+                      {(course.summary || course.description) && (
+                        <p className="text-xs text-slate-600">
+                          {course.summary ?? course.description}
+                        </p>
+                      )}
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                         <Calendar className="h-3 w-3" />
-                        <span>Inicia el {formatDate(course.startDate)}</span>
+                        <span>
+                          Última actualización {formatDate(course.lastUpdatedAt)}
+                        </span>
                       </div>
-                      {(() => {
-                        const daysUntilStart = Math.ceil(
-                          (new Date(course.startDate).getTime() -
-                            new Date().getTime()) /
-                            (1000 * 60 * 60 * 24)
-                        );
-                        return (
-                          daysUntilStart > 0 && (
-                            <Badge className="mt-2 bg-orange-600 text-xs">
-                              En {daysUntilStart} días
-                            </Badge>
-                          )
-                        );
-                      })()}
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          {formatVersionStatus(course.activeVersion?.status)}
+                        </Badge>
+                        {course.visibilityOverride && (
+                          <Badge className="bg-purple-600 text-xs">
+                            Visibilidad forzada
+                          </Badge>
+                        )}
+                      </div>
+                      {course.activeVersion?.summary && (
+                        <p className="mt-2 text-xs text-slate-500">
+                          {course.activeVersion.summary}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </CardContent>

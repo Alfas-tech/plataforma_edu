@@ -79,7 +79,8 @@ export class UpdateModuleUseCase {
         data.order_index !== moduleData.orderIndex
       ) {
         const allModules = await this.moduleRepository.getModulesByCourseId(
-          moduleData.courseId
+          moduleData.courseId,
+          { courseVersionId: moduleData.courseVersionId }
         );
         const newOrder = data.order_index;
         const oldOrder = moduleData.orderIndex;

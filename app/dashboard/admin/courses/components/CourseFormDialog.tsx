@@ -17,26 +17,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { courseSchema, type CourseInput } from "@/lib/validations";
+import type { CourseOverview } from "@/src/presentation/types/course";
 import {
   createCourse,
   updateCourse,
 } from "@/src/presentation/actions/course.actions";
 import { useRouter } from "next/navigation";
 
-interface CourseData {
-  id: string;
-  title: string;
-  description: string | null;
-  startDate: string;
-  endDate: string;
-  isActive: boolean;
-}
-
 interface CourseFormDialogProps {
   isOpen: boolean;
   onClose: () => void;
   mode: "create" | "edit";
-  course?: CourseData | null;
+  course?: CourseOverview | null;
 }
 
 export function CourseFormDialog({
@@ -54,43 +46,37 @@ export function CourseFormDialog({
     handleSubmit,
     formState: { errors },
     reset,
-    watch,
   } = useForm<CourseInput>({
     resolver: zodResolver(courseSchema),
     defaultValues: {
       title: "",
+      summary: "",
       description: "",
-      startDate: "",
-      endDate: "",
-      isActive: true,
+      initialVersionLabel: "v1.0.0",
+      initialVersionSummary: "",
+      visibilityOverride: false,
     },
   });
-
-  const isActive = watch("isActive");
 
   useEffect(() => {
     if (isOpen) {
       if (mode === "edit" && course) {
-        // Convert ISO dates to YYYY-MM-DD format for input
-        const startDate = new Date(course.startDate)
-          .toISOString()
-          .split("T")[0];
-        const endDate = new Date(course.endDate).toISOString().split("T")[0];
-
         reset({
           title: course.title,
+          summary: course.summary || "",
           description: course.description || "",
-          startDate: startDate,
-          endDate: endDate,
-          isActive: course.isActive,
+          initialVersionLabel: "",
+          initialVersionSummary: "",
+          visibilityOverride: course.visibilityOverride,
         });
       } else {
         reset({
           title: "",
+          summary: "",
           description: "",
-          startDate: "",
-          endDate: "",
-          isActive: true,
+          initialVersionLabel: "v1.0.0",
+          initialVersionSummary: "",
+          visibilityOverride: false,
         });
       }
       setError(null);
@@ -106,17 +92,17 @@ export function CourseFormDialog({
       if (mode === "create") {
         result = await createCourse({
           title: data.title,
+          summary: data.summary || null,
           description: data.description || null,
-          start_date: data.startDate,
-          end_date: data.endDate,
+          initialVersionLabel: data.initialVersionLabel || undefined,
+          initialVersionSummary: data.initialVersionSummary || undefined,
         });
       } else if (course) {
         result = await updateCourse(course.id, {
           title: data.title,
+          summary: data.summary || null,
           description: data.description || null,
-          start_date: data.startDate,
-          end_date: data.endDate,
-          is_active: data.isActive,
+          visibility_override: data.visibilityOverride,
         });
       }
 
@@ -136,7 +122,11 @@ export function CourseFormDialog({
   return (
     <Dialog
       open={isOpen}
-      onOpenChange={(open) => !open && !isSubmitting && onClose()}
+      onOpenChange={(open: boolean) => {
+        if (!open && !isSubmitting) {
+          onClose();
+        }
+      }}
     >
       <DialogContent className="max-w-2xl">
         <DialogHeader>
@@ -178,47 +168,61 @@ export function CourseFormDialog({
             />
           </div>
 
-          {/* Dates */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="startDate">
-                Fecha de Inicio <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="startDate"
-                type="date"
-                {...register("startDate")}
-                error={errors.startDate?.message}
-                disabled={isSubmitting}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="endDate">
-                Fecha de Fin <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="endDate"
-                type="date"
-                {...register("endDate")}
-                error={errors.endDate?.message}
-                disabled={isSubmitting}
-              />
-            </div>
+          {/* Summary */}
+          <div className="space-y-2">
+            <Label htmlFor="summary">Resumen</Label>
+            <Textarea
+              id="summary"
+              placeholder="Resumen breve para identificar el curso"
+              {...register("summary")}
+              error={errors.summary?.message}
+              disabled={isSubmitting}
+              rows={3}
+            />
           </div>
 
-          {/* Active checkbox (only in edit mode) */}
+          {/* Version defaults for create */}
+          {mode === "create" && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="initialVersionLabel">Etiqueta de versión inicial</Label>
+                <Input
+                  id="initialVersionLabel"
+                  placeholder="Ej: v1.0.0"
+                  {...register("initialVersionLabel")}
+                  error={errors.initialVersionLabel?.message}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="initialVersionSummary">Resumen de la versión</Label>
+                <Textarea
+                  id="initialVersionSummary"
+                  placeholder="Describe brevemente el alcance de la versión inicial"
+                  {...register("initialVersionSummary")}
+                  error={errors.initialVersionSummary?.message}
+                  disabled={isSubmitting}
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Visibility override (edit only) */}
           {mode === "edit" && (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 rounded-lg border border-purple-200 bg-purple-50 p-3">
               <input
                 type="checkbox"
-                id="isActive"
-                {...register("isActive")}
+                id="visibilityOverride"
+                {...register("visibilityOverride")}
                 disabled={isSubmitting}
-                className="h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-4 w-4 rounded border-purple-300 text-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
-              <Label htmlFor="isActive" className="cursor-pointer font-normal">
-                Curso activo
+              <Label
+                htmlFor="visibilityOverride"
+                className="cursor-pointer text-sm font-medium text-purple-900"
+              >
+                Mostrar curso públicamente aunque la versión no esté publicada
               </Label>
             </div>
           )}

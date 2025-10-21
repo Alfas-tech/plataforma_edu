@@ -72,43 +72,37 @@ export const createUserSchema = z.object({
 // COURSE SCHEMAS
 // ============================================
 
-export const courseSchema = z
-  .object({
-    title: z
-      .string()
-      .min(3, "El título debe tener al menos 3 caracteres")
-      .max(200, "El título no puede exceder 200 caracteres"),
-    description: z
-      .string()
-      .min(10, "La descripción debe tener al menos 10 caracteres")
-      .max(1000, "La descripción no puede exceder 1000 caracteres")
-      .optional()
-      .or(z.literal("")),
-    startDate: z
-      .string()
-      .min(1, "La fecha de inicio es requerida")
-      .refine((date) => !isNaN(Date.parse(date)), {
-        message: "Fecha inválida",
-      }),
-    endDate: z
-      .string()
-      .min(1, "La fecha de fin es requerida")
-      .refine((date) => !isNaN(Date.parse(date)), {
-        message: "Fecha inválida",
-      }),
-    isActive: z.boolean().optional(),
-  })
-  .refine(
-    (data) => {
-      const start = new Date(data.startDate);
-      const end = new Date(data.endDate);
-      return end >= start;
-    },
-    {
-      message: "La fecha de fin debe ser posterior a la fecha de inicio",
-      path: ["endDate"],
-    }
-  );
+export const courseSchema = z.object({
+  title: z
+    .string()
+    .min(3, "El título debe tener al menos 3 caracteres")
+    .max(200, "El título no puede exceder 200 caracteres"),
+  summary: z
+    .string()
+    .min(10, "El resumen debe tener al menos 10 caracteres")
+    .max(500, "El resumen no puede exceder 500 caracteres")
+    .optional()
+    .or(z.literal("")),
+  description: z
+    .string()
+    .min(10, "La descripción debe tener al menos 10 caracteres")
+    .max(2000, "La descripción no puede exceder 2000 caracteres")
+    .optional()
+    .or(z.literal("")),
+  initialVersionLabel: z
+    .string()
+    .min(2, "La etiqueta debe tener al menos 2 caracteres")
+    .max(50, "La etiqueta no puede exceder 50 caracteres")
+    .optional()
+    .or(z.literal("")),
+  initialVersionSummary: z
+    .string()
+    .min(10, "El resumen de la versión debe tener al menos 10 caracteres")
+    .max(500, "El resumen de la versión no puede exceder 500 caracteres")
+    .optional()
+    .or(z.literal("")),
+  visibilityOverride: z.boolean().optional(),
+});
 
 // ============================================
 // MODULE SCHEMAS

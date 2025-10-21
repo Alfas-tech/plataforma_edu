@@ -18,7 +18,10 @@ export class GetModulesByCourseUseCase {
     private readonly profileRepository: IProfileRepository
   ) {}
 
-  async execute(courseId: string): Promise<GetModulesByCourseResult> {
+  async execute(
+    courseId: string,
+    courseVersionId?: string
+  ): Promise<GetModulesByCourseResult> {
     try {
       // Verify course exists
       const course = await this.courseRepository.getCourseById(courseId);
@@ -49,21 +52,27 @@ export class GetModulesByCourseUseCase {
       }
 
       // Get all modules
-      const modules =
-        await this.moduleRepository.getModulesByCourseId(courseId);
+      const modules = await this.moduleRepository.getModulesByCourseId(
+        courseId,
+        courseVersionId ? { courseVersionId } : undefined
+      );
+
+      const versionFilteredModules = courseVersionId
+        ? modules.filter((module) => module.courseVersionId === courseVersionId)
+        : modules;
 
       // Filter based on user role
       if (profile.isStudent()) {
         // Students only see published modules
         return {
           success: true,
-          modules: modules.filter((m) => m.isPublished),
+          modules: versionFilteredModules.filter((m) => m.isPublished),
         };
       } else {
         // Admins and teachers see all modules
         return {
           success: true,
-          modules,
+          modules: versionFilteredModules,
         };
       }
     } catch (error) {

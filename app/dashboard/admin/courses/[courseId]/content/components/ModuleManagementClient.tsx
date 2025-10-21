@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PlusCircle, Edit, Trash2, BookOpen, Eye, EyeOff } from "lucide-react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ModuleFormDialog } from "./ModuleFormDialog";
 import { DeleteModuleDialog } from "./DeleteModuleDialog";
@@ -13,6 +12,7 @@ import { DeleteModuleDialog } from "./DeleteModuleDialog";
 interface ModuleData {
   id: string;
   courseId: string;
+  courseVersionId: string;
   title: string;
   description: string | null;
   orderIndex: number;
@@ -24,6 +24,10 @@ interface ModuleData {
 
 interface ModuleManagementClientProps {
   courseId: string;
+  branchId: string | null;
+  courseVersionId: string | null;
+  branchName: string;
+  isDefaultBranch: boolean;
   modules: ModuleData[];
   isAdmin: boolean;
 }
@@ -38,10 +42,13 @@ function formatContent(content: string | null): string {
 
 export function ModuleManagementClient({
   courseId,
+  branchId,
+  courseVersionId,
+  branchName,
+  isDefaultBranch,
   modules,
   isAdmin,
 }: ModuleManagementClientProps) {
-  const router = useRouter();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingModule, setEditingModule] = useState<ModuleData | null>(null);
   const [deletingModule, setDeletingModule] = useState<ModuleData | null>(null);
@@ -50,13 +57,38 @@ export function ModuleManagementClient({
     (a, b) => a.orderIndex - b.orderIndex
   );
 
+  const canMutateContent = Boolean(courseVersionId);
+  const branchLabel = isDefaultBranch ? "rama principal" : `rama ${branchName}`;
+
   return (
     <>
+      <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <p className="font-semibold text-slate-800">
+          Estás gestionando el contenido de la {branchLabel}.
+        </p>
+        {isDefaultBranch ? (
+          <p>
+            Los cambios publicados impactan a los estudiantes de forma inmediata. Usa ramas para preparar
+            modificaciones sin afectar la experiencia vigente.
+          </p>
+        ) : (
+          <p>
+            Todo lo que crees o edites aquí solo afectará a esta rama hasta que apruebes una fusión hacia la rama principal.
+          </p>
+        )}
+        {!canMutateContent && (
+          <p className="mt-2 rounded-md border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-700">
+            Esta rama no tiene una versión activa. Crea una versión desde el panel del curso antes de agregar módulos.
+          </p>
+        )}
+      </div>
+
       {/* Create Button */}
       <div className="mb-6">
         <Button
-          onClick={() => setIsCreateDialogOpen(true)}
+          onClick={() => canMutateContent && setIsCreateDialogOpen(true)}
           className="bg-purple-600 hover:bg-purple-700"
+          disabled={!canMutateContent}
         >
           <PlusCircle className="mr-2 h-4 w-4" />
           Crear Nuevo Módulo
@@ -76,8 +108,9 @@ export function ModuleManagementClient({
                 Comienza creando el primer módulo del curso
               </p>
               <Button
-                onClick={() => setIsCreateDialogOpen(true)}
+                onClick={() => canMutateContent && setIsCreateDialogOpen(true)}
                 variant="outline"
+                disabled={!canMutateContent}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Crear primer módulo
@@ -123,7 +156,13 @@ export function ModuleManagementClient({
                   </div>
                   <div className="flex flex-shrink-0 gap-2">
                     <Link
-                      href={`/dashboard/admin/courses/${courseId}/modules/${module.id}/lessons`}
+                      href={{
+                        pathname: `/dashboard/admin/courses/${courseId}/modules/${module.id}/lessons`,
+                        query: {
+                          branchId: branchId ?? undefined,
+                          versionId: courseVersionId ?? undefined,
+                        },
+                      }}
                     >
                       <Button size="sm" variant="outline">
                         <BookOpen className="h-4 w-4 sm:mr-2" />
@@ -133,7 +172,8 @@ export function ModuleManagementClient({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setEditingModule(module)}
+                      onClick={() => canMutateContent && setEditingModule(module)}
+                      disabled={!canMutateContent}
                     >
                       <Edit className="h-4 w-4 sm:mr-2" />
                       <span className="hidden sm:inline">Editar</span>
@@ -142,8 +182,9 @@ export function ModuleManagementClient({
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setDeletingModule(module)}
+                        onClick={() => canMutateContent && setDeletingModule(module)}
                         className="border-red-300 text-red-600 hover:bg-red-50"
+                        disabled={!canMutateContent}
                       >
                         <Trash2 className="h-4 w-4 sm:mr-2" />
                         <span className="hidden sm:inline">Eliminar</span>
@@ -163,6 +204,7 @@ export function ModuleManagementClient({
         onClose={() => setIsCreateDialogOpen(false)}
         mode="create"
         courseId={courseId}
+        courseVersionId={courseVersionId}
         maxOrderIndex={modules.length}
       />
 
@@ -171,6 +213,7 @@ export function ModuleManagementClient({
         onClose={() => setEditingModule(null)}
         mode="edit"
         courseId={courseId}
+        courseVersionId={courseVersionId}
         module={editingModule}
         maxOrderIndex={modules.length}
       />

@@ -4,6 +4,7 @@ export class CourseModuleEntity {
   constructor(
     public readonly id: string,
     public readonly courseId: string,
+    public readonly courseVersionId: string,
     public readonly title: string,
     public readonly description: string | null,
     public readonly orderIndex: number,
@@ -17,6 +18,7 @@ export class CourseModuleEntity {
     return new CourseModuleEntity(
       data.id,
       data.course_id,
+      data.course_version_id,
       data.title,
       data.description,
       data.order_index,
@@ -25,6 +27,10 @@ export class CourseModuleEntity {
       new Date(data.created_at),
       new Date(data.updated_at)
     );
+  }
+
+  get versionId(): string {
+    return this.courseVersionId;
   }
 
   isAccessible(): boolean {
