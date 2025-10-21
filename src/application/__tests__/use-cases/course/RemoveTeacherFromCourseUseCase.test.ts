@@ -27,8 +27,8 @@ describe("RemoveTeacherFromCourseUseCase", () => {
       getAllCourses: jest.fn(),
       updateCourse: jest.fn(),
       deleteCourse: jest.fn(),
-  assignTeacherToVersion: jest.fn(),
-  removeTeacherFromVersion: jest.fn(),
+      assignTeacherToVersion: jest.fn(),
+      removeTeacherFromVersion: jest.fn(),
       getTeacherCourses: jest.fn(),
       getCourseTeachers: jest.fn(),
     };

@@ -285,7 +285,8 @@ export default async function StudentDashboardPage() {
                         <CardTitle className="text-lg sm:text-xl md:text-2xl">
                           {currentCourse.title}
                         </CardTitle>
-                        {(currentCourse.summary || currentCourse.description) && (
+                        {(currentCourse.summary ||
+                          currentCourse.description) && (
                           <CardDescription className="mt-2">
                             {currentCourse.summary ?? currentCourse.description}
                           </CardDescription>
@@ -295,7 +296,9 @@ export default async function StudentDashboardPage() {
                         <Badge className="ml-2 bg-green-600">Disponible</Badge>
                         {currentCourse.activeVersion && (
                           <Badge variant="outline">
-                            {formatVersionStatus(currentCourse.activeVersion.status)}
+                            {formatVersionStatus(
+                              currentCourse.activeVersion.status
+                            )}
                           </Badge>
                         )}
                         {currentCourse.visibilityOverride && (
@@ -309,7 +312,8 @@ export default async function StudentDashboardPage() {
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
                         <span>
-                          Actualizado el {formatDate(currentCourse.lastUpdatedAt)}
+                          Actualizado el{" "}
+                          {formatDate(currentCourse.lastUpdatedAt)}
                         </span>
                       </div>
                       {currentCourse.activeVersion?.label && (
@@ -503,7 +507,8 @@ export default async function StudentDashboardPage() {
                       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                         <Calendar className="h-3 w-3" />
                         <span>
-                          Última actualización {formatDate(course.lastUpdatedAt)}
+                          Última actualización{" "}
+                          {formatDate(course.lastUpdatedAt)}
                         </span>
                       </div>
                       <div className="mt-2 flex flex-wrap gap-2">

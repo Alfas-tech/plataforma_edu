@@ -99,10 +99,11 @@ export class CreateModuleUseCase {
       }
 
       if (profile.isTeacher()) {
-        const isAssigned = await this.courseRepository.isTeacherAssignedToVersion(
-          targetVersionId,
-          currentUser.id
-        );
+        const isAssigned =
+          await this.courseRepository.isTeacherAssignedToVersion(
+            targetVersionId,
+            currentUser.id
+          );
 
         if (!isAssigned) {
           return {

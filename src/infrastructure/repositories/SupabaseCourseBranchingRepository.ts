@@ -22,8 +22,7 @@ export class SupabaseCourseBranchingRepository
   implements ICourseBranchingRepository
 {
   constructor(
-    private readonly courseRepository: ICourseRepository =
-      new SupabaseCourseRepository()
+    private readonly courseRepository: ICourseRepository = new SupabaseCourseRepository()
   ) {}
 
   async createCourseBranch(
@@ -100,10 +99,10 @@ export class SupabaseCourseBranchingRepository
       .insert({
         course_id: input.courseId,
         branch_id: branchData.id,
-    parent_version_id: baseVersion.id,
-    based_on_version_id: baseVersion.id,
+        parent_version_id: baseVersion.id,
+        based_on_version_id: baseVersion.id,
         version_label: versionLabel,
-    summary: baseVersion.summary,
+        summary: baseVersion.summary,
         status: "draft" satisfies CourseVersionStatus,
         is_active: false,
         is_published: false,
@@ -165,7 +164,9 @@ export class SupabaseCourseBranchingRepository
     );
 
     if (!sourceVersion) {
-      throw new Error("La rama de origen no tiene una versión activa para fusionar");
+      throw new Error(
+        "La rama de origen no tiene una versión activa para fusionar"
+      );
     }
 
     const targetVersion = await this.getBranchTipVersion(
@@ -173,22 +174,21 @@ export class SupabaseCourseBranchingRepository
       input.targetBranchId
     );
 
-    const { data: mergeRequestData, error: mergeRequestError } =
-      await supabase
-        .from("course_merge_requests")
-        .insert({
-          course_id: input.courseId,
-          source_branch_id: input.sourceBranchId,
-          target_branch_id: input.targetBranchId,
-          source_version_id: sourceVersion.id,
-          target_version_id: targetVersion?.id ?? null,
-          title: input.title,
-          summary: input.summary ?? null,
-          status: "open" satisfies CourseMergeRequestStatus,
-          opened_by: userId,
-        })
-        .select()
-        .single();
+    const { data: mergeRequestData, error: mergeRequestError } = await supabase
+      .from("course_merge_requests")
+      .insert({
+        course_id: input.courseId,
+        source_branch_id: input.sourceBranchId,
+        target_branch_id: input.targetBranchId,
+        source_version_id: sourceVersion.id,
+        target_version_id: targetVersion?.id ?? null,
+        title: input.title,
+        summary: input.summary ?? null,
+        status: "open" satisfies CourseMergeRequestStatus,
+        opened_by: userId,
+      })
+      .select()
+      .single();
 
     if (mergeRequestError || !mergeRequestData) {
       throw new Error(
@@ -245,7 +245,9 @@ export class SupabaseCourseBranchingRepository
       .eq("id", mergeRequest.id);
 
     if (updateError) {
-      throw new Error(updateError.message || "Error al actualizar la solicitud");
+      throw new Error(
+        updateError.message || "Error al actualizar la solicitud"
+      );
     }
 
     if (decisionStatus === "rejected") {
@@ -296,7 +298,9 @@ export class SupabaseCourseBranchingRepository
     );
 
     if (!sourceVersion) {
-      throw new Error("La rama de origen no tiene una versión lista para fusionar");
+      throw new Error(
+        "La rama de origen no tiene una versión lista para fusionar"
+      );
     }
 
     const targetTip = await this.getBranchTipVersion(
@@ -331,13 +335,17 @@ export class SupabaseCourseBranchingRepository
         merge_request_id: null,
         version_label: versionLabel,
         summary: sourceVersion.summary,
-  status: (isDefaultTarget ? "published" : sourceVersion.status) satisfies CourseVersionStatus,
+        status: (isDefaultTarget
+          ? "published"
+          : sourceVersion.status) satisfies CourseVersionStatus,
         is_active: isDefaultTarget ? true : sourceVersion.is_active,
         is_published: isDefaultTarget ? true : sourceVersion.is_published,
         is_tip: true,
         created_by: sourceVersion.created_by,
         reviewed_by: reviewerId,
-        approved_at: isDefaultTarget ? new Date().toISOString() : sourceVersion.approved_at,
+        approved_at: isDefaultTarget
+          ? new Date().toISOString()
+          : sourceVersion.approved_at,
       })
       .select()
       .single();
@@ -519,9 +527,7 @@ export class SupabaseCourseBranchingRepository
       .eq("id", input.branchId);
 
     if (deleteBranchError) {
-      throw new Error(
-        deleteBranchError.message || "Error al eliminar la rama"
-      );
+      throw new Error(deleteBranchError.message || "Error al eliminar la rama");
     }
 
     return this.loadCourseOrThrow(
@@ -673,7 +679,7 @@ export class SupabaseCourseBranchingRepository
         continue;
       }
 
-  const lessonsInsert = (lessonsData as LessonData[]).map((lesson) => ({
+      const lessonsInsert = (lessonsData as LessonData[]).map((lesson) => ({
         module_id: createdModule.id,
         title: lesson.title,
         content: lesson.content,

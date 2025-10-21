@@ -185,7 +185,9 @@ export function CourseFormDialog({
           {mode === "create" && (
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="initialVersionLabel">Etiqueta de versión inicial</Label>
+                <Label htmlFor="initialVersionLabel">
+                  Etiqueta de versión inicial
+                </Label>
                 <Input
                   id="initialVersionLabel"
                   placeholder="Ej: v1.0.0"
@@ -195,7 +197,9 @@ export function CourseFormDialog({
                 />
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="initialVersionSummary">Resumen de la versión</Label>
+                <Label htmlFor="initialVersionSummary">
+                  Resumen de la versión
+                </Label>
                 <Textarea
                   id="initialVersionSummary"
                   placeholder="Describe brevemente el alcance de la versión inicial"

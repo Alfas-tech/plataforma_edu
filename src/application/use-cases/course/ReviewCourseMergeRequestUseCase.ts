@@ -17,9 +17,8 @@ export class ReviewCourseMergeRequestUseCase {
     input: ReviewCourseMergeRequestInput
   ): Promise<ReviewCourseMergeRequestResult> {
     try {
-      const course = await this.branchingRepository.reviewCourseMergeRequest(
-        input
-      );
+      const course =
+        await this.branchingRepository.reviewCourseMergeRequest(input);
 
       return {
         success: true,

@@ -19,7 +19,10 @@ interface DeleteBranchDialogProps {
   isOpen: boolean;
   onClose: () => void;
   course: CourseOverview | null;
-  branch: CourseOverview["branches"][number] | CourseOverview["defaultBranch"] | null;
+  branch:
+    | CourseOverview["branches"][number]
+    | CourseOverview["defaultBranch"]
+    | null;
 }
 
 export function DeleteBranchDialog({
@@ -55,7 +58,9 @@ export function DeleteBranchDialog({
       router.refresh();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Error inesperado al eliminar la edición"
+        err instanceof Error
+          ? err.message
+          : "Error inesperado al eliminar la edición"
       );
     } finally {
       setIsLoading(false);
@@ -63,7 +68,7 @@ export function DeleteBranchDialog({
   };
 
   return (
-  <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-red-600">
@@ -71,8 +76,8 @@ export function DeleteBranchDialog({
             Eliminar edición
           </DialogTitle>
           <DialogDescription>
-            Esta acción elimina de forma permanente la edición seleccionada, incluyendo
-            sus versiones, módulos y lecciones asociados.
+            Esta acción elimina de forma permanente la edición seleccionada,
+            incluyendo sus versiones, módulos y lecciones asociados.
           </DialogDescription>
         </DialogHeader>
 
@@ -83,7 +88,8 @@ export function DeleteBranchDialog({
           </p>
           {branch.tipVersionLabel && (
             <p className="text-red-700">
-              Última versión: <span className="font-medium">{branch.tipVersionLabel}</span>
+              Última versión:{" "}
+              <span className="font-medium">{branch.tipVersionLabel}</span>
             </p>
           )}
         </div>

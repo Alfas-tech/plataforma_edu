@@ -61,10 +61,11 @@ export class UpdateModuleUseCase {
       }
 
       if (profile.isTeacher()) {
-        const isAssigned = await this.courseRepository.isTeacherAssignedToVersion(
-          moduleData.courseVersionId,
-          currentUser.id
-        );
+        const isAssigned =
+          await this.courseRepository.isTeacherAssignedToVersion(
+            moduleData.courseVersionId,
+            currentUser.id
+          );
 
         if (!isAssigned) {
           return {

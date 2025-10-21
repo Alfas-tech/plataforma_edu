@@ -108,7 +108,9 @@ export default async function TeacherDashboardPage() {
   const courses: CourseOverview[] =
     "error" in coursesResult ? [] : coursesResult.courses || [];
 
-  const visibleCourses = courses.filter((course) => course.isVisibleForStudents);
+  const visibleCourses = courses.filter(
+    (course) => course.isVisibleForStudents
+  );
   const pendingCourses = courses.filter(
     (course) => course.activeVersion?.status === "pending_review"
   );
@@ -183,7 +185,8 @@ export default async function TeacherDashboardPage() {
             Panel de Docente
           </h1>
           <p className="text-pretty text-sm text-slate-600 sm:text-base">
-            Bienvenido, {profile.displayName}. Gestiona el contenido de tus cursos asignados.
+            Bienvenido, {profile.displayName}. Gestiona el contenido de tus
+            cursos asignados.
           </p>
         </div>
 
@@ -259,7 +262,8 @@ export default async function TeacherDashboardPage() {
                     No tienes cursos asignados
                   </h3>
                   <p className="text-sm text-slate-600">
-                    El administrador te asignará cursos para que puedas gestionar su contenido.
+                    El administrador te asignará cursos para que puedas
+                    gestionar su contenido.
                   </p>
                 </div>
               </CardContent>
@@ -268,7 +272,8 @@ export default async function TeacherDashboardPage() {
             <div className="grid gap-4 md:grid-cols-2">
               {courses.map((course) => {
                 const versionVisibilityLabel = course.activeVersion
-                  ? course.activeVersion.isPublished && course.activeVersion.isActive
+                  ? course.activeVersion.isPublished &&
+                    course.activeVersion.isActive
                     ? "Publicada y activa"
                     : course.activeVersion.isPublished
                       ? "Publicada (sin activar)"
@@ -289,7 +294,9 @@ export default async function TeacherDashboardPage() {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="mb-2 flex flex-wrap items-center gap-2">
-                            <CardTitle className="text-xl">{course.title}</CardTitle>
+                            <CardTitle className="text-xl">
+                              {course.title}
+                            </CardTitle>
                             {getVisibilityBadge(course)}
                             {getVersionBadge(course)}
                           </div>
@@ -341,7 +348,8 @@ export default async function TeacherDashboardPage() {
                           <strong>Visibilidad:</strong> {versionVisibilityLabel}
                         </p>
                         <p>
-                          <strong>Motivo:</strong> {getVisibilityExplanation(course)}
+                          <strong>Motivo:</strong>{" "}
+                          {getVisibilityExplanation(course)}
                         </p>
                         {course.activeVersion?.summary && (
                           <p className="text-slate-700">
@@ -354,19 +362,24 @@ export default async function TeacherDashboardPage() {
                         <div className="mt-3 flex items-start gap-2 rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
                           <AlertTriangle className="mt-0.5 h-4 w-4 text-slate-500" />
                           <span>
-                            Este curso sigue oculto para estudiantes. Publica la versión activa o habilita la visibilidad forzada para hacerlo visible.
+                            Este curso sigue oculto para estudiantes. Publica la
+                            versión activa o habilita la visibilidad forzada
+                            para hacerlo visible.
                           </span>
                         </div>
                       )}
 
                       {course.visibilityOverride && (
                         <div className="mt-3 rounded-lg border border-purple-200 bg-purple-50 p-3 text-xs text-purple-900">
-                          🔓 Visibilidad forzada: los estudiantes pueden ver el curso aunque la versión activa no esté publicada.
+                          🔓 Visibilidad forzada: los estudiantes pueden ver el
+                          curso aunque la versión activa no esté publicada.
                         </div>
                       )}
 
                       <div className="mt-4">
-                        <Link href={`/dashboard/admin/courses/${course.id}/content`}>
+                        <Link
+                          href={`/dashboard/admin/courses/${course.id}/content`}
+                        >
                           <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
                             <FileEdit className="mr-2 h-4 w-4" />
                             Gestionar Contenido
@@ -396,7 +409,9 @@ export default async function TeacherDashboardPage() {
                     <li>✓ Crear y editar módulos</li>
                     <li>✓ Crear y editar lecciones</li>
                     <li>✓ Publicar/ocultar contenido</li>
-                    <li>✗ No puedes eliminar módulos ni lecciones (solo admins)</li>
+                    <li>
+                      ✗ No puedes eliminar módulos ni lecciones (solo admins)
+                    </li>
                   </ul>
                 </div>
               </div>

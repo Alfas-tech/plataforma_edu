@@ -31,15 +31,15 @@ describe("SupabaseCourseRepository", () => {
       neq: jest.fn().mockImplementation(() => builder),
       in: jest.fn().mockImplementation(() => builder),
       order: jest.fn().mockImplementation(() => builder),
-      limit: jest.fn().mockImplementation(() =>
-        Promise.resolve(builder.__result)
-      ),
-      single: jest.fn().mockImplementation(() =>
-        Promise.resolve(builder.__result)
-      ),
-      maybeSingle: jest.fn().mockImplementation(() =>
-        Promise.resolve(builder.__result)
-      ),
+      limit: jest
+        .fn()
+        .mockImplementation(() => Promise.resolve(builder.__result)),
+      single: jest
+        .fn()
+        .mockImplementation(() => Promise.resolve(builder.__result)),
+      maybeSingle: jest
+        .fn()
+        .mockImplementation(() => Promise.resolve(builder.__result)),
       then: (resolve: any, reject?: any) =>
         Promise.resolve(builder.__result).then(resolve, reject),
       setResult: (result: any) => {
@@ -51,7 +51,9 @@ describe("SupabaseCourseRepository", () => {
     return builder;
   };
 
-  const createCourseRow = (overrides: Partial<CourseData> = {}): CourseData => ({
+  const createCourseRow = (
+    overrides: Partial<CourseData> = {}
+  ): CourseData => ({
     id: "course-1",
     title: "Course 1",
     summary: "Summary",
@@ -96,9 +98,9 @@ describe("SupabaseCourseRepository", () => {
         throw new Error("Unexpected table call");
       }),
       auth: {
-        getUser: jest.fn().mockResolvedValue(
-          success({ user: { id: "user-123" } })
-        ),
+        getUser: jest
+          .fn()
+          .mockResolvedValue(success({ user: { id: "user-123" } })),
       },
     };
 
@@ -175,7 +177,9 @@ describe("SupabaseCourseRepository", () => {
 
       const consoleSpy = jest.spyOn(console, "error").mockImplementation();
 
-      await expect(repository.getAllCourses()).rejects.toThrow("Database error");
+      await expect(repository.getAllCourses()).rejects.toThrow(
+        "Database error"
+      );
 
       consoleSpy.mockRestore();
     });
@@ -285,7 +289,9 @@ describe("SupabaseCourseRepository", () => {
       );
 
       const versionInsertBuilder = createChainableBuilder();
-      versionInsertBuilder.insert = jest.fn().mockReturnValue(versionInsertBuilder);
+      versionInsertBuilder.insert = jest
+        .fn()
+        .mockReturnValue(versionInsertBuilder);
       versionInsertBuilder.select.mockReturnValue(versionInsertBuilder);
       versionInsertBuilder.single.mockImplementation(() =>
         Promise.resolve(success(createdVersionRow))
@@ -293,11 +299,13 @@ describe("SupabaseCourseRepository", () => {
 
       const coursesUpdateBuilder = createChainableBuilder();
       coursesUpdateBuilder.update.mockReturnValue(coursesUpdateBuilder);
-      coursesUpdateBuilder.eq.mockImplementation((column: string, value: string) => {
-        expect(column).toBe("id");
-        expect(value).toBe("course-new");
-        return coursesUpdateBuilder.setResult(success(null));
-      });
+      coursesUpdateBuilder.eq.mockImplementation(
+        (column: string, value: string) => {
+          expect(column).toBe("id");
+          expect(value).toBe("course-new");
+          return coursesUpdateBuilder.setResult(success(null));
+        }
+      );
 
       mockSupabase.from
         .mockImplementationOnce((table: string) => {
@@ -333,14 +341,18 @@ describe("SupabaseCourseRepository", () => {
       });
 
       const coursesInsertBuilder = createChainableBuilder();
-      coursesInsertBuilder.insert = jest.fn().mockReturnValue(coursesInsertBuilder);
+      coursesInsertBuilder.insert = jest
+        .fn()
+        .mockReturnValue(coursesInsertBuilder);
       coursesInsertBuilder.select.mockReturnValue(coursesInsertBuilder);
       coursesInsertBuilder.single.mockImplementation(() =>
         Promise.resolve(success(initialCourseRow))
       );
 
       const versionInsertBuilder = createChainableBuilder();
-      versionInsertBuilder.insert = jest.fn().mockReturnValue(versionInsertBuilder);
+      versionInsertBuilder.insert = jest
+        .fn()
+        .mockReturnValue(versionInsertBuilder);
       versionInsertBuilder.select.mockReturnValue(versionInsertBuilder);
       versionInsertBuilder.single.mockImplementation(() =>
         Promise.resolve(failure("version failed"))
@@ -414,11 +426,7 @@ describe("SupabaseCourseRepository", () => {
       });
 
       await expect(
-        repository.assignTeacherToVersion(
-          "course-1",
-          "version-1",
-          "teacher-1"
-        )
+        repository.assignTeacherToVersion("course-1", "version-1", "teacher-1")
       ).resolves.not.toThrow();
 
       expect(insertBuilder.insert).toHaveBeenCalledWith({
@@ -436,11 +444,7 @@ describe("SupabaseCourseRepository", () => {
       mockSupabase.from.mockImplementationOnce(() => insertBuilder);
 
       await expect(
-        repository.assignTeacherToVersion(
-          "course-1",
-          "version-1",
-          "teacher-1"
-        )
+        repository.assignTeacherToVersion("course-1", "version-1", "teacher-1")
       ).rejects.toThrow("Insert failed");
     });
   });
@@ -487,26 +491,25 @@ describe("SupabaseCourseRepository", () => {
         expect(column).toBe("course_id");
         expect(value).toBe("course-1");
         return versionsBuilder.setResult(
-          success([
-            { id: "version-1" },
-            { id: "version-2" },
-          ])
+          success([{ id: "version-1" }, { id: "version-2" }])
         );
       });
 
       const assignmentsBuilder = createChainableBuilder();
       assignmentsBuilder.select.mockReturnValue(assignmentsBuilder);
-      assignmentsBuilder.in.mockImplementation((column: string, values: string[]) => {
-        expect(column).toBe("course_version_id");
-        expect(values).toEqual(["version-1", "version-2"]);
-        return assignmentsBuilder.setResult(
-          success([
-            { teacher_id: "t1" },
-            { teacher_id: "t2" },
-            { teacher_id: "t1" },
-          ])
-        );
-      });
+      assignmentsBuilder.in.mockImplementation(
+        (column: string, values: string[]) => {
+          expect(column).toBe("course_version_id");
+          expect(values).toEqual(["version-1", "version-2"]);
+          return assignmentsBuilder.setResult(
+            success([
+              { teacher_id: "t1" },
+              { teacher_id: "t2" },
+              { teacher_id: "t1" },
+            ])
+          );
+        }
+      );
 
       mockSupabase.from
         .mockImplementationOnce((table: string) => {
@@ -532,9 +535,9 @@ describe("SupabaseCourseRepository", () => {
 
       mockSupabase.from.mockImplementationOnce(() => versionsBuilder);
 
-      await expect(
-        repository.getCourseTeachers("course-1")
-      ).rejects.toThrow("boom");
+      await expect(repository.getCourseTeachers("course-1")).rejects.toThrow(
+        "boom"
+      );
     });
 
     it("throws when assignments lookup fails", async () => {
@@ -554,9 +557,9 @@ describe("SupabaseCourseRepository", () => {
         .mockImplementationOnce(() => versionsBuilder)
         .mockImplementationOnce(() => assignmentsBuilder);
 
-      await expect(
-        repository.getCourseTeachers("course-1")
-      ).rejects.toThrow("boom");
+      await expect(repository.getCourseTeachers("course-1")).rejects.toThrow(
+        "boom"
+      );
     });
   });
 
@@ -613,42 +616,50 @@ describe("SupabaseCourseRepository", () => {
 
       const assignmentsBuilder = createChainableBuilder();
       assignmentsBuilder.select.mockReturnValue(assignmentsBuilder);
-      assignmentsBuilder.eq.mockImplementation((column: string, value: string) => {
-        expect(column).toBe("teacher_id");
-        expect(value).toBe("teacher-1");
-        return assignmentsBuilder.setResult(
-          success([{ course_version_id: versionRow.id }])
-        );
-      });
+      assignmentsBuilder.eq.mockImplementation(
+        (column: string, value: string) => {
+          expect(column).toBe("teacher_id");
+          expect(value).toBe("teacher-1");
+          return assignmentsBuilder.setResult(
+            success([{ course_version_id: versionRow.id }])
+          );
+        }
+      );
 
       const versionLookupBuilder = createChainableBuilder();
       versionLookupBuilder.select.mockReturnValue(versionLookupBuilder);
-      versionLookupBuilder.in.mockImplementation((column: string, values: string[]) => {
-        expect(column).toBe("id");
-        expect(values).toEqual([versionRow.id]);
-        return versionLookupBuilder.setResult(
-          success([{ id: versionRow.id, course_id: courseRow.id }])
-        );
-      });
+      versionLookupBuilder.in.mockImplementation(
+        (column: string, values: string[]) => {
+          expect(column).toBe("id");
+          expect(values).toEqual([versionRow.id]);
+          return versionLookupBuilder.setResult(
+            success([{ id: versionRow.id, course_id: courseRow.id }])
+          );
+        }
+      );
 
       const coursesBuilder = createChainableBuilder();
       coursesBuilder.select.mockReturnValue(coursesBuilder);
-      coursesBuilder.in.mockImplementation((column: string, values: string[]) => {
-        expect(column).toBe("id");
-        expect(values).toEqual([courseRow.id]);
-        return coursesBuilder;
-      });
+      coursesBuilder.in.mockImplementation(
+        (column: string, values: string[]) => {
+          expect(column).toBe("id");
+          expect(values).toEqual([courseRow.id]);
+          return coursesBuilder;
+        }
+      );
       coursesBuilder.order.mockImplementation(() =>
         coursesBuilder.setResult(success([courseRow]))
       );
 
       const activeVersionsBuilder = createChainableBuilder();
       activeVersionsBuilder.select.mockReturnValue(activeVersionsBuilder);
-      activeVersionsBuilder.in.mockImplementation((column: string, values: string[]) => {
-        expect(column).toBe("id");
-        expect(values).toEqual([courseRow.active_version_id!]);
-        return activeVersionsBuilder.setResult(success([versionRow]));
-      });
+      activeVersionsBuilder.in.mockImplementation(
+        (column: string, values: string[]) => {
+          expect(column).toBe("id");
+          expect(values).toEqual([courseRow.active_version_id!]);
+          return activeVersionsBuilder.setResult(success([versionRow]));
+        }
+      );
 
       mockSupabase.from
         .mockImplementationOnce((table: string) => {
@@ -683,9 +694,9 @@ describe("SupabaseCourseRepository", () => {
 
       mockSupabase.from.mockImplementationOnce(() => teacherCoursesBuilder);
 
-      await expect(
-        repository.getTeacherCourses("teacher-1")
-      ).rejects.toThrow("boom");
+      await expect(repository.getTeacherCourses("teacher-1")).rejects.toThrow(
+        "boom"
+      );
     });
   });
 });

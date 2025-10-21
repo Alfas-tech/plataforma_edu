@@ -46,9 +46,8 @@ export class RemoveTeacherFromCourseVersionUseCase {
         };
       }
 
-      const version = await this.courseRepository.getCourseVersionById(
-        courseVersionId
-      );
+      const version =
+        await this.courseRepository.getCourseVersionById(courseVersionId);
       if (!version) {
         return {
           success: false,
@@ -63,9 +62,8 @@ export class RemoveTeacherFromCourseVersionUseCase {
         };
       }
 
-      const assignedTeachers = await this.courseRepository.getVersionTeachers(
-        courseVersionId
-      );
+      const assignedTeachers =
+        await this.courseRepository.getVersionTeachers(courseVersionId);
 
       if (!assignedTeachers.includes(teacherId)) {
         return {

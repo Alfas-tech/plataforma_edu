@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition, type ChangeEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+  type ChangeEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -46,8 +52,9 @@ export function CreateMergeRequestDialog({
   const [isPending, startTransition] = useTransition();
 
   const sourceBranch = useMemo(
-    () => course.branches.find((branch) => branch.id === sourceBranchId) ?? null,
-    [course.branches, sourceBranchId],
+    () =>
+      course.branches.find((branch) => branch.id === sourceBranchId) ?? null,
+    [course.branches, sourceBranchId]
   );
 
   const availableTargets = useMemo(() => {
@@ -107,12 +114,17 @@ export function CreateMergeRequestDialog({
   const disableSubmit = isPending || availableTargets.length === 0;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open: boolean) => !isPending && !open && onClose()}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open: boolean) => !isPending && !open && onClose()}
+    >
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Nueva solicitud de fusión</DialogTitle>
           <DialogDescription>
-            Compara tu trabajo en <span className="font-semibold">{sourceBranch?.name}</span> con otra edición y solicita la revisión del equipo.
+            Compara tu trabajo en{" "}
+            <span className="font-semibold">{sourceBranch?.name}</span> con otra
+            edición y solicita la revisión del equipo.
           </DialogDescription>
         </DialogHeader>
 
@@ -155,11 +167,13 @@ export function CreateMergeRequestDialog({
                 <SelectValue placeholder="Selecciona una edición" />
               </SelectTrigger>
               <SelectContent>
-                {availableTargets.map((branch: CourseOverview["branches"][number]) => (
-                  <SelectItem key={branch.id} value={branch.id}>
-                    {branch.name} · {branch.tipVersionLabel ?? "Sin etiqueta"}
-                  </SelectItem>
-                ))}
+                {availableTargets.map(
+                  (branch: CourseOverview["branches"][number]) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {branch.name} · {branch.tipVersionLabel ?? "Sin etiqueta"}
+                    </SelectItem>
+                  )
+                )}
               </SelectContent>
             </Select>
           </div>

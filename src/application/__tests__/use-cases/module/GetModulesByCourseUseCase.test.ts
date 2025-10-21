@@ -351,9 +351,7 @@ describe("GetModulesByCourseUseCase", () => {
       );
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe(
-        "No estás asignado a esta versión del curso"
-      );
+      expect(result.error).toBe("No estás asignado a esta versión del curso");
       expect(mockModuleRepository.getModulesByCourseId).not.toHaveBeenCalled();
     });
 

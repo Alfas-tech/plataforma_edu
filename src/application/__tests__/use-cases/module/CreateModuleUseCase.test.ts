@@ -307,7 +307,9 @@ describe("CreateModuleUseCase", () => {
       mockCourseRepository.getCourseVersionById.mockResolvedValue(
         mockCourseVersion
       );
-      mockProfileRepository.getProfileByUserId.mockResolvedValue(teacherProfile);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        teacherProfile
+      );
       mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(false);
 
       const result = await createModuleUseCase.execute(validInput);

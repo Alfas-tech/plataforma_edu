@@ -53,14 +53,14 @@ export default async function ModuleLessonsPage({
 
   const { course } = courseResult;
 
-  const branchCandidates = [
-    course.defaultBranch,
-    ...course.branches,
-  ].filter(Boolean) as typeof course.branches;
+  const branchCandidates = [course.defaultBranch, ...course.branches].filter(
+    Boolean
+  ) as typeof course.branches;
 
   const selectedBranch = requestedBranchId
-    ? branchCandidates.find((branch) => branch.id === requestedBranchId) ?? null
-    : course.defaultBranch ?? null;
+    ? (branchCandidates.find((branch) => branch.id === requestedBranchId) ??
+      null)
+    : (course.defaultBranch ?? null);
 
   const effectiveBranch = selectedBranch ?? course.defaultBranch ?? null;
 

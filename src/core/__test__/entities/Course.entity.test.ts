@@ -52,7 +52,9 @@ describe("CourseEntity", () => {
       baseCourseData.description,
       baseCourseData.slug,
       options?.visibilityOverride ?? baseCourseData.visibilityOverride,
-      options?.activeVersion === undefined ? baseVersion : options.activeVersion,
+      options?.activeVersion === undefined
+        ? baseVersion
+        : options.activeVersion,
       baseCourseData.createdBy,
       baseCourseData.createdAt,
       baseCourseData.updatedAt,

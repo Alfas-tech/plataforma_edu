@@ -27,8 +27,8 @@ describe("AssignTeacherToCourseUseCase", () => {
       createCourse: jest.fn(),
       updateCourse: jest.fn(),
       deleteCourse: jest.fn(),
-        assignTeacherToVersion: jest.fn(),
-        removeTeacherFromVersion: jest.fn(),
+      assignTeacherToVersion: jest.fn(),
+      removeTeacherFromVersion: jest.fn(),
       getCourseTeachers: jest.fn(),
       getTeacherCourses: jest.fn(),
     };
@@ -134,7 +134,7 @@ describe("AssignTeacherToCourseUseCase", () => {
         .mockResolvedValueOnce(mockTeacherProfile);
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
       mockCourseRepository.getCourseTeachers.mockResolvedValue([]);
-        mockCourseRepository.assignTeacherToVersion.mockResolvedValue(undefined);
+      mockCourseRepository.assignTeacherToVersion.mockResolvedValue(undefined);
 
       const result = await assignTeacherToCourseUseCase.execute(
         "course-123",
@@ -142,10 +142,10 @@ describe("AssignTeacherToCourseUseCase", () => {
       );
 
       expect(result.success).toBe(true);
-        expect(mockCourseRepository.assignTeacherToVersion).toHaveBeenCalledWith(
-          "course-123",
-          "version-1",
-          "teacher-123"
+      expect(mockCourseRepository.assignTeacherToVersion).toHaveBeenCalledWith(
+        "course-123",
+        "version-1",
+        "teacher-123"
       );
     });
 
@@ -268,9 +268,9 @@ describe("AssignTeacherToCourseUseCase", () => {
         .mockResolvedValueOnce(mockTeacherProfile);
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
       mockCourseRepository.getCourseTeachers.mockResolvedValue([]);
-        mockCourseRepository.assignTeacherToVersion.mockRejectedValue(
-          new Error("Database error")
-        );
+      mockCourseRepository.assignTeacherToVersion.mockRejectedValue(
+        new Error("Database error")
+      );
 
       const result = await assignTeacherToCourseUseCase.execute(
         "course-123",
@@ -288,7 +288,9 @@ describe("AssignTeacherToCourseUseCase", () => {
         .mockResolvedValueOnce(mockTeacherProfile);
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
       mockCourseRepository.getCourseTeachers.mockResolvedValue([]);
-        mockCourseRepository.assignTeacherToVersion.mockRejectedValue("Unknown error");
+      mockCourseRepository.assignTeacherToVersion.mockRejectedValue(
+        "Unknown error"
+      );
 
       const result = await assignTeacherToCourseUseCase.execute(
         "course-123",

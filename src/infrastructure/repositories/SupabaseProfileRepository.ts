@@ -169,7 +169,10 @@ export class SupabaseProfileRepository implements IProfileRepository {
       .eq("teacher_id", userId);
 
     if (removeAssignmentsError) {
-      console.error("demoteToStudent remove assignments error", removeAssignmentsError);
+      console.error(
+        "demoteToStudent remove assignments error",
+        removeAssignmentsError
+      );
       throw new Error(
         removeAssignmentsError.message
           ? `Error al degradar a estudiante: ${removeAssignmentsError.message}`

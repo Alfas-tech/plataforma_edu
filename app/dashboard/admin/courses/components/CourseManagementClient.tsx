@@ -56,7 +56,8 @@ interface CourseManagementClientProps {
 
 type BranchOverview = CourseOverview["branches"][number];
 
-type MergeRequestStatus = CourseOverview["pendingMergeRequests"][number]["status"];
+type MergeRequestStatus =
+  CourseOverview["pendingMergeRequests"][number]["status"];
 
 interface MergeRequestCallout {
   title: string;
@@ -69,25 +70,31 @@ const reviewSteps = [
   {
     Icon: Eye,
     title: "Paso 1 · Revisar",
-    description: "Abre la vista previa para validar módulos, lecciones y metadatos.",
+    description:
+      "Abre la vista previa para validar módulos, lecciones y metadatos.",
   },
   {
     Icon: Check,
     title: "Paso 2 · Decidir",
-    description: "Aprueba si los cambios están listos o rechaza pidiendo ajustes.",
+    description:
+      "Aprueba si los cambios están listos o rechaza pidiendo ajustes.",
   },
   {
     Icon: GitMerge,
     title: "Paso 3 · Publicar",
-    description: "Fusiona con la edición principal cuando confirmes que todo luce bien.",
+    description:
+      "Fusiona con la edición principal cuando confirmes que todo luce bien.",
   },
 ];
 
-function getMergeRequestCallout(status: MergeRequestStatus): MergeRequestCallout | null {
+function getMergeRequestCallout(
+  status: MergeRequestStatus
+): MergeRequestCallout | null {
   if (status === "open") {
     return {
       title: "Tu revisión está pendiente",
-      message: "Revisa los cambios propuestos y aprueba o rechaza para desbloquear la fusión.",
+      message:
+        "Revisa los cambios propuestos y aprueba o rechaza para desbloquear la fusión.",
       classes: "border-amber-200 bg-amber-50 text-amber-700",
       Icon: AlertTriangle,
     };
@@ -116,7 +123,8 @@ function getMergeRequestCallout(status: MergeRequestStatus): MergeRequestCallout
   if (status === "rejected") {
     return {
       title: "Solicita ajustes",
-      message: "La solicitud se rechazó. Comunica los cambios necesarios para que el autor vuelva a intentarlo.",
+      message:
+        "La solicitud se rechazó. Comunica los cambios necesarios para que el autor vuelva a intentarlo.",
       classes: "border-rose-200 bg-rose-50 text-rose-700",
       Icon: X,
     };
@@ -146,19 +154,22 @@ export function CourseManagementClient({
   const [editingCourse, setEditingCourse] = useState<CourseOverview | null>(
     null
   );
-  const [selectedBranches, setSelectedBranches] = useState<Record<string, string>>(
-    () => buildInitialSelectedBranches(courses)
-  );
-  const [branchDialogCourse, setBranchDialogCourse] = useState<CourseOverview | null>(null);
-  const [mergeDialogState, setMergeDialogState] = useState<
-    { course: CourseOverview; branchId: string } | null
+  const [selectedBranches, setSelectedBranches] = useState<
+    Record<string, string>
+  >(() => buildInitialSelectedBranches(courses));
+  const [branchDialogCourse, setBranchDialogCourse] =
+    useState<CourseOverview | null>(null);
+  const [mergeDialogState, setMergeDialogState] = useState<{
+    course: CourseOverview;
+    branchId: string;
+  } | null>(null);
+  const [branchDeletionTarget, setBranchDeletionTarget] = useState<{
+    course: CourseOverview;
+    branch: BranchOverview;
+  } | null>(null);
+  const [processingMergeRequestId, setProcessingMergeRequestId] = useState<
+    string | null
   >(null);
-  const [branchDeletionTarget, setBranchDeletionTarget] = useState<
-    { course: CourseOverview; branch: BranchOverview } | null
-  >(null);
-  const [processingMergeRequestId, setProcessingMergeRequestId] = useState<string | null>(
-    null
-  );
   const [actionError, setActionError] = useState<string | null>(null);
   const [isActionPending, startActionTransition] = useTransition();
 
@@ -296,7 +307,9 @@ export function CourseManagementClient({
 
     if (status === "published") {
       return (
-        <span className={`${baseClasses} rounded-full border border-emerald-200 bg-emerald-50 font-semibold text-emerald-700`}>
+        <span
+          className={`${baseClasses} rounded-full border border-emerald-200 bg-emerald-50 font-semibold text-emerald-700`}
+        >
           {branchLabel}Versión {label} · Publicada
         </span>
       );
@@ -304,7 +317,9 @@ export function CourseManagementClient({
 
     if (status === "approved") {
       return (
-        <span className={`${baseClasses} rounded-full border border-blue-200 bg-blue-50 font-semibold text-blue-700`}>
+        <span
+          className={`${baseClasses} rounded-full border border-blue-200 bg-blue-50 font-semibold text-blue-700`}
+        >
           {branchLabel}Versión {label} · Aprobada
         </span>
       );
@@ -312,7 +327,9 @@ export function CourseManagementClient({
 
     if (status === "pending_review") {
       return (
-        <span className={`${baseClasses} rounded-full border border-amber-200 bg-amber-50 font-semibold text-amber-700`}>
+        <span
+          className={`${baseClasses} rounded-full border border-amber-200 bg-amber-50 font-semibold text-amber-700`}
+        >
           {branchLabel}Versión {label} · Pendiente
         </span>
       );
@@ -320,14 +337,18 @@ export function CourseManagementClient({
 
     if (status === "draft") {
       return (
-        <span className={`${baseClasses} rounded-full border border-slate-200 bg-slate-50 font-semibold text-slate-700`}>
+        <span
+          className={`${baseClasses} rounded-full border border-slate-200 bg-slate-50 font-semibold text-slate-700`}
+        >
           {branchLabel}Versión {label} · Borrador
         </span>
       );
     }
 
     return (
-      <span className={`${baseClasses} rounded-full border border-slate-300 bg-slate-100 font-semibold text-slate-700`}>
+      <span
+        className={`${baseClasses} rounded-full border border-slate-300 bg-slate-100 font-semibold text-slate-700`}
+      >
         {branchLabel}Versión {label} · Archivada
       </span>
     );
@@ -336,11 +357,14 @@ export function CourseManagementClient({
   const getMergeRequestBadge = (
     status: CourseOverview["pendingMergeRequests"][number]["status"]
   ) => {
-    const base = "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold";
+    const base =
+      "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold";
 
     if (status === "open") {
       return (
-        <span className={`${base} border border-amber-200 bg-amber-50 text-amber-700`}>
+        <span
+          className={`${base} border border-amber-200 bg-amber-50 text-amber-700`}
+        >
           Abierta
         </span>
       );
@@ -348,7 +372,9 @@ export function CourseManagementClient({
 
     if (status === "approved") {
       return (
-        <span className={`${base} border border-blue-200 bg-blue-50 text-blue-700`}>
+        <span
+          className={`${base} border border-blue-200 bg-blue-50 text-blue-700`}
+        >
           Aprobada
         </span>
       );
@@ -356,14 +382,18 @@ export function CourseManagementClient({
 
     if (status === "merged") {
       return (
-        <span className={`${base} border border-emerald-200 bg-emerald-50 text-emerald-700`}>
+        <span
+          className={`${base} border border-emerald-200 bg-emerald-50 text-emerald-700`}
+        >
           Fusionada
         </span>
       );
     }
 
     return (
-      <span className={`${base} border border-rose-200 bg-rose-50 text-rose-700`}>
+      <span
+        className={`${base} border border-rose-200 bg-rose-50 text-rose-700`}
+      >
         Rechazada
       </span>
     );
@@ -446,8 +476,9 @@ export function CourseManagementClient({
         <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
           <p className="font-semibold text-slate-800">Curso principal</p>
           <p>
-            Esta cuenta administra un único curso base. Usa ediciones de trabajo para preparar
-            nuevas versiones sin afectar la experiencia publicada en la edición principal.
+            Esta cuenta administra un único curso base. Usa ediciones de trabajo
+            para preparar nuevas versiones sin afectar la experiencia publicada
+            en la edición principal.
           </p>
         </div>
       )}
@@ -495,7 +526,7 @@ export function CourseManagementClient({
             const selectedBranchId =
               selectedBranches[course.id] ?? allBranches[0]?.id ?? null;
             const selectedBranch = selectedBranchId
-              ? branchLookup.get(selectedBranchId) ?? null
+              ? (branchLookup.get(selectedBranchId) ?? null)
               : null;
             const isDefaultBranchSelected =
               !!course.defaultBranch &&
@@ -549,7 +580,7 @@ export function CourseManagementClient({
                 : [];
 
             const lastBranchUpdate = selectedBranch
-              ? selectedBranch.tipVersionUpdatedAt ?? selectedBranch.updatedAt
+              ? (selectedBranch.tipVersionUpdatedAt ?? selectedBranch.updatedAt)
               : null;
 
             const branchNameMap = new Map<string, string>();
@@ -557,13 +588,16 @@ export function CourseManagementClient({
               branchNameMap.set(branch.id, branch.name)
             );
             if (course.defaultBranch) {
-              branchNameMap.set(course.defaultBranch.id, course.defaultBranch.name);
+              branchNameMap.set(
+                course.defaultBranch.id,
+                course.defaultBranch.name
+              );
             }
 
-            const activeVersionBranchName =
-              course.activeVersion?.branchId
-                ? branchNameMap.get(course.activeVersion.branchId) ?? "Sin edición"
-                : course.defaultBranch?.name ?? "Sin edición";
+            const activeVersionBranchName = course.activeVersion?.branchId
+              ? (branchNameMap.get(course.activeVersion.branchId) ??
+                "Sin edición")
+              : (course.defaultBranch?.name ?? "Sin edición");
 
             const activeVersionAssociatedWithSelection = course.activeVersion
               ? course.activeVersion.branchId
@@ -583,7 +617,9 @@ export function CourseManagementClient({
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex-1">
                       <div className="mb-2 flex flex-wrap items-center gap-2">
-                        <CardTitle className="text-xl">{course.title}</CardTitle>
+                        <CardTitle className="text-xl">
+                          {course.title}
+                        </CardTitle>
                         {getVisibilityBadge(course)}
                         {getVersionBadge(course)}
                         {course.defaultBranch && (
@@ -620,7 +656,9 @@ export function CourseManagementClient({
                     <div className="flex items-start gap-3 rounded-lg border bg-slate-50 p-3">
                       <Calendar className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
                       <div>
-                        <p className="text-xs font-medium text-slate-600">Creado</p>
+                        <p className="text-xs font-medium text-slate-600">
+                          Creado
+                        </p>
                         <p className="text-sm font-semibold text-slate-800">
                           {formatDate(course.createdAt)}
                         </p>
@@ -629,7 +667,9 @@ export function CourseManagementClient({
                     <div className="flex items-start gap-3 rounded-lg border bg-slate-50 p-3">
                       <RefreshCcw className="mt-0.5 h-5 w-5 flex-shrink-0 text-indigo-600" />
                       <div>
-                        <p className="text-xs font-medium text-slate-600">Última actualización</p>
+                        <p className="text-xs font-medium text-slate-600">
+                          Última actualización
+                        </p>
                         <p className="text-sm font-semibold text-slate-800">
                           {formatDate(course.lastUpdatedAt)}
                         </p>
@@ -638,7 +678,9 @@ export function CourseManagementClient({
                     <div className="flex items-start gap-3 rounded-lg border bg-slate-50 p-3">
                       <GitCommit className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" />
                       <div>
-                        <p className="text-xs font-medium text-slate-600">Versión activa</p>
+                        <p className="text-xs font-medium text-slate-600">
+                          Versión activa
+                        </p>
                         <p className="text-sm font-semibold text-slate-800">
                           {course.activeVersion
                             ? `${course.activeVersion.label} · ${getVersionStatusLabel(course.activeVersion.status)}`
@@ -652,9 +694,12 @@ export function CourseManagementClient({
                     <div className="flex items-start gap-3 rounded-lg border bg-slate-50 p-3">
                       <Layers className="mt-0.5 h-5 w-5 flex-shrink-0 text-purple-600" />
                       <div>
-                        <p className="text-xs font-medium text-slate-600">Ediciones & fusiones</p>
+                        <p className="text-xs font-medium text-slate-600">
+                          Ediciones & fusiones
+                        </p>
                         <p className="text-sm font-semibold text-slate-800">
-                          {allBranches.length} ediciones · {course.pendingMergeRequests.length} fusiones
+                          {allBranches.length} ediciones ·{" "}
+                          {course.pendingMergeRequests.length} fusiones
                         </p>
                       </div>
                     </div>
@@ -682,7 +727,8 @@ export function CourseManagementClient({
                           <SelectContent>
                             {allBranches.map((branch) => (
                               <SelectItem key={branch.id} value={branch.id}>
-                                {branch.name} · {branch.tipVersionLabel ?? "Sin etiqueta"}
+                                {branch.name} ·{" "}
+                                {branch.tipVersionLabel ?? "Sin etiqueta"}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -728,7 +774,8 @@ export function CourseManagementClient({
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                             <GitPullRequest className="h-4 w-4 text-emerald-600" />
-                            Revisiones pendientes en {course.defaultBranch?.name ?? "principal"}
+                            Revisiones pendientes en{" "}
+                            {course.defaultBranch?.name ?? "principal"}
                           </h3>
                           <span className="text-xs text-slate-500">
                             {incomingRequests.length} solicitud(es) por atender
@@ -741,7 +788,10 @@ export function CourseManagementClient({
                             ¿Cómo revisar?
                           </p>
                           <p className="mt-1 leading-5">
-                            Previsualiza los contenidos, registra tu decisión y finalmente fusiona cuando estés seguro. Todo sucede sin afectar a la edición principal hasta el paso final.
+                            Previsualiza los contenidos, registra tu decisión y
+                            finalmente fusiona cuando estés seguro. Todo sucede
+                            sin afectar a la edición principal hasta el paso
+                            final.
                           </p>
                         </div>
 
@@ -752,159 +802,200 @@ export function CourseManagementClient({
                         )}
 
                         <div className="space-y-3">
-                          {incomingRequests.map((mr: CourseOverview["pendingMergeRequests"][number]) => {
-                            const isProcessing = processingSameMergeRequest(mr.id);
-                            const reviewQuery = new URLSearchParams();
-                            reviewQuery.set("branchId", mr.sourceBranchId);
-                            reviewQuery.set("versionId", mr.sourceVersionId);
-                            const reviewHref = `/dashboard/admin/courses/${course.id}/content?${reviewQuery.toString()}`;
-                            const callout = getMergeRequestCallout(mr.status);
-                            const isPendingDecision = mr.status === "open";
-                            const hasReviewer = Boolean(
-                              mr.reviewerId || mr.reviewerName || mr.reviewerEmail
-                            );
+                          {incomingRequests.map(
+                            (
+                              mr: CourseOverview["pendingMergeRequests"][number]
+                            ) => {
+                              const isProcessing = processingSameMergeRequest(
+                                mr.id
+                              );
+                              const reviewQuery = new URLSearchParams();
+                              reviewQuery.set("branchId", mr.sourceBranchId);
+                              reviewQuery.set("versionId", mr.sourceVersionId);
+                              const reviewHref = `/dashboard/admin/courses/${course.id}/content?${reviewQuery.toString()}`;
+                              const callout = getMergeRequestCallout(mr.status);
+                              const isPendingDecision = mr.status === "open";
+                              const hasReviewer = Boolean(
+                                mr.reviewerId ||
+                                  mr.reviewerName ||
+                                  mr.reviewerEmail
+                              );
 
-                            return (
-                              <div
-                                key={mr.id}
-                                className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4"
-                              >
-                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                  <p className="text-sm font-semibold text-slate-800">
-                                    {mr.title}
-                                  </p>
-                                  {getMergeRequestBadge(mr.status)}
-                                </div>
-                                {callout && (
-                                  <div className={`flex items-start gap-3 rounded-md border px-3 py-2 text-xs ${callout.classes}`}>
-                                    <callout.Icon className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                                    <div className="space-y-1">
-                                      <p className="font-semibold">{callout.title}</p>
-                                      <p className="leading-4 opacity-90">{callout.message}</p>
-                                    </div>
-                                  </div>
-                                )}
-                                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
-                                  <GitBranch className="h-3 w-3 text-slate-500" />
-                                  Edición origen: {mr.sourceBranchName} ({mr.sourceVersionLabel}) → Edición destino: {mr.targetBranchName}
-                                  {mr.targetVersionLabel && (
-                                    <span>({mr.targetVersionLabel})</span>
-                                  )}
-                                </div>
-                                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
-                                  <div className="flex items-center gap-1">
-                                    <Users className="h-3 w-3 text-slate-500" />
-                                    <span>
-                                      Solicitado por
-                                      <span className="ml-1 font-semibold text-slate-800">
-                                        {getParticipantLabel(
-                                          mr.openedByName,
-                                          mr.openedByEmail
-                                        )}
-                                      </span>
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <ShieldCheck className="h-3 w-3 text-emerald-600" />
-                                    <span>
-                                      {hasReviewer
-                                        ? `Revisor: ${getParticipantLabel(
-                                            mr.reviewerName,
-                                            mr.reviewerEmail
-                                          )}`
-                                        : "Revisor sin asignar"}
-                                    </span>
-                                  </div>
-                                </div>
-                                <p className="text-xs text-slate-500">
-                                  Abierta el {formatDateTime(mr.openedAt)}
-                                </p>
-                                {mr.summary && (
-                                  <p className="text-xs text-slate-600">
-                                    {mr.summary}
-                                  </p>
-                                )}
-                                {isPendingDecision && (
-                                  <div className="rounded-md border border-slate-200 bg-white p-3">
-                                    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
-                                      <ListChecks className="h-3.5 w-3.5 text-indigo-600" />
-                                      Flujo sugerido
+                              return (
+                                <div
+                                  key={mr.id}
+                                  className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4"
+                                >
+                                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                    <p className="text-sm font-semibold text-slate-800">
+                                      {mr.title}
                                     </p>
-                                    <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                                      {reviewSteps.map(({ Icon, title, description }) => (
-                                        <div key={title} className="flex items-start gap-2 text-xs text-slate-600">
-                                          <Icon className="mt-0.5 h-4 w-4 flex-shrink-0 text-indigo-600" />
-                                          <div className="space-y-1">
-                                            <p className="font-semibold text-slate-800">{title}</p>
-                                            <p className="text-[11px] leading-4 text-slate-600">{description}</p>
-                                          </div>
-                                        </div>
-                                      ))}
+                                    {getMergeRequestBadge(mr.status)}
+                                  </div>
+                                  {callout && (
+                                    <div
+                                      className={`flex items-start gap-3 rounded-md border px-3 py-2 text-xs ${callout.classes}`}
+                                    >
+                                      <callout.Icon className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                                      <div className="space-y-1">
+                                        <p className="font-semibold">
+                                          {callout.title}
+                                        </p>
+                                        <p className="leading-4 opacity-90">
+                                          {callout.message}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  )}
+                                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                                    <GitBranch className="h-3 w-3 text-slate-500" />
+                                    Edición origen: {mr.sourceBranchName} (
+                                    {mr.sourceVersionLabel}) → Edición destino:{" "}
+                                    {mr.targetBranchName}
+                                    {mr.targetVersionLabel && (
+                                      <span>({mr.targetVersionLabel})</span>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+                                    <div className="flex items-center gap-1">
+                                      <Users className="h-3 w-3 text-slate-500" />
+                                      <span>
+                                        Solicitado por
+                                        <span className="ml-1 font-semibold text-slate-800">
+                                          {getParticipantLabel(
+                                            mr.openedByName,
+                                            mr.openedByEmail
+                                          )}
+                                        </span>
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <ShieldCheck className="h-3 w-3 text-emerald-600" />
+                                      <span>
+                                        {hasReviewer
+                                          ? `Revisor: ${getParticipantLabel(
+                                              mr.reviewerName,
+                                              mr.reviewerEmail
+                                            )}`
+                                          : "Revisor sin asignar"}
+                                      </span>
                                     </div>
                                   </div>
-                                )}
-                                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                                  <Button
-                                    asChild
-                                    size="sm"
-                                    variant="outline"
-                                    className="w-full border-slate-300 text-slate-700 hover:bg-slate-100 sm:w-auto"
-                                  >
-                                    <Link href={reviewHref} target="_blank" rel="noreferrer">
-                                      <Eye className="mr-2 h-4 w-4" />
-                                      Previsualizar cambios
-                                    </Link>
-                                  </Button>
-                                  {mr.status === "open" && (
-                                    <>
-                                      <Button
-                                        size="sm"
-                                        className="w-full bg-emerald-600 text-white hover:bg-emerald-700 sm:w-auto"
-                                        disabled={isProcessing}
-                                        onClick={() => handleReviewMergeRequest(mr.id, "approve")}
-                                      >
-                                        {isProcessing ? (
-                                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        ) : (
-                                          <Check className="mr-2 h-4 w-4" />
-                                        )}
-                                        Aprobar
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="w-full border-rose-300 text-rose-600 hover:bg-rose-50 sm:w-auto"
-                                        disabled={isProcessing}
-                                        onClick={() => handleReviewMergeRequest(mr.id, "reject")}
-                                      >
-                                        {isProcessing ? (
-                                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        ) : (
-                                          <X className="mr-2 h-4 w-4" />
-                                        )}
-                                        Rechazar
-                                      </Button>
-                                    </>
+                                  <p className="text-xs text-slate-500">
+                                    Abierta el {formatDateTime(mr.openedAt)}
+                                  </p>
+                                  {mr.summary && (
+                                    <p className="text-xs text-slate-600">
+                                      {mr.summary}
+                                    </p>
                                   )}
-                                  {mr.status === "approved" && (
+                                  {isPendingDecision && (
+                                    <div className="rounded-md border border-slate-200 bg-white p-3">
+                                      <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                                        <ListChecks className="h-3.5 w-3.5 text-indigo-600" />
+                                        Flujo sugerido
+                                      </p>
+                                      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                                        {reviewSteps.map(
+                                          ({ Icon, title, description }) => (
+                                            <div
+                                              key={title}
+                                              className="flex items-start gap-2 text-xs text-slate-600"
+                                            >
+                                              <Icon className="mt-0.5 h-4 w-4 flex-shrink-0 text-indigo-600" />
+                                              <div className="space-y-1">
+                                                <p className="font-semibold text-slate-800">
+                                                  {title}
+                                                </p>
+                                                <p className="text-[11px] leading-4 text-slate-600">
+                                                  {description}
+                                                </p>
+                                              </div>
+                                            </div>
+                                          )
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                                     <Button
+                                      asChild
                                       size="sm"
-                                      className="w-full bg-indigo-600 text-white hover:bg-indigo-700 sm:w-auto"
-                                      disabled={isProcessing}
-                                      onClick={() => handleMergeCourseBranch(mr.id)}
+                                      variant="outline"
+                                      className="w-full border-slate-300 text-slate-700 hover:bg-slate-100 sm:w-auto"
                                     >
-                                      {isProcessing ? (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                      ) : (
-                                        <GitMerge className="mr-2 h-4 w-4" />
-                                      )}
-                                      Fusionar con la edición principal
+                                      <Link
+                                        href={reviewHref}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                      >
+                                        <Eye className="mr-2 h-4 w-4" />
+                                        Previsualizar cambios
+                                      </Link>
                                     </Button>
-                                  )}
+                                    {mr.status === "open" && (
+                                      <>
+                                        <Button
+                                          size="sm"
+                                          className="w-full bg-emerald-600 text-white hover:bg-emerald-700 sm:w-auto"
+                                          disabled={isProcessing}
+                                          onClick={() =>
+                                            handleReviewMergeRequest(
+                                              mr.id,
+                                              "approve"
+                                            )
+                                          }
+                                        >
+                                          {isProcessing ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                          ) : (
+                                            <Check className="mr-2 h-4 w-4" />
+                                          )}
+                                          Aprobar
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="w-full border-rose-300 text-rose-600 hover:bg-rose-50 sm:w-auto"
+                                          disabled={isProcessing}
+                                          onClick={() =>
+                                            handleReviewMergeRequest(
+                                              mr.id,
+                                              "reject"
+                                            )
+                                          }
+                                        >
+                                          {isProcessing ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                          ) : (
+                                            <X className="mr-2 h-4 w-4" />
+                                          )}
+                                          Rechazar
+                                        </Button>
+                                      </>
+                                    )}
+                                    {mr.status === "approved" && (
+                                      <Button
+                                        size="sm"
+                                        className="w-full bg-indigo-600 text-white hover:bg-indigo-700 sm:w-auto"
+                                        disabled={isProcessing}
+                                        onClick={() =>
+                                          handleMergeCourseBranch(mr.id)
+                                        }
+                                      >
+                                        {isProcessing ? (
+                                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : (
+                                          <GitMerge className="mr-2 h-4 w-4" />
+                                        )}
+                                        Fusionar con la edición principal
+                                      </Button>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            }
+                          )}
                         </div>
                       </section>
                     )}
@@ -913,7 +1004,8 @@ export function CourseManagementClient({
                       <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                         <div>
                           <p className="text-sm font-semibold text-slate-900">
-                            {selectedBranch?.name ?? "No hay edición seleccionada"}
+                            {selectedBranch?.name ??
+                              "No hay edición seleccionada"}
                           </p>
                           <div className="mt-1 flex flex-wrap gap-2 text-xs text-slate-600">
                             {selectedBranch?.isDefault && (
@@ -929,8 +1021,12 @@ export function CourseManagementClient({
                               </Badge>
                             )}
                             {selectedBranch?.tipVersionLabel && (
-                              <Badge variant="outline" className="border-slate-300 text-slate-600">
-                                Última versión · {selectedBranch.tipVersionLabel}
+                              <Badge
+                                variant="outline"
+                                className="border-slate-300 text-slate-600"
+                              >
+                                Última versión ·{" "}
+                                {selectedBranch.tipVersionLabel}
                               </Badge>
                             )}
                           </div>
@@ -959,7 +1055,11 @@ export function CourseManagementClient({
                           <span className="sm:hidden">Doc.</span>
                         </Button>
                         <Link href={contentHref} className="w-full sm:w-auto">
-                          <Button size="sm" variant="outline" className="w-full sm:w-auto">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full sm:w-auto"
+                          >
                             <BookOpen className="h-4 w-4 sm:mr-2" />
                             <span className="hidden sm:inline">Contenido</span>
                             <span className="sm:hidden">Cont.</span>
@@ -975,7 +1075,9 @@ export function CourseManagementClient({
                             }
                           >
                             <Trash2 className="h-4 w-4 sm:mr-2" />
-                            <span className="hidden sm:inline">Eliminar edición</span>
+                            <span className="hidden sm:inline">
+                              Eliminar edición
+                            </span>
                             <span className="sm:hidden">Eliminar</span>
                           </Button>
                         )}
@@ -983,25 +1085,41 @@ export function CourseManagementClient({
                       <div className="mt-4 grid gap-3 sm:grid-cols-3">
                         <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
                           <p className="font-semibold text-slate-800">Base</p>
-                          <p>{selectedBranch?.baseVersionLabel ?? "Sin versión"}</p>
+                          <p>
+                            {selectedBranch?.baseVersionLabel ?? "Sin versión"}
+                          </p>
                         </div>
                         <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-                          <p className="font-semibold text-slate-800">Última etiqueta</p>
-                          <p>{selectedBranch?.tipVersionLabel ?? "Sin versiones"}</p>
+                          <p className="font-semibold text-slate-800">
+                            Última etiqueta
+                          </p>
+                          <p>
+                            {selectedBranch?.tipVersionLabel ?? "Sin versiones"}
+                          </p>
                         </div>
                         <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-                          <p className="font-semibold text-slate-800">Edición de origen</p>
+                          <p className="font-semibold text-slate-800">
+                            Edición de origen
+                          </p>
                           <p>
                             {selectedBranch?.parentBranchId
-                              ? branchNameMap.get(selectedBranch.parentBranchId) ?? "Desconocida"
+                              ? (branchNameMap.get(
+                                  selectedBranch.parentBranchId
+                                ) ?? "Desconocida")
                               : "Sin edición de origen"}
                           </p>
                         </div>
                       </div>
                       {!isDefaultBranchSelected && selectedBranch && (
                         <div className="mt-4 rounded-md border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-900">
-                          Esta edición es una copia aislada de <span className="font-semibold">{course.defaultBranch?.name ?? "la edición principal"}</span>.
-                          Puedes crear, editar o borrar módulos y lecciones sin afectar al contenido publicado hasta que envíes y fusiones una solicitud.
+                          Esta edición es una copia aislada de{" "}
+                          <span className="font-semibold">
+                            {course.defaultBranch?.name ??
+                              "la edición principal"}
+                          </span>
+                          . Puedes crear, editar o borrar módulos y lecciones
+                          sin afectar al contenido publicado hasta que envíes y
+                          fusiones una solicitud.
                         </div>
                       )}
                     </section>
@@ -1015,17 +1133,23 @@ export function CourseManagementClient({
                               Versión activa {course.activeVersion.label}
                             </p>
                             <p>
-                              <strong>Estado:</strong> {getVersionStatusLabel(course.activeVersion.status)}
+                              <strong>Estado:</strong>{" "}
+                              {getVersionStatusLabel(
+                                course.activeVersion.status
+                              )}
                             </p>
                             <p>
-                              <strong>Visibilidad:</strong> {course.activeVersion.isPublished && course.activeVersion.isActive
+                              <strong>Visibilidad:</strong>{" "}
+                              {course.activeVersion.isPublished &&
+                              course.activeVersion.isActive
                                 ? "Publicada y activa"
                                 : course.activeVersion.isActive
-                                ? "Activa pero no publicada"
-                                : "Inactiva"}
+                                  ? "Activa pero no publicada"
+                                  : "Inactiva"}
                             </p>
                             <p>
-                              <strong>Última revisión:</strong> {formatDateTime(course.activeVersion.updatedAt)}
+                              <strong>Última revisión:</strong>{" "}
+                              {formatDateTime(course.activeVersion.updatedAt)}
                             </p>
                             {course.activeVersion.summary && (
                               <p className="text-slate-600">
@@ -1037,14 +1161,19 @@ export function CourseManagementClient({
                           <div className="flex items-center gap-2 text-sm text-slate-700">
                             <AlertTriangle className="h-4 w-4 text-amber-600" />
                             <span>
-                              La versión activa vive en {activeVersionBranchName}. Cambia de edición para revisarla.
+                              La versión activa vive en{" "}
+                              {activeVersionBranchName}. Cambia de edición para
+                              revisarla.
                             </span>
                           </div>
                         )
                       ) : (
                         <div className="flex items-center gap-2 text-sm text-slate-700">
                           <AlertTriangle className="h-4 w-4 text-amber-600" />
-                          <span>Este curso aún no tiene una versión activa configurada.</span>
+                          <span>
+                            Este curso aún no tiene una versión activa
+                            configurada.
+                          </span>
                         </div>
                       )}
                     </section>
@@ -1063,106 +1192,129 @@ export function CourseManagementClient({
                               ? `${incomingRequests.length} atendidas arriba`
                               : "Sin solicitudes entrantes"
                             : outgoingRequests.length
-                            ? `${outgoingRequests.length} pendiente(s)`
-                            : "Sin solicitudes desde esta edición"}
+                              ? `${outgoingRequests.length} pendiente(s)`
+                              : "Sin solicitudes desde esta edición"}
                         </span>
                       </div>
 
                       {isDefaultBranchSelected ? (
                         <div className="rounded-lg border border-dashed border-slate-300 bg-white p-4 text-xs text-slate-600">
-                          Usa el panel de revisión superior para aprobar o fusionar los cambios que llegan a la edición principal.
+                          Usa el panel de revisión superior para aprobar o
+                          fusionar los cambios que llegan a la edición
+                          principal.
                         </div>
                       ) : outgoingRequests.length === 0 ? (
                         <div className="rounded-lg border border-dashed border-slate-300 bg-white p-4 text-xs text-slate-600">
-                          Aún no has creado solicitudes de fusión desde esta edición. Prepara tus cambios y envía una revisión cuando estén listos.
+                          Aún no has creado solicitudes de fusión desde esta
+                          edición. Prepara tus cambios y envía una revisión
+                          cuando estén listos.
                         </div>
                       ) : (
                         <div className="space-y-3">
-                          {outgoingRequests.map((mr: CourseOverview["pendingMergeRequests"][number]) => {
-                            const callout = getMergeRequestCallout(mr.status);
-                            const hasReviewer = Boolean(
-                              mr.reviewerId || mr.reviewerName || mr.reviewerEmail
-                            );
+                          {outgoingRequests.map(
+                            (
+                              mr: CourseOverview["pendingMergeRequests"][number]
+                            ) => {
+                              const callout = getMergeRequestCallout(mr.status);
+                              const hasReviewer = Boolean(
+                                mr.reviewerId ||
+                                  mr.reviewerName ||
+                                  mr.reviewerEmail
+                              );
 
-                            return (
-                              <div
-                                key={mr.id}
-                                className="space-y-2 rounded-lg border border-slate-200 bg-white p-4"
-                              >
-                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                  <p className="text-sm font-semibold text-slate-800">
-                                    {mr.title}
-                                  </p>
-                                  {getMergeRequestBadge(mr.status)}
-                                </div>
-                                {callout && (
-                                  <div className={`flex items-start gap-3 rounded-md border px-3 py-2 text-xs ${callout.classes}`}>
-                                    <callout.Icon className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                                    <div className="space-y-1">
-                                      <p className="font-semibold">{callout.title}</p>
-                                      <p className="leading-4 opacity-90">{callout.message}</p>
+                              return (
+                                <div
+                                  key={mr.id}
+                                  className="space-y-2 rounded-lg border border-slate-200 bg-white p-4"
+                                >
+                                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                    <p className="text-sm font-semibold text-slate-800">
+                                      {mr.title}
+                                    </p>
+                                    {getMergeRequestBadge(mr.status)}
+                                  </div>
+                                  {callout && (
+                                    <div
+                                      className={`flex items-start gap-3 rounded-md border px-3 py-2 text-xs ${callout.classes}`}
+                                    >
+                                      <callout.Icon className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                                      <div className="space-y-1">
+                                        <p className="font-semibold">
+                                          {callout.title}
+                                        </p>
+                                        <p className="leading-4 opacity-90">
+                                          {callout.message}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  )}
+                                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                                    <GitBranch className="h-3 w-3 text-slate-500" />
+                                    Edición origen: {mr.sourceBranchName} (
+                                    {mr.sourceVersionLabel}) → Edición destino:{" "}
+                                    {mr.targetBranchName}
+                                    {mr.targetVersionLabel && (
+                                      <span>({mr.targetVersionLabel})</span>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+                                    <div className="flex items-center gap-1">
+                                      <Users className="h-3 w-3 text-slate-500" />
+                                      <span>
+                                        Solicitado por
+                                        <span className="ml-1 font-semibold text-slate-800">
+                                          {getParticipantLabel(
+                                            mr.openedByName,
+                                            mr.openedByEmail
+                                          )}
+                                        </span>
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <ShieldCheck className="h-3 w-3 text-emerald-600" />
+                                      <span>
+                                        {hasReviewer
+                                          ? `Revisor: ${getParticipantLabel(
+                                              mr.reviewerName,
+                                              mr.reviewerEmail
+                                            )}`
+                                          : "Revisor sin asignar"}
+                                      </span>
                                     </div>
                                   </div>
-                                )}
-                                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
-                                  <GitBranch className="h-3 w-3 text-slate-500" />
-                                  Edición origen: {mr.sourceBranchName} ({mr.sourceVersionLabel}) → Edición destino: {mr.targetBranchName}
-                                  {mr.targetVersionLabel && (
-                                    <span>({mr.targetVersionLabel})</span>
-                                  )}
-                                </div>
-                                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
-                                  <div className="flex items-center gap-1">
-                                    <Users className="h-3 w-3 text-slate-500" />
-                                    <span>
-                                      Solicitado por
-                                      <span className="ml-1 font-semibold text-slate-800">
-                                        {getParticipantLabel(
-                                          mr.openedByName,
-                                          mr.openedByEmail
-                                        )}
-                                      </span>
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <ShieldCheck className="h-3 w-3 text-emerald-600" />
-                                    <span>
-                                      {hasReviewer
-                                        ? `Revisor: ${getParticipantLabel(
-                                            mr.reviewerName,
-                                            mr.reviewerEmail
-                                          )}`
-                                        : "Revisor sin asignar"}
-                                    </span>
-                                  </div>
-                                </div>
-                                <p className="text-xs text-slate-500">
-                                  Abierta el {formatDateTime(mr.openedAt)}
-                                </p>
-                                {mr.summary && (
-                                  <p className="text-xs text-slate-600">
-                                    {mr.summary}
+                                  <p className="text-xs text-slate-500">
+                                    Abierta el {formatDateTime(mr.openedAt)}
                                   </p>
-                                )}
-                                <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-                                  Espera la revisión del administrador. Puedes seguir editando esta edición sin afectar a la edición principal.
+                                  {mr.summary && (
+                                    <p className="text-xs text-slate-600">
+                                      {mr.summary}
+                                    </p>
+                                  )}
+                                  <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+                                    Espera la revisión del administrador. Puedes
+                                    seguir editando esta edición sin afectar a
+                                    la edición principal.
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            }
+                          )}
                         </div>
                       )}
                     </section>
 
                     {course.visibilityOverride && (
                       <div className="rounded-lg border border-purple-200 bg-purple-50 p-3 text-xs text-purple-900">
-                        🔓 Visibilidad forzada: los estudiantes verán este curso incluso si la versión activa no está publicada.
+                        🔓 Visibilidad forzada: los estudiantes verán este curso
+                        incluso si la versión activa no está publicada.
                       </div>
                     )}
 
                     {!course.isVisibleForStudents && (
                       <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
-                        <strong>Estado actual:</strong> Este curso aún no es visible para estudiantes. Publica la versión activa o usa la visibilidad forzada para habilitarlo.
+                        <strong>Estado actual:</strong> Este curso aún no es
+                        visible para estudiantes. Publica la versión activa o
+                        usa la visibilidad forzada para habilitarlo.
                       </div>
                     )}
                   </div>

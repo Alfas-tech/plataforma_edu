@@ -265,9 +265,7 @@ export function LessonFormDialog({
             </Button>
             <Button
               type="submit"
-              disabled={
-                isSubmitting || (mode === "create" && !courseVersionId)
-              }
+              disabled={isSubmitting || (mode === "create" && !courseVersionId)}
               className="bg-purple-600 hover:bg-purple-700"
             >
               {isSubmitting ? (

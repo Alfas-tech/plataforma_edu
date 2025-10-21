@@ -55,7 +55,9 @@ export function LessonManagementClient({
   );
 
   const canMutateContent = Boolean(courseVersionId);
-  const branchLabel = isDefaultBranch ? "edición principal" : `edición ${branchName}`;
+  const branchLabel = isDefaultBranch
+    ? "edición principal"
+    : `edición ${branchName}`;
 
   return (
     <>
@@ -65,16 +67,20 @@ export function LessonManagementClient({
         </p>
         {isDefaultBranch ? (
           <p>
-            Los cambios publicados se reflejan de inmediato para los estudiantes. Utiliza ediciones de trabajo para preparar cambios antes de fusionarlos.
+            Los cambios publicados se reflejan de inmediato para los
+            estudiantes. Utiliza ediciones de trabajo para preparar cambios
+            antes de fusionarlos.
           </p>
         ) : (
           <p>
-            Todo lo que modifiques o crees permanecerá aislado en esta edición hasta que lo fusiones con la edición principal.
+            Todo lo que modifiques o crees permanecerá aislado en esta edición
+            hasta que lo fusiones con la edición principal.
           </p>
         )}
         {!canMutateContent && (
           <p className="mt-2 rounded-md border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-700">
-            Esta edición del curso no tiene una versión activa. Regresa al panel del curso para activar una versión antes de agregar lecciones.
+            Esta edición del curso no tiene una versión activa. Regresa al panel
+            del curso para activar una versión antes de agregar lecciones.
           </p>
         )}
       </div>
@@ -155,7 +161,9 @@ export function LessonManagementClient({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => canMutateContent && setEditingLesson(lesson)}
+                      onClick={() =>
+                        canMutateContent && setEditingLesson(lesson)
+                      }
                       disabled={!canMutateContent}
                     >
                       <Edit className="h-4 w-4 sm:mr-2" />
@@ -165,7 +173,9 @@ export function LessonManagementClient({
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => canMutateContent && setDeletingLesson(lesson)}
+                        onClick={() =>
+                          canMutateContent && setDeletingLesson(lesson)
+                        }
                         className="border-red-300 text-red-600 hover:bg-red-50"
                         disabled={!canMutateContent}
                       >

@@ -163,7 +163,8 @@ export function ModuleFormDialog({
           </DialogDescription>
           {!courseVersionId && (
             <p className="mt-2 text-xs text-red-600">
-              Esta edición del curso necesita una versión activa antes de crear módulos.
+              Esta edición del curso necesita una versión activa antes de crear
+              módulos.
             </p>
           )}
         </DialogHeader>
@@ -261,9 +262,7 @@ export function ModuleFormDialog({
             </Button>
             <Button
               type="submit"
-              disabled={
-                isSubmitting || (mode === "create" && !courseVersionId)
-              }
+              disabled={isSubmitting || (mode === "create" && !courseVersionId)}
               className="bg-purple-600 hover:bg-purple-700"
             >
               {isSubmitting ? (

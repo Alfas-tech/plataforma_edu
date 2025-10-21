@@ -20,9 +20,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDateSpanish(
-  dateInput: string | number | Date
-): string {
+export function formatDateSpanish(dateInput: string | number | Date): string {
   const parsedDate =
     typeof dateInput === "string" || typeof dateInput === "number"
       ? new Date(dateInput)

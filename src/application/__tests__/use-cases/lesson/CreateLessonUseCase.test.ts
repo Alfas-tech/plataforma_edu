@@ -130,7 +130,7 @@ describe("CreateLessonUseCase", () => {
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         mockAdminProfile
       );
-  mockLessonRepository.createLesson.mockResolvedValue(mockLesson);
+      mockLessonRepository.createLesson.mockResolvedValue(mockLesson);
 
       const result = await createLessonUseCase.execute(validInput);
 
@@ -260,7 +260,7 @@ describe("CreateLessonUseCase", () => {
       const result = await createLessonUseCase.execute(validInput);
 
       expect(result.success).toBe(false);
-  expect(result.error).toBe("No estás asignado a esta versión del curso");
+      expect(result.error).toBe("No estás asignado a esta versión del curso");
       expect(mockLessonRepository.createLesson).not.toHaveBeenCalled();
     });
 

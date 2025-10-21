@@ -50,9 +50,8 @@ export class GetCourseVersionAssignmentsUseCase {
         };
       }
 
-      const assignments = await this.courseRepository.getCourseVersionAssignments(
-        courseId
-      );
+      const assignments =
+        await this.courseRepository.getCourseVersionAssignments(courseId);
 
       if (profile.isAdmin()) {
         return {

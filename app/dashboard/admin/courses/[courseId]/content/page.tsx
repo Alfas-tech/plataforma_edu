@@ -20,7 +20,10 @@ interface PageProps {
   };
 }
 
-export default async function CourseContentPage({ params, searchParams }: PageProps) {
+export default async function CourseContentPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { courseId } = params;
   const requestedBranchId = searchParams?.branchId ?? null;
   const requestedVersionId = searchParams?.versionId ?? null;
@@ -55,14 +58,14 @@ export default async function CourseContentPage({ params, searchParams }: PagePr
 
   const { course } = courseResult;
 
-  const branchCandidates = [
-    course.defaultBranch,
-    ...course.branches,
-  ].filter(Boolean) as typeof course.branches;
+  const branchCandidates = [course.defaultBranch, ...course.branches].filter(
+    Boolean
+  ) as typeof course.branches;
 
   const selectedBranch = requestedBranchId
-    ? branchCandidates.find((branch) => branch.id === requestedBranchId) ?? null
-    : course.defaultBranch ?? null;
+    ? (branchCandidates.find((branch) => branch.id === requestedBranchId) ??
+      null)
+    : (course.defaultBranch ?? null);
 
   const effectiveBranch = selectedBranch ?? course.defaultBranch ?? null;
 

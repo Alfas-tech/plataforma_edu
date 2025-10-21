@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition, type ChangeEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+  type ChangeEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -71,11 +77,7 @@ export function CreateBranchDialog({
     if (!defaultBranch) {
       return "";
     }
-    return (
-      defaultBranch.tipVersionId ??
-      defaultBranch.baseVersionId ??
-      ""
-    );
+    return defaultBranch.tipVersionId ?? defaultBranch.baseVersionId ?? "";
   }, [defaultBranch]);
 
   useEffect(() => {
@@ -175,12 +177,16 @@ export function CreateBranchDialog({
     isPending || versionOptions.length === 0 || !baseVersionId;
 
   return (
-  <Dialog open={isOpen} onOpenChange={(open: boolean) => !isPending && !open && onClose()}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open: boolean) => !isPending && !open && onClose()}
+    >
       <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle>Crear nueva edición</DialogTitle>
           <DialogDescription>
-            Duplica la versión seleccionada para trabajar cambios sin afectar a los estudiantes.
+            Duplica la versión seleccionada para trabajar cambios sin afectar a
+            los estudiantes.
           </DialogDescription>
         </DialogHeader>
 
@@ -199,7 +205,9 @@ export function CreateBranchDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="newVersionLabel">Etiqueta de la nueva versión</Label>
+            <Label htmlFor="newVersionLabel">
+              Etiqueta de la nueva versión
+            </Label>
             <Input
               id="newVersionLabel"
               placeholder="ej. v2.0.0-redesign"
@@ -222,11 +230,13 @@ export function CreateBranchDialog({
                 <SelectValue placeholder="Selecciona una versión" />
               </SelectTrigger>
               <SelectContent>
-                {versionOptions.map((option: { value: string; label: string }) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
+                {versionOptions.map(
+                  (option: { value: string; label: string }) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  )
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -267,7 +277,7 @@ export function CreateBranchDialog({
                   Creando...
                 </>
               ) : (
-        "Crear edición"
+                "Crear edición"
               )}
             </Button>
           </DialogFooter>

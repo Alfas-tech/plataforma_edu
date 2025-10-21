@@ -282,7 +282,7 @@ describe("UpdateLessonUseCase", () => {
       const result = await updateLessonUseCase.execute(lessonId, validInput);
 
       expect(result.success).toBe(false);
-  expect(result.error).toBe("No estás asignado a esta versión del curso");
+      expect(result.error).toBe("No estás asignado a esta versión del curso");
     });
 
     it("should handle repository errors gracefully", async () => {

@@ -60,7 +60,7 @@ export function DeleteModuleDialog({
   if (!module) return null;
 
   return (
-  <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-red-600">

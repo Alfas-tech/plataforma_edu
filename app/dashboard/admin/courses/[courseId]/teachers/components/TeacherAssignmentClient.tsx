@@ -214,9 +214,7 @@ export function TeacherAssignmentClient({
                         : "border-amber-300 text-amber-700"
                     }
                   >
-                    {selectedVersion.isPublished
-                      ? "Publicada"
-                      : "Sin publicar"}
+                    {selectedVersion.isPublished ? "Publicada" : "Sin publicar"}
                   </Badge>
                   {selectedVersion.isActive && (
                     <Badge className="bg-emerald-600 text-white">

@@ -1,7 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LogOut, Users, GitPullRequest, GitBranch, GitMerge } from "lucide-react";
+import {
+  LogOut,
+  Users,
+  GitPullRequest,
+  GitBranch,
+  GitMerge,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,14 +31,20 @@ export default async function AdminDashboardPage() {
     redirect("/dashboard");
   }
 
-  const displayName = profile.displayName ?? profile.fullName ?? profile.email ?? "Administrador";
+  const displayName =
+    profile.displayName ?? profile.fullName ?? profile.email ?? "Administrador";
   const initials = displayName.trim().charAt(0).toUpperCase() || "A";
   const coursesResult = await getAllCourses();
-  const courseData: CourseOverview[] = "error" in coursesResult ? [] : coursesResult.courses ?? [];
+  const courseData: CourseOverview[] =
+    "error" in coursesResult ? [] : (coursesResult.courses ?? []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
-      <AdminHeader displayName={displayName} avatarUrl={profile.avatarUrl} initials={initials} />
+      <AdminHeader
+        displayName={displayName}
+        avatarUrl={profile.avatarUrl}
+        initials={initials}
+      />
 
       <main className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8">
         <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
@@ -41,11 +53,15 @@ export default async function AdminDashboardPage() {
               Gestión de Cursos
             </h1>
             <p className="text-pretty text-sm text-slate-600 sm:text-base md:text-lg">
-              Itera el curso principal usando ediciones de trabajo y solicitudes de fusión sin interrumpir a los estudiantes.
+              Itera el curso principal usando ediciones de trabajo y solicitudes
+              de fusión sin interrumpir a los estudiantes.
             </p>
           </div>
           <Link href="/dashboard/admin/users">
-            <Button variant="outline" className="gap-2 border-purple-200 text-purple-700 hover:bg-purple-50">
+            <Button
+              variant="outline"
+              className="gap-2 border-purple-200 text-purple-700 hover:bg-purple-50"
+            >
               <Users className="h-4 w-4" />
               Gestionar usuarios
             </Button>
@@ -80,16 +96,32 @@ function AdminHeader({ displayName, avatarUrl, initials }: AdminHeaderProps) {
             className="flex items-center gap-2 transition-opacity hover:opacity-80 sm:gap-3"
           >
             <div className="relative h-8 w-8 flex-shrink-0 sm:h-10 sm:w-10">
-              <Image src="/logo.png" alt="Aprende Code Logo" fill className="object-contain" priority />
+              <Image
+                src="/logo.png"
+                alt="Aprende Code Logo"
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
-            <h1 className="truncate text-lg font-bold text-slate-800 sm:text-xl md:text-2xl">Aprende Code</h1>
+            <h1 className="truncate text-lg font-bold text-slate-800 sm:text-xl md:text-2xl">
+              Aprende Code
+            </h1>
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <span className="hidden text-xs font-medium text-purple-600 sm:inline sm:text-sm">🛡️ Administrador</span>
+            <span className="hidden text-xs font-medium text-purple-600 sm:inline sm:text-sm">
+              🛡️ Administrador
+            </span>
             {avatarUrl ? (
               <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-full sm:h-10 sm:w-10">
-                <Image src={avatarUrl} alt={displayName} fill className="object-cover" unoptimized />
+                <Image
+                  src={avatarUrl}
+                  alt={displayName}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
               </div>
             ) : (
               <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-600 text-xs font-semibold text-white sm:h-10 sm:w-10 sm:text-sm">
@@ -100,7 +132,12 @@ function AdminHeader({ displayName, avatarUrl, initials }: AdminHeaderProps) {
               {displayName}
             </span>
             <form action={signout}>
-              <Button variant="outline" size="sm" type="submit" className="bg-transparent text-xs sm:text-sm">
+              <Button
+                variant="outline"
+                size="sm"
+                type="submit"
+                className="bg-transparent text-xs sm:text-sm"
+              >
                 <LogOut className="h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">Salir</span>
               </Button>
@@ -118,16 +155,22 @@ type CoursesOverviewProps = {
 
 function CoursesOverview({ courses }: CoursesOverviewProps) {
   const openMergeRequests = courses.reduce((count, course) => {
-    const openForCourse = course.pendingMergeRequests.filter((mr) => mr.status === "open").length;
+    const openForCourse = course.pendingMergeRequests.filter(
+      (mr) => mr.status === "open"
+    ).length;
     return count + openForCourse;
   }, 0);
   const readyToMerge = courses.reduce((count, course) => {
-    const approvedForCourse = course.pendingMergeRequests.filter((mr) => mr.status === "approved").length;
+    const approvedForCourse = course.pendingMergeRequests.filter(
+      (mr) => mr.status === "approved"
+    ).length;
     return count + approvedForCourse;
   }, 0);
   const draftBranches = courses.reduce((count, course) => {
-    const hasPending = course.branches.some((branch) =>
-      branch.tipVersionStatus === "draft" || branch.tipVersionStatus === "pending_review"
+    const hasPending = course.branches.some(
+      (branch) =>
+        branch.tipVersionStatus === "draft" ||
+        branch.tipVersionStatus === "pending_review"
     );
 
     return hasPending ? count + 1 : count;
@@ -144,9 +187,12 @@ function CoursesOverview({ courses }: CoursesOverviewProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-emerald-600">{readyToMerge}</p>
+            <p className="text-3xl font-bold text-emerald-600">
+              {readyToMerge}
+            </p>
             <p className="mt-2 text-sm text-slate-500">
-              Solicitudes ya aprobadas esperando ser fusionadas a la edición principal.
+              Solicitudes ya aprobadas esperando ser fusionadas a la edición
+              principal.
             </p>
           </CardContent>
         </Card>
@@ -161,7 +207,8 @@ function CoursesOverview({ courses }: CoursesOverviewProps) {
           <CardContent>
             <p className="text-3xl font-bold text-slate-600">{draftBranches}</p>
             <p className="mt-2 text-sm text-slate-500">
-              Cursos con contenido nuevo en ediciones alternativas listo para revisión.
+              Cursos con contenido nuevo en ediciones alternativas listo para
+              revisión.
             </p>
           </CardContent>
         </Card>
@@ -174,7 +221,9 @@ function CoursesOverview({ courses }: CoursesOverviewProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-purple-600">{openMergeRequests}</p>
+            <p className="text-3xl font-bold text-purple-600">
+              {openMergeRequests}
+            </p>
           </CardContent>
         </Card>
       </div>

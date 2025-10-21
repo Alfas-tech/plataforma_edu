@@ -21,9 +21,7 @@ export function FullscreenLoader({
         {title ? (
           <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
         ) : null}
-        {message ? (
-          <p className="text-sm text-slate-600">{message}</p>
-        ) : null}
+        {message ? <p className="text-sm text-slate-600">{message}</p> : null}
       </div>
     </div>
   );

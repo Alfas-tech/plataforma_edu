@@ -113,15 +113,13 @@ export class SupabaseCourseRepository implements ICourseRepository {
         branchTipVersions = new Map(
           (tipVersionsData as CourseVersionData[])
             .filter((version) => Boolean(version.branch_id))
-            .map((version) => [
-              version.branch_id as string,
-              version,
-            ])
+            .map((version) => [version.branch_id as string, version])
         );
       }
     }
 
-    const defaultBranch = branchRows.find((branch) => branch.is_default) ?? null;
+    const defaultBranch =
+      branchRows.find((branch) => branch.is_default) ?? null;
 
     const { data: mergeRequestsData } = await supabase
       .from("course_merge_requests")
@@ -129,7 +127,8 @@ export class SupabaseCourseRepository implements ICourseRepository {
       .eq("course_id", id)
       .in("status", ["open", "approved"]);
 
-    const mergeRequestRows = (mergeRequestsData as CourseMergeRequestData[]) ?? [];
+    const mergeRequestRows =
+      (mergeRequestsData as CourseMergeRequestData[]) ?? [];
 
     const extras = {
       defaultBranch,
@@ -138,7 +137,7 @@ export class SupabaseCourseRepository implements ICourseRepository {
         branchRows.map((branch) => [
           branch.id,
           branch.base_version_id
-            ? branchBaseVersions.get(branch.base_version_id) ?? null
+            ? (branchBaseVersions.get(branch.base_version_id) ?? null)
             : null,
         ])
       ),
@@ -214,8 +213,14 @@ export class SupabaseCourseRepository implements ICourseRepository {
     }
 
     const branchesByCourse = new Map<string, CourseBranchData[]>();
-    const branchBaseVersionByBranch = new Map<string, CourseVersionData | null>();
-    const branchTipVersionByBranch = new Map<string, CourseVersionData | null>();
+    const branchBaseVersionByBranch = new Map<
+      string,
+      CourseVersionData | null
+    >();
+    const branchTipVersionByBranch = new Map<
+      string,
+      CourseVersionData | null
+    >();
     const defaultBranchByCourse = new Map<string, CourseBranchData>();
     const mergeRequestsByCourse = new Map<string, CourseMergeRequestData[]>();
 
@@ -264,10 +269,7 @@ export class SupabaseCourseRepository implements ICourseRepository {
             tipVersionsMap = new Map(
               (tipVersionsData as CourseVersionData[])
                 .filter((version) => Boolean(version.branch_id))
-                .map((version) => [
-                  version.branch_id as string,
-                  version,
-                ])
+                .map((version) => [version.branch_id as string, version])
             );
           }
         }
@@ -286,7 +288,7 @@ export class SupabaseCourseRepository implements ICourseRepository {
           branchBaseVersionByBranch.set(
             branch.id,
             branch.base_version_id
-              ? baseVersionsMap.get(branch.base_version_id) ?? null
+              ? (baseVersionsMap.get(branch.base_version_id) ?? null)
               : null
           );
 
@@ -339,7 +341,7 @@ export class SupabaseCourseRepository implements ICourseRepository {
       return CourseEntity.fromDatabase(
         course,
         course.active_version_id
-          ? versionsMap.get(course.active_version_id) ?? null
+          ? (versionsMap.get(course.active_version_id) ?? null)
           : null,
         {
           defaultBranch,
@@ -673,14 +675,16 @@ export class SupabaseCourseRepository implements ICourseRepository {
 
     const assignmentMap = new Map<string, string[]>();
 
-    (assignmentsData as { course_version_id: string; teacher_id: string }[] | null)?.forEach(
-      (row) => {
-        if (!assignmentMap.has(row.course_version_id)) {
-          assignmentMap.set(row.course_version_id, []);
-        }
-        assignmentMap.get(row.course_version_id)!.push(row.teacher_id);
+    (
+      assignmentsData as
+        | { course_version_id: string; teacher_id: string }[]
+        | null
+    )?.forEach((row) => {
+      if (!assignmentMap.has(row.course_version_id)) {
+        assignmentMap.set(row.course_version_id, []);
       }
-    );
+      assignmentMap.get(row.course_version_id)!.push(row.teacher_id);
+    });
 
     return versionRows.map((version) => ({
       version: CourseVersionEntity.fromDatabase(version),
@@ -713,11 +717,10 @@ export class SupabaseCourseRepository implements ICourseRepository {
   async getTeacherCourses(teacherId: string): Promise<CourseEntity[]> {
     const supabase = createClient();
 
-    const { data: versionAssignments, error: assignmentsError } =
-      await supabase
-        .from("course_version_teachers")
-        .select("course_version_id")
-        .eq("teacher_id", teacherId);
+    const { data: versionAssignments, error: assignmentsError } = await supabase
+      .from("course_version_teachers")
+      .select("course_version_id")
+      .eq("teacher_id", teacherId);
 
     if (assignmentsError) {
       throw new Error(
@@ -747,7 +750,11 @@ export class SupabaseCourseRepository implements ICourseRepository {
     }
 
     const courseIds = Array.from(
-      new Set((versionRows as { id: string; course_id: string }[]).map((row) => row.course_id))
+      new Set(
+        (versionRows as { id: string; course_id: string }[]).map(
+          (row) => row.course_id
+        )
+      )
     );
 
     if (courseIds.length === 0) {
@@ -793,7 +800,7 @@ export class SupabaseCourseRepository implements ICourseRepository {
       CourseEntity.fromDatabase(
         course,
         course.active_version_id
-          ? versionMap.get(course.active_version_id) ?? null
+          ? (versionMap.get(course.active_version_id) ?? null)
           : null
       )
     );

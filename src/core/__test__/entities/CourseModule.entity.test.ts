@@ -35,9 +35,7 @@ describe("CourseModuleEntity", () => {
 
       expect(courseModule.id).toBe(mockModuleData.id);
       expect(courseModule.courseId).toBe(mockModuleData.courseId);
-      expect(courseModule.courseVersionId).toBe(
-        mockModuleData.courseVersionId
-      );
+      expect(courseModule.courseVersionId).toBe(mockModuleData.courseVersionId);
       expect(courseModule.versionId).toBe(mockModuleData.courseVersionId);
       expect(courseModule.title).toBe(mockModuleData.title);
       expect(courseModule.description).toBe(mockModuleData.description);

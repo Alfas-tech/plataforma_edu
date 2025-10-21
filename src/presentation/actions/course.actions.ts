@@ -41,9 +41,7 @@ const courseBranchingRepository = new SupabaseCourseBranchingRepository();
 const authRepository = new SupabaseAuthRepository();
 const profileRepository = new SupabaseProfileRepository();
 
-function getVisibilitySource(
-  course: CourseEntity
-): CourseVisibilitySource {
+function getVisibilitySource(course: CourseEntity): CourseVisibilitySource {
   const version = course.activeVersion;
 
   if (course.visibilityOverride) {
@@ -94,10 +92,16 @@ function mapCourseToPresentation(course: CourseEntity): CourseOverview {
     branchNameById.set(branch.id, branch.name);
     if (branch.tipVersion) {
       branchTipVersionMap.set(branch.id, branch.tipVersion.versionLabel);
-      versionLabelById.set(branch.tipVersion.id, branch.tipVersion.versionLabel);
+      versionLabelById.set(
+        branch.tipVersion.id,
+        branch.tipVersion.versionLabel
+      );
     }
     if (branch.baseVersion) {
-      versionLabelById.set(branch.baseVersion.id, branch.baseVersion.versionLabel);
+      versionLabelById.set(
+        branch.baseVersion.id,
+        branch.baseVersion.versionLabel
+      );
     }
   });
 
@@ -136,7 +140,7 @@ function mapCourseToPresentation(course: CourseEntity): CourseOverview {
         updatedAt: version.updatedAt.toISOString(),
         branchId: version.branchId,
         branchName: version.branchId
-          ? branchNameById.get(version.branchId) ?? null
+          ? (branchNameById.get(version.branchId) ?? null)
           : null,
       }
     : null;
@@ -170,9 +174,9 @@ function mapCourseToPresentation(course: CourseEntity): CourseOverview {
     targetBranchName: branchNameFallback(mr.targetBranchId),
     targetVersionId: mr.targetVersionId,
     targetVersionLabel: mr.targetVersionId
-      ? versionLabelById.get(mr.targetVersionId) ??
+      ? (versionLabelById.get(mr.targetVersionId) ??
         branchTipVersionMap.get(mr.targetBranchId) ??
-        mr.targetVersionId
+        mr.targetVersionId)
       : null,
     openedAt: mr.openedAt.toISOString(),
     openedById: mr.openedBy,
@@ -244,8 +248,12 @@ async function enrichMergeRequestParticipants(
   return courses.map((course) => ({
     ...course,
     pendingMergeRequests: course.pendingMergeRequests.map((mr) => {
-      const author = mr.openedById ? profileById.get(mr.openedById) ?? null : null;
-      const reviewer = mr.reviewerId ? profileById.get(mr.reviewerId) ?? null : null;
+      const author = mr.openedById
+        ? (profileById.get(mr.openedById) ?? null)
+        : null;
+      const reviewer = mr.reviewerId
+        ? (profileById.get(mr.reviewerId) ?? null)
+        : null;
 
       return {
         ...mr,
@@ -388,8 +396,7 @@ export async function createCourseMergeRequest(
 
   if (!result.success || !result.course) {
     return {
-      error:
-        result.error || "Error al crear la solicitud de fusión del curso",
+      error: result.error || "Error al crear la solicitud de fusión del curso",
     };
   }
 
@@ -640,7 +647,7 @@ export async function getCourseVersionAssignments(courseId: string) {
     updatedAt: version.updatedAt.toISOString(),
     branchId: version.branchId,
     branchName: version.branchId
-      ? branchNameById.get(version.branchId) ?? null
+      ? (branchNameById.get(version.branchId) ?? null)
       : null,
     teacherIds,
     teachers: teacherIds
