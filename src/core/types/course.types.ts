@@ -1,6 +1,7 @@
 export type CourseVersionStatus =
   | "draft"
   | "pending_review"
+  | "approved"
   | "published"
   | "archived";
 

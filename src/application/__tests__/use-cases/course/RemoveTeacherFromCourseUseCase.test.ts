@@ -27,8 +27,8 @@ describe("RemoveTeacherFromCourseUseCase", () => {
       getAllCourses: jest.fn(),
       updateCourse: jest.fn(),
       deleteCourse: jest.fn(),
-      assignTeacher: jest.fn(),
-      removeTeacher: jest.fn(),
+  assignTeacherToVersion: jest.fn(),
+  removeTeacherFromVersion: jest.fn(),
       getTeacherCourses: jest.fn(),
       getCourseTeachers: jest.fn(),
     };
@@ -95,6 +95,7 @@ describe("RemoveTeacherFromCourseUseCase", () => {
         slug: "test-course",
         visibility_override: false,
         active_version_id: "version-123",
+        default_branch_id: null,
         created_by: "admin-123",
         created_at: now.toISOString(),
         updated_at: now.toISOString(),
@@ -102,12 +103,17 @@ describe("RemoveTeacherFromCourseUseCase", () => {
       {
         id: "version-123",
         course_id: courseId,
+        branch_id: null,
         version_label: "v1.0.0",
         summary: "Course Summary",
         status: "published",
         is_active: true,
         is_published: true,
+        is_tip: true,
         based_on_version_id: null,
+        parent_version_id: null,
+        merged_into_version_id: null,
+        merge_request_id: null,
         created_by: "admin-123",
         reviewed_by: null,
         approved_at: now.toISOString(),
@@ -122,7 +128,9 @@ describe("RemoveTeacherFromCourseUseCase", () => {
         mockAdminProfile
       );
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
-      mockCourseRepository.removeTeacher.mockResolvedValue(undefined);
+      mockCourseRepository.removeTeacherFromVersion.mockResolvedValue(
+        undefined
+      );
 
       const result = await removeTeacherFromCourseUseCase.execute(
         courseId,
@@ -130,10 +138,9 @@ describe("RemoveTeacherFromCourseUseCase", () => {
       );
 
       expect(result.success).toBe(true);
-      expect(mockCourseRepository.removeTeacher).toHaveBeenCalledWith(
-        courseId,
-        teacherId
-      );
+      expect(
+        mockCourseRepository.removeTeacherFromVersion
+      ).toHaveBeenCalledWith(courseId, "version-123", teacherId);
     });
 
     it("should return error when no user is authenticated", async () => {
@@ -146,7 +153,9 @@ describe("RemoveTeacherFromCourseUseCase", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("No hay usuario autenticado");
-      expect(mockCourseRepository.removeTeacher).not.toHaveBeenCalled();
+      expect(
+        mockCourseRepository.removeTeacherFromVersion
+      ).not.toHaveBeenCalled();
     });
 
     it("should return error when user is not admin", async () => {
@@ -174,7 +183,9 @@ describe("RemoveTeacherFromCourseUseCase", () => {
       expect(result.error).toBe(
         "Solo los administradores pueden remover docentes"
       );
-      expect(mockCourseRepository.removeTeacher).not.toHaveBeenCalled();
+      expect(
+        mockCourseRepository.removeTeacherFromVersion
+      ).not.toHaveBeenCalled();
     });
 
     it("should return error when course not found", async () => {
@@ -191,7 +202,9 @@ describe("RemoveTeacherFromCourseUseCase", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("Curso no encontrado");
-      expect(mockCourseRepository.removeTeacher).not.toHaveBeenCalled();
+      expect(
+        mockCourseRepository.removeTeacherFromVersion
+      ).not.toHaveBeenCalled();
     });
 
     it("should handle repository errors gracefully", async () => {
@@ -200,7 +213,7 @@ describe("RemoveTeacherFromCourseUseCase", () => {
         mockAdminProfile
       );
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
-      mockCourseRepository.removeTeacher.mockRejectedValue(
+      mockCourseRepository.removeTeacherFromVersion.mockRejectedValue(
         new Error("Database error")
       );
 
@@ -219,7 +232,9 @@ describe("RemoveTeacherFromCourseUseCase", () => {
         mockAdminProfile
       );
       mockCourseRepository.getCourseById.mockResolvedValue(mockCourse);
-      mockCourseRepository.removeTeacher.mockRejectedValue("Unknown error");
+      mockCourseRepository.removeTeacherFromVersion.mockRejectedValue(
+        "Unknown error"
+      );
 
       const result = await removeTeacherFromCourseUseCase.execute(
         courseId,

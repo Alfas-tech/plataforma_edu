@@ -74,8 +74,19 @@ export class AssignTeacherToCourseUseCase {
         };
       }
 
-      // Assign teacher to course
-      await this.courseRepository.assignTeacher(courseId, teacherId);
+      const activeVersion = course.activeVersion;
+      if (!activeVersion) {
+        return {
+          success: false,
+          error: "El curso no tiene una versión activa",
+        };
+      }
+
+      await this.courseRepository.assignTeacherToVersion(
+        courseId,
+        activeVersion.id,
+        teacherId
+      );
 
       return {
         success: true,

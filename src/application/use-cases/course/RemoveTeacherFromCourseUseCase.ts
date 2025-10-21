@@ -47,8 +47,19 @@ export class RemoveTeacherFromCourseUseCase {
         };
       }
 
-      // Remove teacher from course
-      await this.courseRepository.removeTeacher(courseId, teacherId);
+      const activeVersion = course.activeVersion;
+      if (!activeVersion) {
+        return {
+          success: false,
+          error: "El curso no tiene una versión activa",
+        };
+      }
+
+      await this.courseRepository.removeTeacherFromVersion(
+        courseId,
+        activeVersion.id,
+        teacherId
+      );
 
       return {
         success: true,

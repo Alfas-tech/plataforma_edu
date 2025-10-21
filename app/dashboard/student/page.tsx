@@ -3,6 +3,7 @@ import { getCurrentProfile } from "@/src/presentation/actions/profile.actions";
 import { getAllCourses } from "@/src/presentation/actions/course.actions";
 import { getCourseWithModulesAndLessons } from "@/src/presentation/actions/student.actions";
 import { signout } from "@/src/presentation/actions/auth.actions";
+import { formatDateSpanish as formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -93,14 +94,6 @@ export default async function StudentDashboardPage() {
     courseData?.modules && Array.isArray(courseData.modules)
       ? courseData.modules.length
       : 0;
-
-  function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString("es-ES", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  }
 
   function formatVersionStatus(status?: string): string {
     switch (status) {
