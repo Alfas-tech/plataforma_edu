@@ -98,26 +98,100 @@ export class SupabaseProfileRepository implements IProfileRepository {
   }
 
   async promoteToTeacher(userId: string): Promise<void> {
-    const supabase = createClient();
+    const supabase = createAdminClient();
 
-    const { error } = await supabase.rpc("promote_to_teacher", {
-      user_id: userId,
-    });
+    const { data: fetchData, error: fetchError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .limit(1);
 
-    if (error) {
-      throw new Error("Error al promover a docente");
+    const profile = Array.isArray(fetchData) ? fetchData[0] : null;
+
+    if (fetchError || !profile) {
+      console.error("promoteToTeacher fetch error", fetchError);
+      throw new Error(
+        fetchError?.message
+          ? `Error al promover a docente: ${fetchError.message}`
+          : "Error al promover a docente"
+      );
+    }
+
+    if (profile.role === "admin") {
+      throw new Error("No se puede modificar el rol de un administrador");
+    }
+
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({
+        role: "teacher",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", userId);
+
+    if (updateError) {
+      console.error("promoteToTeacher update error", updateError);
+      throw new Error(
+        updateError.message
+          ? `Error al promover a docente: ${updateError.message}`
+          : "Error al promover a docente"
+      );
     }
   }
 
   async demoteToStudent(userId: string): Promise<void> {
-    const supabase = createClient();
+    const supabase = createAdminClient();
 
-    const { error } = await supabase.rpc("demote_to_student", {
-      user_id: userId,
-    });
+    const { data: fetchData, error: fetchError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .limit(1);
 
-    if (error) {
-      throw new Error("Error al degradar a estudiante");
+    const profile = Array.isArray(fetchData) ? fetchData[0] : null;
+
+    if (fetchError || !profile) {
+      console.error("demoteToStudent fetch error", fetchError);
+      throw new Error(
+        fetchError?.message
+          ? `Error al degradar a estudiante: ${fetchError.message}`
+          : "Error al degradar a estudiante"
+      );
+    }
+
+    if (profile.role === "admin") {
+      throw new Error("No se puede degradar a un administrador");
+    }
+
+    const { error: removeAssignmentsError } = await supabase
+      .from("course_version_teachers")
+      .delete()
+      .eq("teacher_id", userId);
+
+    if (removeAssignmentsError) {
+      console.error("demoteToStudent remove assignments error", removeAssignmentsError);
+      throw new Error(
+        removeAssignmentsError.message
+          ? `Error al degradar a estudiante: ${removeAssignmentsError.message}`
+          : "Error al degradar a estudiante"
+      );
+    }
+
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({
+        role: "student",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", userId);
+
+    if (updateError) {
+      console.error("demoteToStudent update error", updateError);
+      throw new Error(
+        updateError.message
+          ? `Error al degradar a estudiante: ${updateError.message}`
+          : "Error al degradar a estudiante"
+      );
     }
   }
 
