@@ -261,186 +261,109 @@ export default async function StudentDashboardPage() {
 
         {/* Main Content Grid */}
         <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
-          {/* Course Content */}
+          {/* Course Cards */}
           <div className="space-y-4 sm:space-y-6 lg:col-span-2">
-            {visibleCourses.length === 0 ? (
-              <Card className="border-2">
-                <CardContent className="py-12 text-center">
-                  <BookOpen className="mx-auto mb-4 h-16 w-16 text-slate-300" />
-                  <h3 className="mb-2 text-xl font-semibold text-slate-800">
-                    No hay cursos activos
-                  </h3>
-                  <p className="text-slate-600">
-                    Los cursos aparecerán aquí cuando estén disponibles
-                  </p>
-                </CardContent>
-              </Card>
-            ) : currentCourse ? (
-              <>
-                {/* Current Course */}
+            <div>
+              <h2 className="mb-4 text-xl font-bold text-slate-800 sm:text-2xl">
+                Mis Cursos
+              </h2>
+              {visibleCourses.length === 0 ? (
                 <Card className="border-2">
-                  <CardHeader className="p-4 sm:p-6">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg sm:text-xl md:text-2xl">
-                          {currentCourse.title}
-                        </CardTitle>
-                        {(currentCourse.summary ||
-                          currentCourse.description) && (
-                          <CardDescription className="mt-2">
-                            {currentCourse.summary ?? currentCourse.description}
-                          </CardDescription>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-end gap-2 text-right">
-                        <Badge className="ml-2 bg-green-600">Disponible</Badge>
-                        {currentCourse.activeVersion && (
-                          <Badge variant="outline">
-                            {formatVersionStatus(
-                              currentCourse.activeVersion.status
-                            )}
-                          </Badge>
-                        )}
-                        {currentCourse.visibilityOverride && (
-                          <Badge className="bg-purple-600">
-                            Visibilidad forzada
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>
-                          Actualizado el{" "}
-                          {formatDate(currentCourse.lastUpdatedAt)}
-                        </span>
-                      </div>
-                      {currentCourse.activeVersion?.label && (
-                        <Badge
-                          variant="outline"
-                          className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-50"
-                        >
-                          Versión: {currentCourse.activeVersion.label}
-                        </Badge>
-                      )}
-                    </div>
-                  </CardHeader>
+                  <CardContent className="py-12 text-center">
+                    <BookOpen className="mx-auto mb-4 h-16 w-16 text-slate-300" />
+                    <h3 className="mb-2 text-xl font-semibold text-slate-800">
+                      No hay cursos activos
+                    </h3>
+                    <p className="text-slate-600">
+                      Los cursos aparecerán aquí cuando estén disponibles
+                    </p>
+                  </CardContent>
                 </Card>
+              ) : (
+                <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+                  {visibleCourses.map((course) => {
+                    // Calcular progreso para cada curso
+                    let courseProgress = 0;
+                    let courseTotalLessons = 0;
+                    let courseCompletedLessons = 0;
 
-                {/* Modules & Lessons */}
-                {courseData &&
-                courseData.modules &&
-                Array.isArray(courseData.modules) &&
-                courseData.modules.length > 0 ? (
-                  <div className="space-y-4">
-                    {courseData.modules.map(
-                      (module: any, moduleIndex: number) => (
-                        <Card key={module.id} className="border-2">
-                          <CardHeader className="pb-3">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <CardTitle className="text-base sm:text-lg">
-                                  Módulo {module.order_index}: {module.title}
-                                </CardTitle>
-                                {module.description && (
-                                  <CardDescription className="mt-1">
-                                    {module.description}
-                                  </CardDescription>
-                                )}
+                    if (course.id === currentCourse?.id && courseData) {
+                      courseTotalLessons = totalLessons;
+                      courseCompletedLessons = completedLessons;
+                      courseProgress = progressPercentage;
+                    }
+
+                    return (
+                      <Link
+                        key={course.id}
+                        href={`/dashboard/student/courses/${course.id}`}
+                      >
+                        <Card className="h-full border-2 transition-all hover:border-blue-300 hover:shadow-lg cursor-pointer">
+                          <CardHeader className="p-4 sm:p-6">
+                            <div className="flex items-start justify-between gap-2">
+                              <CardTitle className="text-base sm:text-lg line-clamp-2">
+                                {course.title}
+                              </CardTitle>
+                              <Badge className="ml-2 bg-green-600 flex-shrink-0">
+                                Disponible
+                              </Badge>
+                            </div>
+                            {(course.summary || course.description) && (
+                              <CardDescription className="mt-2 line-clamp-2">
+                                {course.summary ?? course.description}
+                              </CardDescription>
+                            )}
+                          </CardHeader>
+                          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+                            {/* Progress bar */}
+                            <div className="mb-3">
+                              <div className="mb-1 flex justify-between text-xs sm:text-sm">
+                                <span className="text-slate-600">Progreso</span>
+                                <span className="font-semibold">
+                                  {courseProgress}%
+                                </span>
                               </div>
-                              {module.is_published && (
-                                <Badge variant="outline" className="ml-2">
-                                  {module.lessons &&
-                                  Array.isArray(module.lessons)
-                                    ? module.lessons.length
-                                    : 0}{" "}
+                              <div className="h-2 w-full rounded-full bg-slate-200">
+                                <div
+                                  className="h-2 rounded-full bg-blue-600 transition-all"
+                                  style={{ width: `${courseProgress}%` }}
+                                ></div>
+                              </div>
+                            </div>
+
+                            {/* Stats */}
+                            <div className="flex items-center gap-4 text-xs text-slate-600">
+                              <div className="flex items-center gap-1">
+                                <BookOpen className="h-3 w-3" />
+                                <span>
+                                  {courseCompletedLessons}/{courseTotalLessons}{" "}
                                   lecciones
+                                </span>
+                              </div>
+                              {course.activeVersion && (
+                                <Badge variant="outline" className="text-xs">
+                                  {formatVersionStatus(
+                                    course.activeVersion.status
+                                  )}
                                 </Badge>
                               )}
                             </div>
-                          </CardHeader>
-                          <CardContent>
-                            {module.lessons &&
-                            Array.isArray(module.lessons) &&
-                            module.lessons.length > 0 ? (
-                              <div className="space-y-2">
-                                {module.lessons.map((lesson: any) => {
-                                  const isCompleted =
-                                    courseData.progress &&
-                                    Array.isArray(courseData.progress) &&
-                                    courseData.progress.some(
-                                      (p: any) =>
-                                        p.lesson_id === lesson.id && p.completed
-                                    );
 
-                                  return (
-                                    <Link
-                                      key={lesson.id}
-                                      href={`/courses/${currentCourse.id}/modules/${module.id}/lessons/${lesson.id}`}
-                                      className="block"
-                                    >
-                                      <div className="flex items-center justify-between rounded-lg border bg-white p-3 transition-all hover:border-blue-300 hover:shadow-md">
-                                        <div className="flex items-center gap-3">
-                                          <div
-                                            className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                                              isCompleted
-                                                ? "bg-green-100 text-green-600"
-                                                : "bg-slate-100 text-slate-400"
-                                            }`}
-                                          >
-                                            {isCompleted ? (
-                                              <CheckCircle2 className="h-5 w-5" />
-                                            ) : (
-                                              <PlayCircle className="h-5 w-5" />
-                                            )}
-                                          </div>
-                                          <div>
-                                            <p className="font-medium text-slate-800">
-                                              {lesson.title}
-                                            </p>
-                                            {lesson.duration_minutes && (
-                                              <div className="mt-1 flex items-center gap-1 text-xs text-slate-500">
-                                                <Clock className="h-3 w-3" />
-                                                <span>
-                                                  {lesson.duration_minutes} min
-                                                </span>
-                                              </div>
-                                            )}
-                                          </div>
-                                        </div>
-                                        {isCompleted && (
-                                          <Badge className="bg-green-600">
-                                            Completado
-                                          </Badge>
-                                        )}
-                                      </div>
-                                    </Link>
-                                  );
-                                })}
-                              </div>
-                            ) : (
-                              <p className="py-4 text-center text-sm text-slate-500">
-                                No hay lecciones publicadas aún
-                              </p>
-                            )}
+                            <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+                              <Calendar className="h-3 w-3" />
+                              <span>
+                                Actualizado el{" "}
+                                {formatDate(course.lastUpdatedAt)}
+                              </span>
+                            </div>
                           </CardContent>
                         </Card>
-                      )
-                    )}
-                  </div>
-                ) : (
-                  <Card className="border-2">
-                    <CardContent className="py-8 text-center">
-                      <FileText className="mx-auto mb-3 h-12 w-12 text-slate-300" />
-                      <p className="text-sm text-slate-600">
-                        El contenido del curso estará disponible pronto
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-              </>
-            ) : null}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Sidebar */}
