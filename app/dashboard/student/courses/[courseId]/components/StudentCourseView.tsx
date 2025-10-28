@@ -24,23 +24,23 @@ import { signout } from "@/src/presentation/actions/auth.actions";
 
 interface Lesson {
   id: string;
-  module_id: string;
+  moduleId: string;
   title: string;
   content: string | null;
-  order_index: number;
-  duration_minutes: number | null;
-  is_published: boolean;
+  orderIndex: number;
+  durationMinutes: number | null;
+  isPublished: boolean;
   completed?: boolean;
 }
 
 interface Module {
   id: string;
-  course_id: string;
-  course_version_id: string;
+  courseId: string;
+  courseVersionId: string;
   title: string;
   description: string | null;
-  order_index: number;
-  is_published: boolean;
+  orderIndex: number;
+  isPublished: boolean;
   lessons: Lesson[];
 }
 
@@ -48,7 +48,7 @@ interface Course {
   id: string;
   title: string;
   description: string | null;
-  active_version_id: string | null;
+  activeVersionId: string | null;
 }
 
 interface Profile {
@@ -292,7 +292,7 @@ export function StudentCourseView({
                               <ChevronRight className="h-5 w-5 flex-shrink-0 text-slate-400" />
                             )}
                             <CardTitle className="text-base sm:text-lg">
-                              Módulo {module.order_index}: {module.title}
+                              Módulo {module.orderIndex}: {module.title}
                             </CardTitle>
                           </div>
                           {module.description && (
@@ -353,10 +353,10 @@ export function StudentCourseView({
                                       {lesson.title}
                                     </p>
                                     <div className="mt-1 flex flex-wrap items-center gap-2 sm:gap-3">
-                                      {lesson.duration_minutes && (
+                                      {lesson.durationMinutes && (
                                         <p className="flex items-center gap-1 text-xs text-slate-500">
                                           <Clock className="h-3 w-3" />
-                                          {lesson.duration_minutes} min
+                                          {lesson.durationMinutes} min
                                         </p>
                                       )}
                                       {lesson.completed && (
@@ -431,7 +431,7 @@ export function StudentCourseView({
                           className="rounded-lg border bg-white p-3"
                         >
                           <p className="mb-1 text-sm font-medium text-slate-800">
-                            Módulo {module.order_index}
+                            Módulo {module.orderIndex}
                           </p>
                           <div className="flex items-center justify-between gap-2 text-xs text-slate-600">
                             <span>
