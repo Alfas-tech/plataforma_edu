@@ -1,4 +1,4 @@
-name: Build Check
+name: CI - Build, Lint & Test
 
 env:
   PNPM_VERSION: "9.6.0"
@@ -15,16 +15,16 @@ permissions:
   contents: read
 
 concurrency:
-  group: group-build-check-${{ github.ref }}-${{ github.workflow }}
+  group: ci-checks-${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  ci-checks:
     if: github.event.pull_request.draft == false || contains(github.event.pull_request.labels.*.name, 'force-ci') || contains(github.event.pull_request.labels.*.name, 'force-full-ci')
     runs-on: ubuntu-latest
 
     steps:
-      - name: Full checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Node.js
@@ -37,8 +37,34 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
 
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Run ESLint
+        run: pnpm eslint .
+
       - name: Build project
         run: pnpm build
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
