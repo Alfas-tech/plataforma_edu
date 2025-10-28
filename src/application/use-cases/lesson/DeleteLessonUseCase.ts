@@ -67,7 +67,10 @@ export class DeleteLessonUseCase {
         };
       }
 
-      // Additional security: Verify the course exists and is accessible
+      // Validate course exists and is accessible
+      // Note: Admins have access to all courses by design.
+      // This check ensures database integrity and prevents
+      // deletion of lessons from non-existent courses.
       const course = await this.courseRepository.getCourseById(
         moduleData.courseId
       );
