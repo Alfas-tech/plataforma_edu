@@ -45,6 +45,7 @@ describe("DeleteLessonUseCase", () => {
       getCourseWithTeachers: jest.fn(),
       getTeacherCourses: jest.fn(),
       getCourseTeachers: jest.fn(),
+      isTeacherAssignedToVersion: jest.fn(),
     } as any;
 
     mockAuthRepository = {
@@ -85,6 +86,7 @@ describe("DeleteLessonUseCase", () => {
     const lessonId = "lesson-123";
     const moduleId = "module-123";
     const courseId = "course-123";
+    const courseVersionId = "version-123";
 
     const mockLesson = new LessonEntity(
       lessonId,
@@ -101,6 +103,7 @@ describe("DeleteLessonUseCase", () => {
     const mockModule = {
       id: moduleId,
       courseId,
+      courseVersionId,
       title: "Test Module",
       description: "Description",
       orderIndex: 1,
@@ -108,6 +111,8 @@ describe("DeleteLessonUseCase", () => {
       isPublished: true,
       createdAt: new Date(),
       updatedAt: new Date(),
+      versionId: courseVersionId,
+      isAccessible: () => true,
     };
 
     const mockUser = new UserEntity(
@@ -170,9 +175,9 @@ describe("DeleteLessonUseCase", () => {
       expect(result.error).toBe("No hay usuario autenticado");
     });
 
-    it("should return error when user is not admin", async () => {
+    it("should allow teacher to delete lesson if assigned to version", async () => {
       const teacherProfile = new ProfileEntity(
-        "user-123",
+        "teacher-123",
         "teacher@example.com",
         "Teacher User",
         null,
@@ -181,19 +186,92 @@ describe("DeleteLessonUseCase", () => {
         new Date()
       );
 
+      const teacherUser = new UserEntity(
+        "teacher-123",
+        "teacher@example.com",
+        "Teacher User"
+      );
+
       mockLessonRepository.getLessonById.mockResolvedValue(mockLesson);
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
-      mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
+      mockAuthRepository.getCurrentUser.mockResolvedValue(teacherUser);
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         teacherProfile
+      );
+      mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(true);
+      mockLessonRepository.deleteLesson.mockResolvedValue(undefined);
+
+      const result = await deleteLessonUseCase.execute(lessonId);
+
+      expect(result.success).toBe(true);
+      expect(mockCourseRepository.isTeacherAssignedToVersion).toHaveBeenCalledWith(
+        courseVersionId,
+        "teacher-123"
+      );
+      expect(mockLessonRepository.deleteLesson).toHaveBeenCalledWith(lessonId);
+    });
+
+    it("should prevent teacher from deleting lesson if not assigned to version", async () => {
+      const teacherProfile = new ProfileEntity(
+        "teacher-123",
+        "teacher@example.com",
+        "Teacher User",
+        null,
+        "teacher",
+        new Date(),
+        new Date()
+      );
+
+      const teacherUser = new UserEntity(
+        "teacher-123",
+        "teacher@example.com",
+        "Teacher User"
+      );
+
+      mockLessonRepository.getLessonById.mockResolvedValue(mockLesson);
+      mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
+      mockAuthRepository.getCurrentUser.mockResolvedValue(teacherUser);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        teacherProfile
+      );
+      mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(false);
+
+      const result = await deleteLessonUseCase.execute(lessonId);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("No tienes permisos para eliminar esta lección");
+      expect(mockLessonRepository.deleteLesson).not.toHaveBeenCalled();
+    });
+
+    it("should prevent student from deleting lesson", async () => {
+      const studentProfile = new ProfileEntity(
+        "student-123",
+        "student@example.com",
+        "Student User",
+        null,
+        "student",
+        new Date(),
+        new Date()
+      );
+
+      const studentUser = new UserEntity(
+        "student-123",
+        "student@example.com",
+        "Student User"
+      );
+
+      mockLessonRepository.getLessonById.mockResolvedValue(mockLesson);
+      mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
+      mockAuthRepository.getCurrentUser.mockResolvedValue(studentUser);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        studentProfile
       );
 
       const result = await deleteLessonUseCase.execute(lessonId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe(
-        "Solo los administradores pueden eliminar lecciones"
-      );
+      expect(result.error).toBe("No tienes permisos para eliminar lecciones");
+      expect(mockLessonRepository.deleteLesson).not.toHaveBeenCalled();
     });
 
     it("should handle repository errors gracefully", async () => {

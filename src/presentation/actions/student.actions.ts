@@ -1,41 +1,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/src/infrastructure/supabase/server";
 import { getCurrentProfile } from "./profile.actions";
+import { SupabaseStudentRepository } from "@/src/infrastructure/repositories/SupabaseStudentRepository";
+import { GetCourseWithModulesAndLessonsUseCase } from "@/src/application/use-cases/student/GetCourseWithModulesAndLessonsUseCase";
+import { MarkLessonCompleteUseCase } from "@/src/application/use-cases/student/MarkLessonCompleteUseCase";
+import { MarkLessonIncompleteUseCase } from "@/src/application/use-cases/student/MarkLessonIncompleteUseCase";
 
-export async function getStudentProgress(studentId: string) {
-  try {
-    const supabase = createClient();
+// Initialize repository
+const studentRepository = new SupabaseStudentRepository();
 
-    // Get all progress for student
-    const { data: progressData, error } = await supabase
-      .from("student_progress")
-      .select(
-        `
-        *,
-        lesson:lessons (
-          id,
-          title,
-          module_id
-        )
-      `
-      )
-      .eq("student_id", studentId);
-
-    if (error) {
-      return { error: error.message };
-    }
-
-    return { progress: progressData || [] };
-  } catch (error) {
-    return {
-      error:
-        error instanceof Error ? error.message : "Error al obtener progreso",
-    };
-  }
-}
-
+/**
+ * Server Action: Get course with modules, lessons, and student progress
+ */
 export async function getCourseWithModulesAndLessons(courseId: string) {
   try {
     const profileResult = await getCurrentProfile();
@@ -44,85 +21,22 @@ export async function getCourseWithModulesAndLessons(courseId: string) {
     }
 
     const { profile } = profileResult;
-    const supabase = createClient();
 
-    // Get course
-    const { data: course, error: courseError } = await supabase
-      .from("courses")
-      .select("*")
-      .eq("id", courseId)
-      .single();
-
-    if (courseError) {
-      return { error: courseError.message };
+    if (!profile.isStudent) {
+      return { error: "Solo estudiantes pueden acceder a este contenido" };
     }
 
-    // Ensure course has an active version to scope content
-    const activeVersionId = course.active_version_id;
-    if (!activeVersionId) {
-      return { error: "El curso no tiene una versión activa" };
-    }
+    const useCase = new GetCourseWithModulesAndLessonsUseCase(studentRepository);
+    const result = await useCase.execute(courseId, profile.id);
 
-    // Get modules limited to the active version
-    const modulesQuery = supabase
-      .from("course_modules")
-      .select("*")
-      .eq("course_id", courseId)
-      .eq("course_version_id", activeVersionId)
-      .order("order_index", { ascending: true });
-
-    // Only show published modules to students
-    if (profile.isStudent) {
-      modulesQuery.eq("is_published", true);
-    }
-
-    const { data: modules, error: modulesError } = await modulesQuery;
-
-    if (modulesError) {
-      return { error: modulesError.message };
-    }
-
-    // Get lessons for each module
-    const modulesWithLessons = await Promise.all(
-      (modules || []).map(async (module) => {
-        const lessonsQuery = supabase
-          .from("lessons")
-          .select("*")
-          .eq("module_id", module.id)
-          .order("order_index", { ascending: true });
-
-        // Only show published lessons to students
-        if (profile.isStudent) {
-          lessonsQuery.eq("is_published", true);
-        }
-
-        const { data: lessons, error: lessonsError } = await lessonsQuery;
-
-        if (lessonsError) {
-          return { ...module, lessons: [] };
-        }
-
-        return { ...module, lessons: lessons || [] };
-      })
-    );
-
-    // Get student progress if student
-    let progress: any[] = [];
-    if (profile.isStudent) {
-      const { data: progressData, error: progressError } = await supabase
-        .from("student_progress")
-        .select("*")
-        .eq("student_id", profile.id);
-
-      if (!progressError) {
-        progress = progressData || [];
-      }
+    if (!result.success || !result.data) {
+      return { error: result.error || "Error al obtener curso" };
     }
 
     return {
-      course,
-      modules: modulesWithLessons,
-      progress,
+      course: result.data.course,
+      modules: result.data.modules,
+      progress: result.data.progress,
     };
   } catch (error) {
     return {
@@ -131,6 +45,9 @@ export async function getCourseWithModulesAndLessons(courseId: string) {
   }
 }
 
+/**
+ * Server Action: Mark a lesson as completed
+ */
 export async function markLessonComplete(lessonId: string) {
   try {
     const profileResult = await getCurrentProfile();
@@ -146,42 +63,11 @@ export async function markLessonComplete(lessonId: string) {
       };
     }
 
-    const supabase = createClient();
+    const useCase = new MarkLessonCompleteUseCase(studentRepository);
+    const result = await useCase.execute(lessonId, profile.id);
 
-    // Check if progress already exists
-    const { data: existing } = await supabase
-      .from("student_progress")
-      .select("*")
-      .eq("student_id", profile.id)
-      .eq("lesson_id", lessonId)
-      .single();
-
-    if (existing) {
-      // Update existing
-      const { error } = await supabase
-        .from("student_progress")
-        .update({
-          completed: true,
-          completed_at: new Date().toISOString(),
-        })
-        .eq("student_id", profile.id)
-        .eq("lesson_id", lessonId);
-
-      if (error) {
-        return { error: error.message };
-      }
-    } else {
-      // Insert new
-      const { error } = await supabase.from("student_progress").insert({
-        student_id: profile.id,
-        lesson_id: lessonId,
-        completed: true,
-        completed_at: new Date().toISOString(),
-      });
-
-      if (error) {
-        return { error: error.message };
-      }
+    if (!result.success) {
+      return { error: result.error || "Error al marcar lección" };
     }
 
     revalidatePath("/dashboard/student");
@@ -193,6 +79,9 @@ export async function markLessonComplete(lessonId: string) {
   }
 }
 
+/**
+ * Server Action: Mark a lesson as incomplete
+ */
 export async function markLessonIncomplete(lessonId: string) {
   try {
     const profileResult = await getCurrentProfile();
@@ -206,19 +95,11 @@ export async function markLessonIncomplete(lessonId: string) {
       return { error: "Solo estudiantes pueden actualizar su progreso" };
     }
 
-    const supabase = createClient();
+    const useCase = new MarkLessonIncompleteUseCase(studentRepository);
+    const result = await useCase.execute(lessonId, profile.id);
 
-    const { error } = await supabase
-      .from("student_progress")
-      .update({
-        completed: false,
-        completed_at: null,
-      })
-      .eq("student_id", profile.id)
-      .eq("lesson_id", lessonId);
-
-    if (error) {
-      return { error: error.message };
+    if (!result.success) {
+      return { error: result.error || "Error al actualizar lección" };
     }
 
     revalidatePath("/dashboard/student");
@@ -227,6 +108,22 @@ export async function markLessonIncomplete(lessonId: string) {
     return {
       error:
         error instanceof Error ? error.message : "Error al actualizar lección",
+    };
+  }
+}
+
+/**
+ * Server Action: Get student progress (legacy - kept for compatibility)
+ * @deprecated Use getCourseWithModulesAndLessons instead
+ */
+export async function getStudentProgress(studentId: string) {
+  try {
+    const progress = await studentRepository.getStudentProgress(studentId);
+    return { progress };
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error ? error.message : "Error al obtener progreso",
     };
   }
 }
