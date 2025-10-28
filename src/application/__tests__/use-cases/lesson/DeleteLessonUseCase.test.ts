@@ -126,12 +126,18 @@ describe("DeleteLessonUseCase", () => {
     );
 
     it("should delete lesson successfully when user is admin", async () => {
+      const mockCourse = {
+        id: courseId,
+        title: "Test Course",
+      };
+
       mockLessonRepository.getLessonById.mockResolvedValue(mockLesson);
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         mockAdminProfile
       );
+      mockCourseRepository.getCourseById.mockResolvedValue(mockCourse as any);
       mockLessonRepository.deleteLesson.mockResolvedValue(undefined);
 
       const result = await deleteLessonUseCase.execute(lessonId);
@@ -197,12 +203,18 @@ describe("DeleteLessonUseCase", () => {
     });
 
     it("should handle repository errors gracefully", async () => {
+      const mockCourse = {
+        id: courseId,
+        title: "Test Course",
+      };
+
       mockLessonRepository.getLessonById.mockResolvedValue(mockLesson);
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         mockAdminProfile
       );
+      mockCourseRepository.getCourseById.mockResolvedValue(mockCourse as any);
       mockLessonRepository.deleteLesson.mockRejectedValue(
         new Error("Database error")
       );
@@ -214,12 +226,18 @@ describe("DeleteLessonUseCase", () => {
     });
 
     it("should handle unknown errors", async () => {
+      const mockCourse = {
+        id: courseId,
+        title: "Test Course",
+      };
+
       mockLessonRepository.getLessonById.mockResolvedValue(mockLesson);
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         mockAdminProfile
       );
+      mockCourseRepository.getCourseById.mockResolvedValue(mockCourse as any);
       mockLessonRepository.deleteLesson.mockRejectedValue("Unknown error");
 
       const result = await deleteLessonUseCase.execute(lessonId);

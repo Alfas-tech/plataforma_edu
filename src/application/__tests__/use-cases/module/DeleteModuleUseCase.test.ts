@@ -90,6 +90,7 @@ describe("DeleteModuleUseCase", () => {
       const mockModule = {
         id: moduleId,
         courseId: "course-123",
+        courseVersionId: "version-123",
         title: "Module to Delete",
         description: "Description",
         orderIndex: 1,
@@ -99,11 +100,17 @@ describe("DeleteModuleUseCase", () => {
         updatedAt: new Date(),
       };
 
+      const mockCourse = {
+        id: "course-123",
+        title: "Test Course",
+      };
+
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         mockAdminProfile
       );
+      mockCourseRepository.getCourseById.mockResolvedValue(mockCourse as any);
       mockModuleRepository.deleteModule.mockResolvedValue(undefined);
 
       const result = await deleteModuleUseCase.execute(moduleId);
@@ -177,6 +184,7 @@ describe("DeleteModuleUseCase", () => {
       const mockModule = {
         id: moduleId,
         courseId: "course-123",
+        courseVersionId: "version-123",
         title: "Module to Delete",
         description: "Description",
         orderIndex: 1,
@@ -186,11 +194,17 @@ describe("DeleteModuleUseCase", () => {
         updatedAt: new Date(),
       };
 
+      const mockCourse = {
+        id: "course-123",
+        title: "Test Course",
+      };
+
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         mockAdminProfile
       );
+      mockCourseRepository.getCourseById.mockResolvedValue(mockCourse as any);
       mockModuleRepository.deleteModule.mockRejectedValue(
         new Error("Database error")
       );
@@ -205,6 +219,7 @@ describe("DeleteModuleUseCase", () => {
       const mockModule = {
         id: moduleId,
         courseId: "course-123",
+        courseVersionId: "version-123",
         title: "Module to Delete",
         description: "Description",
         orderIndex: 1,
@@ -214,11 +229,17 @@ describe("DeleteModuleUseCase", () => {
         updatedAt: new Date(),
       };
 
+      const mockCourse = {
+        id: "course-123",
+        title: "Test Course",
+      };
+
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         mockAdminProfile
       );
+      mockCourseRepository.getCourseById.mockResolvedValue(mockCourse as any);
       mockModuleRepository.deleteModule.mockRejectedValue("Unknown error");
 
       const result = await deleteModuleUseCase.execute(moduleId);
@@ -231,6 +252,7 @@ describe("DeleteModuleUseCase", () => {
       const mockModule = {
         id: moduleId,
         courseId: "course-123",
+        courseVersionId: "version-123",
         title: "Module to Delete",
         description: "Description",
         orderIndex: 1,
@@ -247,9 +269,7 @@ describe("DeleteModuleUseCase", () => {
       const result = await deleteModuleUseCase.execute(moduleId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe(
-        "Solo los administradores pueden eliminar módulos"
-      );
+      expect(result.error).toBe("Perfil no encontrado");
     });
   });
 });

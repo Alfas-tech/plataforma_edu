@@ -40,7 +40,7 @@ export class DeleteLessonUseCase {
         };
       }
 
-      // Only admins can delete lessons
+      // Verify current user is authenticated
       const currentUser = await this.authRepository.getCurrentUser();
       if (!currentUser) {
         return {
@@ -59,10 +59,25 @@ export class DeleteLessonUseCase {
         };
       }
 
+      // Only admins can delete lessons (teachers cannot delete)
       if (!profile.isAdmin()) {
         return {
           success: false,
           error: "Solo los administradores pueden eliminar lecciones",
+        };
+      }
+
+      // Validate course exists and is accessible
+      // Note: Admins have access to all courses by design.
+      // This check ensures database integrity and prevents
+      // deletion of lessons from non-existent courses.
+      const course = await this.courseRepository.getCourseById(
+        moduleData.courseId
+      );
+      if (!course) {
+        return {
+          success: false,
+          error: "Curso no encontrado",
         };
       }
 
