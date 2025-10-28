@@ -186,10 +186,9 @@ describe("DeleteModuleUseCase", () => {
       const result = await deleteModuleUseCase.execute(moduleId);
 
       expect(result.success).toBe(true);
-      expect(mockCourseRepository.isTeacherAssignedToVersion).toHaveBeenCalledWith(
-        courseVersionId,
-        "teacher-123"
-      );
+      expect(
+        mockCourseRepository.isTeacherAssignedToVersion
+      ).toHaveBeenCalledWith(courseVersionId, "teacher-123");
       expect(mockModuleRepository.deleteModule).toHaveBeenCalledWith(moduleId);
     });
 

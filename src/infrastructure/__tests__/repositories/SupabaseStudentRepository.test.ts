@@ -39,14 +39,14 @@ describe("SupabaseStudentRepository", () => {
 
       // Reset mock for clean state
       jest.clearAllMocks();
-      
+
       let callCount = 0;
-      
+
       // Create separate mocks for each database call
       (createClient as jest.Mock).mockReturnValue({
         from: jest.fn().mockImplementation((table) => {
           callCount++;
-          
+
           // First call: courses
           if (callCount === 1) {
             return {
@@ -65,7 +65,7 @@ describe("SupabaseStudentRepository", () => {
               }),
             };
           }
-          
+
           // Second call: modules
           if (callCount === 2) {
             return {
@@ -93,7 +93,7 @@ describe("SupabaseStudentRepository", () => {
               }),
             };
           }
-          
+
           // Third call: lessons
           if (callCount === 3) {
             return {
@@ -119,7 +119,7 @@ describe("SupabaseStudentRepository", () => {
               }),
             };
           }
-          
+
           // Fourth call: progress
           if (callCount === 4) {
             return {
@@ -138,7 +138,7 @@ describe("SupabaseStudentRepository", () => {
               }),
             };
           }
-          
+
           return {
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnThis(),
@@ -172,7 +172,7 @@ describe("SupabaseStudentRepository", () => {
       (createClient as jest.Mock).mockReturnValue({
         from: jest.fn().mockImplementation((table) => {
           callCount++;
-          
+
           if (callCount === 1) {
             return {
               select: jest.fn().mockReturnValue({
@@ -190,7 +190,7 @@ describe("SupabaseStudentRepository", () => {
               }),
             };
           }
-          
+
           if (callCount === 2) {
             return {
               select: jest.fn().mockReturnValue({
@@ -217,7 +217,7 @@ describe("SupabaseStudentRepository", () => {
               }),
             };
           }
-          
+
           if (callCount === 3) {
             return {
               select: jest.fn().mockReturnValue({
@@ -242,7 +242,7 @@ describe("SupabaseStudentRepository", () => {
               }),
             };
           }
-          
+
           if (callCount === 4) {
             return {
               select: jest.fn().mockReturnValue({
@@ -253,7 +253,7 @@ describe("SupabaseStudentRepository", () => {
               }),
             };
           }
-          
+
           return {
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnThis(),
@@ -402,7 +402,7 @@ describe("SupabaseStudentRepository", () => {
       const mockClient = {
         from: jest.fn().mockImplementation(() => {
           callCount++;
-          
+
           // First call: check existing progress
           if (callCount === 1) {
             return {
@@ -423,7 +423,7 @@ describe("SupabaseStudentRepository", () => {
               }),
             };
           }
-          
+
           // Second call: update
           if (callCount === 2) {
             return {

@@ -193,19 +193,19 @@ export class SupabaseCourseRepository implements ICourseRepository {
 
       const fallbackBranchId = defaultBranchId ?? branchRows[0]?.id ?? null;
 
-      (
-        courseTeacherRows as { teacher_id: string | null }[] | null
-      )?.forEach((row) => {
-        if (!fallbackBranchId || !row?.teacher_id) {
-          return;
-        }
+      (courseTeacherRows as { teacher_id: string | null }[] | null)?.forEach(
+        (row) => {
+          if (!fallbackBranchId || !row?.teacher_id) {
+            return;
+          }
 
-        if (!branchAssignments.has(fallbackBranchId)) {
-          branchAssignments.set(fallbackBranchId, new Set());
-        }
+          if (!branchAssignments.has(fallbackBranchId)) {
+            branchAssignments.set(fallbackBranchId, new Set());
+          }
 
-        branchAssignments.get(fallbackBranchId)!.add(row.teacher_id);
-      });
+          branchAssignments.get(fallbackBranchId)!.add(row.teacher_id);
+        }
+      );
 
       const { data: branchVersionRows, error: branchVersionError } =
         await supabase
@@ -251,10 +251,12 @@ export class SupabaseCourseRepository implements ICourseRepository {
         }
 
         (
-          allAssignmentsRows as {
-            course_version_id: string;
-            teacher_id: string;
-          }[] | null
+          allAssignmentsRows as
+            | {
+                course_version_id: string;
+                teacher_id: string;
+              }[]
+            | null
         )?.forEach((assignment) => {
           const branchId = versionToBranch.get(assignment.course_version_id);
           if (!branchId || !assignment.teacher_id) {
@@ -281,7 +283,7 @@ export class SupabaseCourseRepository implements ICourseRepository {
         branchTipVersionByBranch.set(branch.id, tipVersion);
 
         const teacherIds = tipVersion
-          ? tipAssignmentsByVersionId.get(tipVersion.id) ?? []
+          ? (tipAssignmentsByVersionId.get(tipVersion.id) ?? [])
           : [];
 
         branchTipTeacherIdsByBranch.set(branch.id, teacherIds);
@@ -446,10 +448,12 @@ export class SupabaseCourseRepository implements ICourseRepository {
         }
 
         (
-          courseTeacherRows as {
-            course_id: string;
-            teacher_id: string | null;
-          }[] | null
+          courseTeacherRows as
+            | {
+                course_id: string;
+                teacher_id: string | null;
+              }[]
+            | null
         )?.forEach((row) => {
           if (!row?.course_id || !row.teacher_id) {
             return;
@@ -530,7 +534,9 @@ export class SupabaseCourseRepository implements ICourseRepository {
                   if (!assignmentMap.has(row.course_version_id)) {
                     assignmentMap.set(row.course_version_id, []);
                   }
-                  assignmentMap.get(row.course_version_id)!.push(row.teacher_id);
+                  assignmentMap
+                    .get(row.course_version_id)!
+                    .push(row.teacher_id);
                 });
 
                 tipAssignmentsByVersionId = assignmentMap;
@@ -563,11 +569,13 @@ export class SupabaseCourseRepository implements ICourseRepository {
           const versionIds: string[] = [];
 
           (
-            branchVersionRows as {
-              id: string;
-              branch_id: string | null;
-              course_id: string;
-            }[] | null
+            branchVersionRows as
+              | {
+                  id: string;
+                  branch_id: string | null;
+                  course_id: string;
+                }[]
+              | null
           )?.forEach((row) => {
             const branchId =
               row.branch_id ??
@@ -597,10 +605,12 @@ export class SupabaseCourseRepository implements ICourseRepository {
             }
 
             (
-              assignmentRows as {
-                course_version_id: string;
-                teacher_id: string;
-              }[] | null
+              assignmentRows as
+                | {
+                    course_version_id: string;
+                    teacher_id: string;
+                  }[]
+                | null
             )?.forEach((row) => {
               const branchId = versionToBranch.get(row.course_version_id);
               if (!branchId || !row.teacher_id) {
@@ -623,7 +633,10 @@ export class SupabaseCourseRepository implements ICourseRepository {
 
           branchesByCourse.get(branch.course_id)!.push(branch);
 
-          if (branch.is_default && !defaultBranchByCourse.has(branch.course_id)) {
+          if (
+            branch.is_default &&
+            !defaultBranchByCourse.has(branch.course_id)
+          ) {
             defaultBranchByCourse.set(branch.course_id, branch);
           }
 
@@ -638,7 +651,7 @@ export class SupabaseCourseRepository implements ICourseRepository {
           branchTipVersionByBranch.set(branch.id, tipVersion);
 
           const teacherIds = tipVersion
-            ? tipAssignmentsByVersionId.get(tipVersion.id) ?? []
+            ? (tipAssignmentsByVersionId.get(tipVersion.id) ?? [])
             : [];
 
           branchTipTeacherIdsByBranch.set(branch.id, teacherIds);
@@ -1125,13 +1138,13 @@ export class SupabaseCourseRepository implements ICourseRepository {
         );
       }
 
-      (
-        versionRows as { id: string; course_id: string }[] | null
-      )?.forEach((row) => {
-        if (row?.course_id) {
-          assignedCourseIds.add(row.course_id);
+      (versionRows as { id: string; course_id: string }[] | null)?.forEach(
+        (row) => {
+          if (row?.course_id) {
+            assignedCourseIds.add(row.course_id);
+          }
         }
-      });
+      );
     }
 
     const { data: courseTeacherRows, error: courseTeachersError } =
@@ -1147,13 +1160,13 @@ export class SupabaseCourseRepository implements ICourseRepository {
       );
     }
 
-    (
-      courseTeacherRows as { course_id: string | null }[] | null
-    )?.forEach((row) => {
-      if (row?.course_id) {
-        assignedCourseIds.add(row.course_id);
+    (courseTeacherRows as { course_id: string | null }[] | null)?.forEach(
+      (row) => {
+        if (row?.course_id) {
+          assignedCourseIds.add(row.course_id);
+        }
       }
-    });
+    );
 
     if (assignedCourseIds.size === 0) {
       return [];
@@ -1250,10 +1263,12 @@ export class SupabaseCourseRepository implements ICourseRepository {
         }
 
         (
-          courseTeacherRows as {
-            course_id: string;
-            teacher_id: string | null;
-          }[] | null
+          courseTeacherRows as
+            | {
+                course_id: string;
+                teacher_id: string | null;
+              }[]
+            | null
         )?.forEach((row) => {
           if (!row?.course_id || !row.teacher_id) {
             return;
@@ -1334,7 +1349,9 @@ export class SupabaseCourseRepository implements ICourseRepository {
                   if (!assignmentMap.has(row.course_version_id)) {
                     assignmentMap.set(row.course_version_id, []);
                   }
-                  assignmentMap.get(row.course_version_id)!.push(row.teacher_id);
+                  assignmentMap
+                    .get(row.course_version_id)!
+                    .push(row.teacher_id);
                 });
 
                 tipAssignmentsByVersionId = assignmentMap;
@@ -1367,11 +1384,13 @@ export class SupabaseCourseRepository implements ICourseRepository {
           const versionIds: string[] = [];
 
           (
-            branchVersionRows as {
-              id: string;
-              branch_id: string | null;
-              course_id: string;
-            }[] | null
+            branchVersionRows as
+              | {
+                  id: string;
+                  branch_id: string | null;
+                  course_id: string;
+                }[]
+              | null
           )?.forEach((row) => {
             const branchId =
               row.branch_id ??
@@ -1401,10 +1420,12 @@ export class SupabaseCourseRepository implements ICourseRepository {
             }
 
             (
-              assignmentRows as {
-                course_version_id: string;
-                teacher_id: string;
-              }[] | null
+              assignmentRows as
+                | {
+                    course_version_id: string;
+                    teacher_id: string;
+                  }[]
+                | null
             )?.forEach((row) => {
               const branchId = versionToBranch.get(row.course_version_id);
               if (!branchId || !row.teacher_id) {
@@ -1438,7 +1459,7 @@ export class SupabaseCourseRepository implements ICourseRepository {
           branchTipVersionByBranch.set(branch.id, tipVersion);
 
           const teacherIds = tipVersion
-            ? tipAssignmentsByVersionId.get(tipVersion.id) ?? []
+            ? (tipAssignmentsByVersionId.get(tipVersion.id) ?? [])
             : [];
 
           branchTipTeacherIdsByBranch.set(branch.id, teacherIds);

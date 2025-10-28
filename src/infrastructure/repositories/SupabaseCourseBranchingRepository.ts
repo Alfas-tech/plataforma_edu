@@ -43,9 +43,7 @@ export class SupabaseCourseBranchingRepository
     );
 
     if (rpcError) {
-      throw new Error(
-        rpcError.message || "Error al crear la rama del curso"
-      );
+      throw new Error(rpcError.message || "Error al crear la rama del curso");
     }
 
     if (!rpcResult || rpcResult.length === 0) {

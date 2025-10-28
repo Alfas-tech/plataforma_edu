@@ -64,15 +64,17 @@ export class SupabaseStudentRepository implements IStudentRepository {
         }
 
         // Convert to camelCase
-        const lessons: LessonWithProgress[] = (lessonsData || []).map((lesson) => ({
-          id: lesson.id,
-          moduleId: lesson.module_id,
-          title: lesson.title,
-          content: lesson.content,
-          orderIndex: lesson.order_index,
-          durationMinutes: lesson.duration_minutes,
-          isPublished: lesson.is_published,
-        }));
+        const lessons: LessonWithProgress[] = (lessonsData || []).map(
+          (lesson) => ({
+            id: lesson.id,
+            moduleId: lesson.module_id,
+            title: lesson.title,
+            content: lesson.content,
+            orderIndex: lesson.order_index,
+            durationMinutes: lesson.duration_minutes,
+            isPublished: lesson.is_published,
+          })
+        );
 
         return {
           id: module.id,

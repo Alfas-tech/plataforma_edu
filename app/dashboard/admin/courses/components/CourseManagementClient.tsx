@@ -226,7 +226,10 @@ export function CourseManagementClient({
         if (selectedBranchId && course.defaultBranch?.id === selectedBranchId) {
           return course.defaultBranch;
         }
-        return course.branches.find((branch) => branch.id === selectedBranchId) ?? null;
+        return (
+          course.branches.find((branch) => branch.id === selectedBranchId) ??
+          null
+        );
       })();
 
       const canManageSelectedBranch = selectedBranch?.canManage ?? false;
@@ -821,9 +824,9 @@ export function CourseManagementClient({
                       {selectedBranchId &&
                         !isDefaultBranchSelected &&
                         (isAdminMode || canManageSelectedBranch) && (
-                        <Button
-                          size="sm"
-                          className="bg-indigo-600 text-white hover:bg-indigo-700"
+                          <Button
+                            size="sm"
+                            className="bg-indigo-600 text-white hover:bg-indigo-700"
                             onClick={() => {
                               if (!isAdminMode && !canManageSelectedBranch) {
                                 setActionError(
@@ -837,14 +840,14 @@ export function CourseManagementClient({
                                 branchId: selectedBranchId,
                               });
                             }}
-                        >
-                          <GitPullRequest className="h-4 w-4 sm:mr-2" />
-                          <span className="hidden sm:inline">
-                            Solicitar fusión
-                          </span>
-                          <span className="sm:hidden">Fusión</span>
-                        </Button>
-                      )}
+                          >
+                            <GitPullRequest className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">
+                              Solicitar fusión
+                            </span>
+                            <span className="sm:hidden">Fusión</span>
+                          </Button>
+                        )}
                     </div>
                   </div>
                 </CardHeader>
@@ -1152,7 +1155,9 @@ export function CourseManagementClient({
                               className="w-full sm:w-auto"
                             >
                               <BookOpen className="h-4 w-4 sm:mr-2" />
-                              <span className="hidden sm:inline">Contenido</span>
+                              <span className="hidden sm:inline">
+                                Contenido
+                              </span>
                               <span className="sm:hidden">Cont.</span>
                             </Button>
                           </Link>
@@ -1171,21 +1176,21 @@ export function CourseManagementClient({
                         {selectedBranch &&
                           !isDefaultBranchSelected &&
                           isAdminMode && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="w-full border-red-300 text-red-600 hover:bg-red-50 sm:w-auto"
-                            onClick={() =>
-                              handleDeleteBranchClick(course, selectedBranch)
-                            }
-                          >
-                            <Trash2 className="h-4 w-4 sm:mr-2" />
-                            <span className="hidden sm:inline">
-                              Eliminar edición
-                            </span>
-                            <span className="sm:hidden">Eliminar</span>
-                          </Button>
-                        )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full border-red-300 text-red-600 hover:bg-red-50 sm:w-auto"
+                              onClick={() =>
+                                handleDeleteBranchClick(course, selectedBranch)
+                              }
+                            >
+                              <Trash2 className="h-4 w-4 sm:mr-2" />
+                              <span className="hidden sm:inline">
+                                Eliminar edición
+                              </span>
+                              <span className="sm:hidden">Eliminar</span>
+                            </Button>
+                          )}
                       </div>
                       <div className="mt-4 grid gap-3 sm:grid-cols-3">
                         <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">

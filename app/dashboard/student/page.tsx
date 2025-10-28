@@ -298,13 +298,13 @@ export default async function StudentDashboardPage() {
                         key={course.id}
                         href={`/dashboard/student/courses/${course.id}`}
                       >
-                        <Card className="h-full border-2 transition-all hover:border-blue-300 hover:shadow-lg cursor-pointer">
+                        <Card className="h-full cursor-pointer border-2 transition-all hover:border-blue-300 hover:shadow-lg">
                           <CardHeader className="p-4 sm:p-6">
                             <div className="flex items-start justify-between gap-2">
-                              <CardTitle className="text-base sm:text-lg line-clamp-2">
+                              <CardTitle className="line-clamp-2 text-base sm:text-lg">
                                 {course.title}
                               </CardTitle>
-                              <Badge className="ml-2 bg-green-600 flex-shrink-0">
+                              <Badge className="ml-2 flex-shrink-0 bg-green-600">
                                 Disponible
                               </Badge>
                             </div>

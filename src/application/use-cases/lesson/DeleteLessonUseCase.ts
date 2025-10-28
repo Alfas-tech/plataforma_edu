@@ -68,12 +68,13 @@ export class DeleteLessonUseCase {
       // Teachers can delete lessons if they are assigned to the course/version
       if (profile.isTeacher()) {
         const courseVersionId = moduleData.courseVersionId;
-        
+
         // Check if teacher is assigned to this version
-        const isAssigned = await this.courseRepository.isTeacherAssignedToVersion(
-          courseVersionId,
-          currentUser.id
-        );
+        const isAssigned =
+          await this.courseRepository.isTeacherAssignedToVersion(
+            courseVersionId,
+            currentUser.id
+          );
 
         if (!isAssigned) {
           return {

@@ -204,10 +204,9 @@ describe("DeleteLessonUseCase", () => {
       const result = await deleteLessonUseCase.execute(lessonId);
 
       expect(result.success).toBe(true);
-      expect(mockCourseRepository.isTeacherAssignedToVersion).toHaveBeenCalledWith(
-        courseVersionId,
-        "teacher-123"
-      );
+      expect(
+        mockCourseRepository.isTeacherAssignedToVersion
+      ).toHaveBeenCalledWith(courseVersionId, "teacher-123");
       expect(mockLessonRepository.deleteLesson).toHaveBeenCalledWith(lessonId);
     });
 
@@ -239,7 +238,9 @@ describe("DeleteLessonUseCase", () => {
       const result = await deleteLessonUseCase.execute(lessonId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("No tienes permisos para eliminar esta lección");
+      expect(result.error).toBe(
+        "No tienes permisos para eliminar esta lección"
+      );
       expect(mockLessonRepository.deleteLesson).not.toHaveBeenCalled();
     });
 

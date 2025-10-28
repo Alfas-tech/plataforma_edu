@@ -33,7 +33,10 @@ export interface IStudentRepository {
    * @param studentId - The student ID
    * @returns Result indicating success or failure
    */
-  markLessonComplete(lessonId: string, studentId: string): Promise<MarkLessonResult>;
+  markLessonComplete(
+    lessonId: string,
+    studentId: string
+  ): Promise<MarkLessonResult>;
 
   /**
    * Mark a lesson as incomplete for a student
@@ -41,5 +44,8 @@ export interface IStudentRepository {
    * @param studentId - The student ID
    * @returns Result indicating success or failure
    */
-  markLessonIncomplete(lessonId: string, studentId: string): Promise<MarkLessonResult>;
+  markLessonIncomplete(
+    lessonId: string,
+    studentId: string
+  ): Promise<MarkLessonResult>;
 }

@@ -37,7 +37,8 @@ export class GetCourseWithModulesAndLessonsUseCase {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Error al obtener curso",
+        error:
+          error instanceof Error ? error.message : "Error al obtener curso",
       };
     }
   }

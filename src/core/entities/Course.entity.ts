@@ -77,8 +77,7 @@ export class CourseEntity {
             tipVersion: extras?.branchTipVersions?.[branch.id] ?? null,
             tipVersionTeacherIds:
               extras?.branchTipTeacherIds?.[branch.id] ?? [],
-            assignedTeacherIds:
-              extras?.branchTeacherIds?.[branch.id] ?? [],
+            assignedTeacherIds: extras?.branchTeacherIds?.[branch.id] ?? [],
           })
         )
       : [];
@@ -89,13 +88,13 @@ export class CourseEntity {
         )
       : [];
 
-        const primaryVersionCandidate =
-          activeVersionEntity ?? defaultBranchEntity?.tipVersion ?? null;
+    const primaryVersionCandidate =
+      activeVersionEntity ?? defaultBranchEntity?.tipVersion ?? null;
 
-        const visibilityOverrideActive = Boolean(data.visibility_override);
-        const shouldShowOverride =
-          visibilityOverrideActive &&
-          !(primaryVersionCandidate?.isPublishedAndVisible() ?? false);
+    const visibilityOverrideActive = Boolean(data.visibility_override);
+    const shouldShowOverride =
+      visibilityOverrideActive &&
+      !(primaryVersionCandidate?.isPublishedAndVisible() ?? false);
 
     return new CourseEntity(
       data.id,
@@ -103,8 +102,8 @@ export class CourseEntity {
       data.summary,
       data.description,
       data.slug,
-          shouldShowOverride,
-          activeVersionEntity,
+      shouldShowOverride,
+      activeVersionEntity,
       data.created_by,
       new Date(data.created_at),
       new Date(data.updated_at),

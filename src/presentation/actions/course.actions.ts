@@ -313,7 +313,7 @@ export async function getAllCourses() {
     }
 
     const courseOverviews = await enrichMergeRequestParticipants(
-  result.courses.map((course) => mapCourseToPresentation(course))
+      result.courses.map((course) => mapCourseToPresentation(course))
     );
 
     return { courses: courseOverviews };
@@ -715,12 +715,10 @@ export async function getTeacherCourses(teacherId: string) {
             return false;
           }
 
-          const tipAssignments = branch.tipVersionTeacherIds.includes(
-            teacherId
-          );
-          const branchAssignments = branch.assignedTeacherIds.includes(
-            teacherId
-          );
+          const tipAssignments =
+            branch.tipVersionTeacherIds.includes(teacherId);
+          const branchAssignments =
+            branch.assignedTeacherIds.includes(teacherId);
 
           return tipAssignments || branchAssignments;
         };

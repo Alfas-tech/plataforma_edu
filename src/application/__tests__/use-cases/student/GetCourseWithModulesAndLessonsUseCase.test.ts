@@ -76,10 +76,9 @@ describe("GetCourseWithModulesAndLessonsUseCase", () => {
     expect(result.data?.course.title).toBe("Python Programming");
     expect(result.data?.modules).toHaveLength(1);
     expect(result.data?.modules[0].lessons[0].completed).toBe(true);
-    expect(mockStudentRepository.getCourseWithModulesAndLessons).toHaveBeenCalledWith(
-      courseId,
-      studentId
-    );
+    expect(
+      mockStudentRepository.getCourseWithModulesAndLessons
+    ).toHaveBeenCalledWith(courseId, studentId);
   });
 
   it("should merge progress correctly with lessons", async () => {

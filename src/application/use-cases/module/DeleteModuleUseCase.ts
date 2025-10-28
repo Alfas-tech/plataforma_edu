@@ -56,12 +56,13 @@ export class DeleteModuleUseCase {
       if (profile.isTeacher()) {
         // Get course version ID from module
         const courseVersionId = moduleData.courseVersionId;
-        
+
         // Check if teacher is assigned to this version
-        const isAssigned = await this.courseRepository.isTeacherAssignedToVersion(
-          courseVersionId,
-          currentUser.id
-        );
+        const isAssigned =
+          await this.courseRepository.isTeacherAssignedToVersion(
+            courseVersionId,
+            currentUser.id
+          );
 
         if (!isAssigned) {
           return {

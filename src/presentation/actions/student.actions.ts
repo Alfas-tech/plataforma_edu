@@ -26,7 +26,9 @@ export async function getCourseWithModulesAndLessons(courseId: string) {
       return { error: "Solo estudiantes pueden acceder a este contenido" };
     }
 
-    const useCase = new GetCourseWithModulesAndLessonsUseCase(studentRepository);
+    const useCase = new GetCourseWithModulesAndLessonsUseCase(
+      studentRepository
+    );
     const result = await useCase.execute(courseId, profile.id);
 
     if (!result.success || !result.data) {

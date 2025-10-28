@@ -8,7 +8,10 @@ import { MarkLessonResult } from "@/src/core/types/student.types";
 export class MarkLessonCompleteUseCase {
   constructor(private readonly studentRepository: IStudentRepository) {}
 
-  async execute(lessonId: string, studentId: string): Promise<MarkLessonResult> {
+  async execute(
+    lessonId: string,
+    studentId: string
+  ): Promise<MarkLessonResult> {
     try {
       const result = await this.studentRepository.markLessonComplete(
         lessonId,

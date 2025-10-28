@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +24,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { markLessonComplete, markLessonIncomplete } from "@/src/presentation/actions/student.actions";
+import {
+  markLessonComplete,
+  markLessonIncomplete,
+} from "@/src/presentation/actions/student.actions";
 import { useRouter } from "next/navigation";
 import { signout } from "@/src/presentation/actions/auth.actions";
 
@@ -342,9 +351,9 @@ export function StudentCourseView({
                                       <Circle className="h-6 w-6 text-slate-300 group-hover:text-blue-400 sm:h-7 sm:w-7" />
                                     )}
                                   </button>
-                                  <div className="flex-1 min-w-0">
+                                  <div className="min-w-0 flex-1">
                                     <p
-                                      className={`font-medium transition-colors text-sm sm:text-base ${
+                                      className={`text-sm font-medium transition-colors sm:text-base ${
                                         lesson.completed
                                           ? "text-slate-500 line-through"
                                           : "text-slate-900 group-hover:text-blue-700"
