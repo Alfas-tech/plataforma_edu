@@ -27,7 +27,7 @@ export class DeleteModuleUseCase {
         };
       }
 
-      // Only admins can delete modules
+      // Verify current user is authenticated
       const currentUser = await this.authRepository.getCurrentUser();
       if (!currentUser) {
         return {
@@ -39,14 +39,33 @@ export class DeleteModuleUseCase {
       const profile = await this.profileRepository.getProfileByUserId(
         currentUser.id
       );
-      if (!profile || !profile.isAdmin()) {
+      if (!profile) {
+        return {
+          success: false,
+          error: "Perfil no encontrado",
+        };
+      }
+
+      // Only admins can delete modules (teachers cannot delete)
+      if (!profile.isAdmin()) {
         return {
           success: false,
           error: "Solo los administradores pueden eliminar módulos",
         };
       }
 
-      // Delete module
+      // Additional security: Verify the course exists and is accessible
+      const course = await this.courseRepository.getCourseById(
+        moduleData.courseId
+      );
+      if (!course) {
+        return {
+          success: false,
+          error: "Curso no encontrado",
+        };
+      }
+
+      // Delete module (will cascade delete associated lessons)
       await this.moduleRepository.deleteModule(moduleId);
 
       return {

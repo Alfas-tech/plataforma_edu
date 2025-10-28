@@ -40,7 +40,7 @@ export class DeleteLessonUseCase {
         };
       }
 
-      // Only admins can delete lessons
+      // Verify current user is authenticated
       const currentUser = await this.authRepository.getCurrentUser();
       if (!currentUser) {
         return {
@@ -59,10 +59,22 @@ export class DeleteLessonUseCase {
         };
       }
 
+      // Only admins can delete lessons (teachers cannot delete)
       if (!profile.isAdmin()) {
         return {
           success: false,
           error: "Solo los administradores pueden eliminar lecciones",
+        };
+      }
+
+      // Additional security: Verify the course exists and is accessible
+      const course = await this.courseRepository.getCourseById(
+        moduleData.courseId
+      );
+      if (!course) {
+        return {
+          success: false,
+          error: "Curso no encontrado",
         };
       }
 
