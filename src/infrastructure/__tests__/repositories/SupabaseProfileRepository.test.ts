@@ -14,6 +14,7 @@ import { createClient } from "@/src/infrastructure/supabase/server";
 import { createAdminClient } from "@/src/infrastructure/supabase/admin";
 
 describe("SupabaseProfileRepository", () => {
+  let consoleErrorSpy: jest.SpyInstance;
   let repository: SupabaseProfileRepository;
   let mockSupabaseClient: any;
   let mockAdminClient: any;
@@ -77,8 +78,16 @@ describe("SupabaseProfileRepository", () => {
     repository = new SupabaseProfileRepository();
   });
 
+  beforeAll(() => {
+    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    consoleErrorSpy.mockRestore();
   });
 
   describe("getProfileByUserId", () => {
