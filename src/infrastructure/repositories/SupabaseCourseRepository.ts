@@ -77,49 +77,223 @@ export class SupabaseCourseRepository implements ICourseRepository {
 
     const branchRows = (branchesData as CourseBranchData[]) ?? [];
 
-    const branchIds = branchRows.map((branch) => branch.id);
-    const baseVersionIds = branchRows
-      .map((branch) => branch.base_version_id)
-      .filter((versionId): versionId is string => Boolean(versionId));
+    const branchBaseVersionByBranch = new Map<
+      string,
+      CourseVersionData | null
+    >();
+    const branchTipVersionByBranch = new Map<
+      string,
+      CourseVersionData | null
+    >();
+    const branchTipTeacherIdsByBranch = new Map<string, string[]>();
+    const branchTeacherIdsByBranch = new Map<string, string[]>();
 
-    let branchBaseVersions = new Map<string, CourseVersionData>();
+    let defaultBranchRow: CourseBranchData | null = null;
 
-    if (baseVersionIds.length > 0) {
-      const { data: baseVersionsData } = await supabase
-        .from("course_versions")
-        .select("*")
-        .in("id", baseVersionIds);
+    if (branchRows.length > 0) {
+      const branchIds = branchRows.map((branch) => branch.id);
+      const baseVersionIds = branchRows
+        .map((branch) => branch.base_version_id)
+        .filter((versionId): versionId is string => Boolean(versionId));
 
-      if (baseVersionsData) {
-        branchBaseVersions = new Map(
-          (baseVersionsData as CourseVersionData[]).map((version) => [
-            version.id,
-            version,
-          ])
+      defaultBranchRow = branchRows.find((branch) => branch.is_default) ?? null;
+      const defaultBranchId = defaultBranchRow?.id ?? null;
+
+      let baseVersionsMap = new Map<string, CourseVersionData>();
+
+      if (baseVersionIds.length > 0) {
+        const { data: baseVersionsData } = await supabase
+          .from("course_versions")
+          .select("*")
+          .in("id", baseVersionIds);
+
+        if (baseVersionsData) {
+          baseVersionsMap = new Map(
+            (baseVersionsData as CourseVersionData[]).map((version) => [
+              version.id,
+              version,
+            ])
+          );
+        }
+      }
+
+      let tipVersionsMap = new Map<string, CourseVersionData>();
+      let tipAssignmentsByVersionId = new Map<string, string[]>();
+
+      if (branchIds.length > 0) {
+        const { data: tipVersionsData } = await supabase
+          .from("course_versions")
+          .select("*")
+          .in("branch_id", branchIds)
+          .eq("is_tip", true);
+
+        if (tipVersionsData) {
+          const tipVersionRows = (
+            tipVersionsData as CourseVersionData[]
+          ).filter((version) => Boolean(version.branch_id));
+
+          tipVersionsMap = new Map(
+            tipVersionRows.map((version) => [
+              version.branch_id as string,
+              version,
+            ])
+          );
+
+          const tipVersionIds = tipVersionRows.map((version) => version.id);
+
+          if (tipVersionIds.length > 0) {
+            const { data: tipAssignmentsData, error: tipAssignmentsError } =
+              await supabase
+                .from("course_version_teachers")
+                .select("course_version_id, teacher_id")
+                .in("course_version_id", tipVersionIds);
+
+            if (tipAssignmentsError) {
+              throw new Error(
+                tipAssignmentsError.message ||
+                  "Error al obtener docentes asignados a las versiones"
+              );
+            }
+
+            if (tipAssignmentsData) {
+              const assignmentMap = new Map<string, string[]>();
+
+              (
+                tipAssignmentsData as {
+                  course_version_id: string;
+                  teacher_id: string;
+                }[]
+              ).forEach((row) => {
+                if (!assignmentMap.has(row.course_version_id)) {
+                  assignmentMap.set(row.course_version_id, []);
+                }
+                assignmentMap.get(row.course_version_id)!.push(row.teacher_id);
+              });
+
+              tipAssignmentsByVersionId = assignmentMap;
+            }
+          }
+        }
+      }
+
+      const branchAssignments = new Map<string, Set<string>>();
+
+      const { data: courseTeacherRows, error: courseTeacherError } =
+        await supabase
+          .from("course_teachers")
+          .select("teacher_id")
+          .eq("course_id", id);
+
+      if (courseTeacherError) {
+        throw new Error(
+          courseTeacherError.message ||
+            "Error al obtener docentes asignados al curso"
         );
       }
-    }
 
-    let branchTipVersions = new Map<string, CourseVersionData>();
+      const fallbackBranchId = defaultBranchId ?? branchRows[0]?.id ?? null;
 
-    if (branchIds.length > 0) {
-      const { data: tipVersionsData } = await supabase
-        .from("course_versions")
-        .select("*")
-        .in("branch_id", branchIds)
-        .eq("is_tip", true);
+      (courseTeacherRows as { teacher_id: string | null }[] | null)?.forEach(
+        (row) => {
+          if (!fallbackBranchId || !row?.teacher_id) {
+            return;
+          }
 
-      if (tipVersionsData) {
-        branchTipVersions = new Map(
-          (tipVersionsData as CourseVersionData[])
-            .filter((version) => Boolean(version.branch_id))
-            .map((version) => [version.branch_id as string, version])
+          if (!branchAssignments.has(fallbackBranchId)) {
+            branchAssignments.set(fallbackBranchId, new Set());
+          }
+
+          branchAssignments.get(fallbackBranchId)!.add(row.teacher_id);
+        }
+      );
+
+      const { data: branchVersionRows, error: branchVersionError } =
+        await supabase
+          .from("course_versions")
+          .select("id, branch_id")
+          .eq("course_id", id);
+
+      if (branchVersionError) {
+        throw new Error(
+          branchVersionError.message ||
+            "Error al obtener versiones asociadas a las ediciones"
         );
       }
-    }
 
-    const defaultBranch =
-      branchRows.find((branch) => branch.is_default) ?? null;
+      const versionToBranch = new Map<string, string>();
+      const versionIds: string[] = [];
+
+      (
+        branchVersionRows as { id: string; branch_id: string | null }[] | null
+      )?.forEach((row) => {
+        const branchId = row.branch_id ?? defaultBranchId ?? null;
+
+        if (!branchId) {
+          return;
+        }
+
+        versionToBranch.set(row.id, branchId);
+        versionIds.push(row.id);
+      });
+
+      if (versionIds.length > 0) {
+        const { data: allAssignmentsRows, error: allAssignmentsError } =
+          await supabase
+            .from("course_version_teachers")
+            .select("course_version_id, teacher_id")
+            .in("course_version_id", versionIds);
+
+        if (allAssignmentsError) {
+          throw new Error(
+            allAssignmentsError.message ||
+              "Error al obtener docentes asignados por edición"
+          );
+        }
+
+        (
+          allAssignmentsRows as
+            | {
+                course_version_id: string;
+                teacher_id: string;
+              }[]
+            | null
+        )?.forEach((assignment) => {
+          const branchId = versionToBranch.get(assignment.course_version_id);
+          if (!branchId || !assignment.teacher_id) {
+            return;
+          }
+
+          if (!branchAssignments.has(branchId)) {
+            branchAssignments.set(branchId, new Set());
+          }
+
+          branchAssignments.get(branchId)!.add(assignment.teacher_id);
+        });
+      }
+
+      branchRows.forEach((branch) => {
+        branchBaseVersionByBranch.set(
+          branch.id,
+          branch.base_version_id
+            ? (baseVersionsMap.get(branch.base_version_id) ?? null)
+            : null
+        );
+
+        const tipVersion = tipVersionsMap.get(branch.id) ?? null;
+        branchTipVersionByBranch.set(branch.id, tipVersion);
+
+        const teacherIds = tipVersion
+          ? (tipAssignmentsByVersionId.get(tipVersion.id) ?? [])
+          : [];
+
+        branchTipTeacherIdsByBranch.set(branch.id, teacherIds);
+
+        branchTeacherIdsByBranch.set(
+          branch.id,
+          Array.from(branchAssignments.get(branch.id) ?? new Set())
+        );
+      });
+    }
 
     const { data: mergeRequestsData } = await supabase
       .from("course_merge_requests")
@@ -131,20 +305,30 @@ export class SupabaseCourseRepository implements ICourseRepository {
       (mergeRequestsData as CourseMergeRequestData[]) ?? [];
 
     const extras = {
-      defaultBranch,
+      defaultBranch: defaultBranchRow,
       branches: branchRows,
       branchBaseVersions: Object.fromEntries(
         branchRows.map((branch) => [
           branch.id,
-          branch.base_version_id
-            ? (branchBaseVersions.get(branch.base_version_id) ?? null)
-            : null,
+          branchBaseVersionByBranch.get(branch.id) ?? null,
         ])
       ),
       branchTipVersions: Object.fromEntries(
         branchRows.map((branch) => [
           branch.id,
-          branchTipVersions.get(branch.id) ?? null,
+          branchTipVersionByBranch.get(branch.id) ?? null,
+        ])
+      ),
+      branchTipTeacherIds: Object.fromEntries(
+        branchRows.map((branch) => [
+          branch.id,
+          branchTipTeacherIdsByBranch.get(branch.id) ?? [],
+        ])
+      ),
+      branchTeacherIds: Object.fromEntries(
+        branchRows.map((branch) => [
+          branch.id,
+          branchTeacherIdsByBranch.get(branch.id) ?? [],
         ])
       ),
       mergeRequests: mergeRequestRows,
@@ -221,6 +405,8 @@ export class SupabaseCourseRepository implements ICourseRepository {
       string,
       CourseVersionData | null
     >();
+    const branchTipTeacherIdsByBranch = new Map<string, string[]>();
+    const branchTeacherIdsByBranch = new Map<string, string[]>();
     const defaultBranchByCourse = new Map<string, CourseBranchData>();
     const mergeRequestsByCourse = new Map<string, CourseMergeRequestData[]>();
 
@@ -237,6 +423,48 @@ export class SupabaseCourseRepository implements ICourseRepository {
         const baseVersionIds = branchRows
           .map((branch) => branch.base_version_id)
           .filter((id): id is string => Boolean(id));
+
+        const defaultBranchIdByCourse = new Map<string, string>();
+        branchRows.forEach((branch) => {
+          if (branch.is_default) {
+            defaultBranchByCourse.set(branch.course_id, branch);
+            defaultBranchIdByCourse.set(branch.course_id, branch.id);
+          }
+        });
+
+        const courseTeacherAssignments = new Map<string, Set<string>>();
+
+        const { data: courseTeacherRows, error: courseTeacherError } =
+          await supabase
+            .from("course_teachers")
+            .select("course_id, teacher_id")
+            .in("course_id", courseIds);
+
+        if (courseTeacherError) {
+          throw new Error(
+            courseTeacherError.message ||
+              "Error al obtener docentes asignados al curso"
+          );
+        }
+
+        (
+          courseTeacherRows as
+            | {
+                course_id: string;
+                teacher_id: string | null;
+              }[]
+            | null
+        )?.forEach((row) => {
+          if (!row?.course_id || !row.teacher_id) {
+            return;
+          }
+
+          if (!courseTeacherAssignments.has(row.course_id)) {
+            courseTeacherAssignments.set(row.course_id, new Set());
+          }
+
+          courseTeacherAssignments.get(row.course_id)!.add(row.teacher_id);
+        });
 
         let baseVersionsMap = new Map<string, CourseVersionData>();
 
@@ -257,6 +485,7 @@ export class SupabaseCourseRepository implements ICourseRepository {
         }
 
         let tipVersionsMap = new Map<string, CourseVersionData>();
+        let tipAssignmentsByVersionId = new Map<string, string[]>();
 
         if (branchIds.length > 0) {
           const { data: tipVersionsData } = await supabase
@@ -266,11 +495,134 @@ export class SupabaseCourseRepository implements ICourseRepository {
             .eq("is_tip", true);
 
           if (tipVersionsData) {
+            const tipVersionRows = (
+              tipVersionsData as CourseVersionData[]
+            ).filter((version) => Boolean(version.branch_id));
+
             tipVersionsMap = new Map(
-              (tipVersionsData as CourseVersionData[])
-                .filter((version) => Boolean(version.branch_id))
-                .map((version) => [version.branch_id as string, version])
+              tipVersionRows.map((version) => [
+                version.branch_id as string,
+                version,
+              ])
             );
+
+            const tipVersionIds = tipVersionRows.map((version) => version.id);
+
+            if (tipVersionIds.length > 0) {
+              const { data: tipAssignmentsData, error: tipAssignmentsError } =
+                await supabase
+                  .from("course_version_teachers")
+                  .select("course_version_id, teacher_id")
+                  .in("course_version_id", tipVersionIds);
+
+              if (tipAssignmentsError) {
+                throw new Error(
+                  tipAssignmentsError.message ||
+                    "Error al obtener docentes asignados a las versiones"
+                );
+              }
+
+              if (tipAssignmentsData) {
+                const assignmentMap = new Map<string, string[]>();
+
+                (
+                  tipAssignmentsData as {
+                    course_version_id: string;
+                    teacher_id: string;
+                  }[]
+                ).forEach((row) => {
+                  if (!assignmentMap.has(row.course_version_id)) {
+                    assignmentMap.set(row.course_version_id, []);
+                  }
+                  assignmentMap
+                    .get(row.course_version_id)!
+                    .push(row.teacher_id);
+                });
+
+                tipAssignmentsByVersionId = assignmentMap;
+              }
+            }
+          }
+        }
+
+        const branchAssignments = new Map<string, Set<string>>();
+
+        const courseIdsForBranches = Array.from(
+          new Set(branchRows.map((branch) => branch.course_id))
+        );
+
+        if (courseIdsForBranches.length > 0) {
+          const { data: branchVersionRows, error: branchVersionError } =
+            await supabase
+              .from("course_versions")
+              .select("id, branch_id, course_id")
+              .in("course_id", courseIdsForBranches);
+
+          if (branchVersionError) {
+            throw new Error(
+              branchVersionError.message ||
+                "Error al obtener versiones asociadas a las ediciones"
+            );
+          }
+
+          const versionToBranch = new Map<string, string>();
+          const versionIds: string[] = [];
+
+          (
+            branchVersionRows as
+              | {
+                  id: string;
+                  branch_id: string | null;
+                  course_id: string;
+                }[]
+              | null
+          )?.forEach((row) => {
+            const branchId =
+              row.branch_id ??
+              defaultBranchIdByCourse.get(row.course_id) ??
+              null;
+
+            if (!branchId) {
+              return;
+            }
+
+            versionToBranch.set(row.id, branchId);
+            versionIds.push(row.id);
+          });
+
+          if (versionIds.length > 0) {
+            const { data: assignmentRows, error: assignmentsError } =
+              await supabase
+                .from("course_version_teachers")
+                .select("course_version_id, teacher_id")
+                .in("course_version_id", versionIds);
+
+            if (assignmentsError) {
+              throw new Error(
+                assignmentsError.message ||
+                  "Error al obtener asignaciones de docentes por edición"
+              );
+            }
+
+            (
+              assignmentRows as
+                | {
+                    course_version_id: string;
+                    teacher_id: string;
+                  }[]
+                | null
+            )?.forEach((row) => {
+              const branchId = versionToBranch.get(row.course_version_id);
+              if (!branchId || !row.teacher_id) {
+                return;
+              }
+
+              if (!branchAssignments.has(branchId)) {
+                branchAssignments.set(branchId, new Set());
+              }
+
+              branchAssignments.get(branchId)!.add(row.teacher_id);
+            });
           }
         }
 
@@ -281,7 +633,10 @@ export class SupabaseCourseRepository implements ICourseRepository {
 
           branchesByCourse.get(branch.course_id)!.push(branch);
 
-          if (branch.is_default) {
+          if (
+            branch.is_default &&
+            !defaultBranchByCourse.has(branch.course_id)
+          ) {
             defaultBranchByCourse.set(branch.course_id, branch);
           }
 
@@ -292,9 +647,32 @@ export class SupabaseCourseRepository implements ICourseRepository {
               : null
           );
 
-          branchTipVersionByBranch.set(
+          const tipVersion = tipVersionsMap.get(branch.id) ?? null;
+          branchTipVersionByBranch.set(branch.id, tipVersion);
+
+          const teacherIds = tipVersion
+            ? (tipAssignmentsByVersionId.get(tipVersion.id) ?? [])
+            : [];
+
+          branchTipTeacherIdsByBranch.set(branch.id, teacherIds);
+
+          const courseLevelAssignments = courseTeacherAssignments.get(
+            branch.course_id
+          );
+
+          if (courseLevelAssignments && courseLevelAssignments.size > 0) {
+            if (!branchAssignments.has(branch.id)) {
+              branchAssignments.set(branch.id, new Set());
+            }
+
+            courseLevelAssignments.forEach((teacherId: string) => {
+              branchAssignments.get(branch.id)!.add(teacherId);
+            });
+          }
+
+          branchTeacherIdsByBranch.set(
             branch.id,
-            tipVersionsMap.get(branch.id) ?? null
+            Array.from(branchAssignments.get(branch.id) ?? new Set())
           );
         });
       }
@@ -348,6 +726,18 @@ export class SupabaseCourseRepository implements ICourseRepository {
           branches,
           branchBaseVersions: branchBaseVersionsRecord,
           branchTipVersions: branchTipVersionsRecord,
+          branchTipTeacherIds: Object.fromEntries(
+            branches.map((branch) => [
+              branch.id,
+              branchTipTeacherIdsByBranch.get(branch.id) ?? [],
+            ])
+          ),
+          branchTeacherIds: Object.fromEntries(
+            branches.map((branch) => [
+              branch.id,
+              branchTeacherIdsByBranch.get(branch.id) ?? [],
+            ])
+          ),
           mergeRequests: mergeRequestsByCourse.get(course.id) ?? [],
         }
       );
@@ -733,33 +1123,56 @@ export class SupabaseCourseRepository implements ICourseRepository {
       (row) => row.course_version_id
     );
 
-    if (assignedVersionIds.length === 0) {
-      return [];
-    }
+    const assignedCourseIds = new Set<string>();
 
-    const { data: versionRows, error: versionsError } = await supabase
-      .from("course_versions")
-      .select("id, course_id")
-      .in("id", assignedVersionIds);
+    if (assignedVersionIds.length > 0) {
+      const { data: versionRows, error: versionsError } = await supabase
+        .from("course_versions")
+        .select("id, course_id")
+        .in("id", assignedVersionIds);
 
-    if (versionsError) {
-      throw new Error(
-        versionsError.message ||
-          "Error al obtener información de las versiones asignadas"
+      if (versionsError) {
+        throw new Error(
+          versionsError.message ||
+            "Error al obtener información de las versiones asignadas"
+        );
+      }
+
+      (versionRows as { id: string; course_id: string }[] | null)?.forEach(
+        (row) => {
+          if (row?.course_id) {
+            assignedCourseIds.add(row.course_id);
+          }
+        }
       );
     }
 
-    const courseIds = Array.from(
-      new Set(
-        (versionRows as { id: string; course_id: string }[]).map(
-          (row) => row.course_id
-        )
-      )
+    const { data: courseTeacherRows, error: courseTeachersError } =
+      await supabase
+        .from("course_teachers")
+        .select("course_id")
+        .eq("teacher_id", teacherId);
+
+    if (courseTeachersError) {
+      throw new Error(
+        courseTeachersError.message ||
+          "Error al obtener asignaciones de cursos para el docente"
+      );
+    }
+
+    (courseTeacherRows as { course_id: string | null }[] | null)?.forEach(
+      (row) => {
+        if (row?.course_id) {
+          assignedCourseIds.add(row.course_id);
+        }
+      }
     );
 
-    if (courseIds.length === 0) {
+    if (assignedCourseIds.size === 0) {
       return [];
     }
+
+    const courseIds = Array.from(assignedCourseIds);
 
     const { data, error } = await supabase
       .from("courses")
@@ -796,13 +1209,346 @@ export class SupabaseCourseRepository implements ICourseRepository {
       }
     }
 
-    return courses.map((course) =>
-      CourseEntity.fromDatabase(
+    const courseIdsList = courses.map((course) => course.id);
+
+    const branchesByCourse = new Map<string, CourseBranchData[]>();
+    const branchBaseVersionByBranch = new Map<
+      string,
+      CourseVersionData | null
+    >();
+    const branchTipVersionByBranch = new Map<
+      string,
+      CourseVersionData | null
+    >();
+    const branchTipTeacherIdsByBranch = new Map<string, string[]>();
+    const branchTeacherIdsByBranch = new Map<string, string[]>();
+    const defaultBranchByCourse = new Map<string, CourseBranchData>();
+    const mergeRequestsByCourse = new Map<string, CourseMergeRequestData[]>();
+
+    if (courseIdsList.length > 0) {
+      const { data: branchesData } = await supabase
+        .from("course_branches")
+        .select("*")
+        .in("course_id", courseIdsList);
+
+      const branchRows = (branchesData as CourseBranchData[]) ?? [];
+
+      if (branchRows.length > 0) {
+        const branchIds = branchRows.map((branch) => branch.id);
+        const baseVersionIds = branchRows
+          .map((branch) => branch.base_version_id)
+          .filter((id): id is string => Boolean(id));
+
+        const defaultBranchIdByCourse = new Map<string, string>();
+        branchRows.forEach((branch) => {
+          if (branch.is_default) {
+            defaultBranchByCourse.set(branch.course_id, branch);
+            defaultBranchIdByCourse.set(branch.course_id, branch.id);
+          }
+        });
+
+        const courseTeacherAssignments = new Map<string, Set<string>>();
+
+        const { data: courseTeacherRows, error: courseTeacherError } =
+          await supabase
+            .from("course_teachers")
+            .select("course_id, teacher_id")
+            .in("course_id", courseIdsList);
+
+        if (courseTeacherError) {
+          throw new Error(
+            courseTeacherError.message ||
+              "Error al obtener docentes asignados al curso"
+          );
+        }
+
+        (
+          courseTeacherRows as
+            | {
+                course_id: string;
+                teacher_id: string | null;
+              }[]
+            | null
+        )?.forEach((row) => {
+          if (!row?.course_id || !row.teacher_id) {
+            return;
+          }
+
+          if (!courseTeacherAssignments.has(row.course_id)) {
+            courseTeacherAssignments.set(row.course_id, new Set());
+          }
+
+          courseTeacherAssignments.get(row.course_id)!.add(row.teacher_id);
+        });
+
+        let baseVersionsMap = new Map<string, CourseVersionData>();
+
+        if (baseVersionIds.length > 0) {
+          const { data: baseVersionsData } = await supabase
+            .from("course_versions")
+            .select("*")
+            .in("id", baseVersionIds);
+
+          if (baseVersionsData) {
+            baseVersionsMap = new Map(
+              (baseVersionsData as CourseVersionData[]).map((version) => [
+                version.id,
+                version,
+              ])
+            );
+          }
+        }
+
+        let tipVersionsMap = new Map<string, CourseVersionData>();
+        let tipAssignmentsByVersionId = new Map<string, string[]>();
+
+        if (branchIds.length > 0) {
+          const { data: tipVersionsData } = await supabase
+            .from("course_versions")
+            .select("*")
+            .in("branch_id", branchIds)
+            .eq("is_tip", true);
+
+          if (tipVersionsData) {
+            const tipVersionRows = (
+              tipVersionsData as CourseVersionData[]
+            ).filter((version) => Boolean(version.branch_id));
+
+            tipVersionsMap = new Map(
+              tipVersionRows.map((version) => [
+                version.branch_id as string,
+                version,
+              ])
+            );
+
+            const tipVersionIds = tipVersionRows.map((version) => version.id);
+
+            if (tipVersionIds.length > 0) {
+              const { data: tipAssignmentsData, error: tipAssignmentsError } =
+                await supabase
+                  .from("course_version_teachers")
+                  .select("course_version_id, teacher_id")
+                  .in("course_version_id", tipVersionIds);
+
+              if (tipAssignmentsError) {
+                throw new Error(
+                  tipAssignmentsError.message ||
+                    "Error al obtener docentes asignados a las versiones"
+                );
+              }
+
+              if (tipAssignmentsData) {
+                const assignmentMap = new Map<string, string[]>();
+
+                (
+                  tipAssignmentsData as {
+                    course_version_id: string;
+                    teacher_id: string;
+                  }[]
+                ).forEach((row) => {
+                  if (!assignmentMap.has(row.course_version_id)) {
+                    assignmentMap.set(row.course_version_id, []);
+                  }
+                  assignmentMap
+                    .get(row.course_version_id)!
+                    .push(row.teacher_id);
+                });
+
+                tipAssignmentsByVersionId = assignmentMap;
+              }
+            }
+          }
+        }
+
+        const branchAssignments = new Map<string, Set<string>>();
+
+        const courseIdsForBranches = Array.from(
+          new Set(branchRows.map((branch) => branch.course_id))
+        );
+
+        if (courseIdsForBranches.length > 0) {
+          const { data: branchVersionRows, error: branchVersionError } =
+            await supabase
+              .from("course_versions")
+              .select("id, branch_id, course_id")
+              .in("course_id", courseIdsForBranches);
+
+          if (branchVersionError) {
+            throw new Error(
+              branchVersionError.message ||
+                "Error al obtener versiones asociadas a las ediciones"
+            );
+          }
+
+          const versionToBranch = new Map<string, string>();
+          const versionIds: string[] = [];
+
+          (
+            branchVersionRows as
+              | {
+                  id: string;
+                  branch_id: string | null;
+                  course_id: string;
+                }[]
+              | null
+          )?.forEach((row) => {
+            const branchId =
+              row.branch_id ??
+              defaultBranchIdByCourse.get(row.course_id) ??
+              null;
+
+            if (!branchId) {
+              return;
+            }
+
+            versionToBranch.set(row.id, branchId);
+            versionIds.push(row.id);
+          });
+
+          if (versionIds.length > 0) {
+            const { data: assignmentRows, error: assignmentsError } =
+              await supabase
+                .from("course_version_teachers")
+                .select("course_version_id, teacher_id")
+                .in("course_version_id", versionIds);
+
+            if (assignmentsError) {
+              throw new Error(
+                assignmentsError.message ||
+                  "Error al obtener asignaciones de docentes por edición"
+              );
+            }
+
+            (
+              assignmentRows as
+                | {
+                    course_version_id: string;
+                    teacher_id: string;
+                  }[]
+                | null
+            )?.forEach((row) => {
+              const branchId = versionToBranch.get(row.course_version_id);
+              if (!branchId || !row.teacher_id) {
+                return;
+              }
+
+              if (!branchAssignments.has(branchId)) {
+                branchAssignments.set(branchId, new Set());
+              }
+
+              branchAssignments.get(branchId)!.add(row.teacher_id);
+            });
+          }
+        }
+
+        branchRows.forEach((branch) => {
+          if (!branchesByCourse.has(branch.course_id)) {
+            branchesByCourse.set(branch.course_id, []);
+          }
+
+          branchesByCourse.get(branch.course_id)!.push(branch);
+
+          branchBaseVersionByBranch.set(
+            branch.id,
+            branch.base_version_id
+              ? (baseVersionsMap.get(branch.base_version_id) ?? null)
+              : null
+          );
+
+          const tipVersion = tipVersionsMap.get(branch.id) ?? null;
+          branchTipVersionByBranch.set(branch.id, tipVersion);
+
+          const teacherIds = tipVersion
+            ? (tipAssignmentsByVersionId.get(tipVersion.id) ?? [])
+            : [];
+
+          branchTipTeacherIdsByBranch.set(branch.id, teacherIds);
+
+          const courseLevelAssignments = courseTeacherAssignments.get(
+            branch.course_id
+          );
+
+          if (courseLevelAssignments && courseLevelAssignments.size > 0) {
+            if (!branchAssignments.has(branch.id)) {
+              branchAssignments.set(branch.id, new Set());
+            }
+
+            courseLevelAssignments.forEach((teacherId: string) => {
+              branchAssignments.get(branch.id)!.add(teacherId);
+            });
+          }
+
+          branchTeacherIdsByBranch.set(
+            branch.id,
+            Array.from(branchAssignments.get(branch.id) ?? new Set())
+          );
+        });
+      }
+
+      const { data: mergeRequestsData } = await supabase
+        .from("course_merge_requests")
+        .select("*")
+        .in("course_id", courseIdsList)
+        .in("status", ["open", "approved"]);
+
+      if (mergeRequestsData) {
+        (mergeRequestsData as CourseMergeRequestData[]).forEach((mr) => {
+          if (!mergeRequestsByCourse.has(mr.course_id)) {
+            mergeRequestsByCourse.set(mr.course_id, []);
+          }
+
+          mergeRequestsByCourse.get(mr.course_id)!.push(mr);
+        });
+      }
+    }
+
+    return courses.map((course) => {
+      const branches = branchesByCourse.get(course.id) ?? [];
+
+      const branchBaseVersionsRecord = Object.fromEntries(
+        branches.map((branch) => [
+          branch.id,
+          branchBaseVersionByBranch.get(branch.id) ?? null,
+        ])
+      );
+
+      const branchTipVersionsRecord = Object.fromEntries(
+        branches.map((branch) => [
+          branch.id,
+          branchTipVersionByBranch.get(branch.id) ?? null,
+        ])
+      );
+
+      const defaultBranch =
+        defaultBranchByCourse.get(course.id) ??
+        branches.find((branch) => branch.id === course.default_branch_id) ??
+        null;
+
+      return CourseEntity.fromDatabase(
         course,
         course.active_version_id
           ? (versionMap.get(course.active_version_id) ?? null)
-          : null
-      )
-    );
+          : null,
+        {
+          defaultBranch,
+          branches,
+          branchBaseVersions: branchBaseVersionsRecord,
+          branchTipVersions: branchTipVersionsRecord,
+          branchTipTeacherIds: Object.fromEntries(
+            branches.map((branch) => [
+              branch.id,
+              branchTipTeacherIdsByBranch.get(branch.id) ?? [],
+            ])
+          ),
+          branchTeacherIds: Object.fromEntries(
+            branches.map((branch) => [
+              branch.id,
+              branchTeacherIdsByBranch.get(branch.id) ?? [],
+            ])
+          ),
+          mergeRequests: mergeRequestsByCourse.get(course.id) ?? [],
+        }
+      );
+    });
   }
 }

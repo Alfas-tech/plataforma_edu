@@ -169,20 +169,18 @@ export function LessonManagementClient({
                       <Edit className="h-4 w-4 sm:mr-2" />
                       <span className="hidden sm:inline">Editar</span>
                     </Button>
-                    {isAdmin && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          canMutateContent && setDeletingLesson(lesson)
-                        }
-                        className="border-red-300 text-red-600 hover:bg-red-50"
-                        disabled={!canMutateContent}
-                      >
-                        <Trash2 className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Eliminar</span>
-                      </Button>
-                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        canMutateContent && setDeletingLesson(lesson)
+                      }
+                      className="border-red-300 text-red-600 hover:bg-red-50"
+                      disabled={!canMutateContent}
+                    >
+                      <Trash2 className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Eliminar</span>
+                    </Button>
                   </div>
                 </div>
               </CardHeader>

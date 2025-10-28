@@ -29,99 +29,45 @@ export class SupabaseCourseBranchingRepository
     input: CreateCourseBranchInput
   ): Promise<CourseEntity> {
     const supabase = createClient();
-    const authUser = (await supabase.auth.getUser()).data.user;
-    const userId = authUser?.id ?? null;
 
-    const branchName = input.branchName.trim();
-    if (!branchName) {
-      throw new Error("El nombre de la rama es obligatorio");
-    }
-
-    const desiredLabel = input.newVersionLabel.trim();
-    if (!desiredLabel) {
-      throw new Error("La etiqueta de la nueva versión es obligatoria");
-    }
-
-    const { data: baseVersionData, error: baseVersionError } = await supabase
-      .from("course_versions")
-      .select("*")
-      .eq("id", input.baseVersionId)
-      .single();
-
-    if (baseVersionError || !baseVersionData) {
-      throw new Error("No se encontró la versión base seleccionada");
-    }
-
-    const baseVersion = baseVersionData as CourseVersionData;
-
-    if (baseVersion.course_id !== input.courseId) {
-      throw new Error("La versión base seleccionada no pertenece al curso");
-    }
-
-    const { data: existingBranch } = await supabase
-      .from("course_branches")
-      .select("id")
-      .eq("course_id", input.courseId)
-      .eq("name", branchName)
-      .maybeSingle();
-
-    if (existingBranch) {
-      throw new Error("Ya existe una rama con ese nombre en el curso");
-    }
-
-    const { data: branchData, error: branchError } = await supabase
-      .from("course_branches")
-      .insert({
-        course_id: input.courseId,
-        name: branchName,
-        description: input.description ?? null,
-        parent_branch_id: baseVersion.branch_id,
-        base_version_id: baseVersion.id,
-        created_by: userId,
-        is_default: false,
-      })
-      .select()
-      .single();
-
-    if (branchError || !branchData) {
-      const message = branchError?.message ?? "Error al crear la rama";
-      throw new Error(message);
-    }
-
-    const versionLabel = await this.ensureUniqueVersionLabel(
-      supabase,
-      input.courseId,
-      desiredLabel
+    // Usar función RPC transaccional para crear rama + versión atómicamente
+    const { data: rpcResult, error: rpcError } = await supabase.rpc(
+      "create_course_branch_transaction",
+      {
+        p_course_id: input.courseId,
+        p_branch_name: input.branchName.trim(),
+        p_description: input.description ?? "",
+        p_base_version_id: input.baseVersionId,
+        p_new_version_label: input.newVersionLabel.trim(),
+      }
     );
 
-    const { data: newVersionData, error: newVersionError } = await supabase
-      .from("course_versions")
-      .insert({
-        course_id: input.courseId,
-        branch_id: branchData.id,
-        parent_version_id: baseVersion.id,
-        based_on_version_id: baseVersion.id,
-        version_label: versionLabel,
-        summary: baseVersion.summary,
-        status: "draft" satisfies CourseVersionStatus,
-        is_active: false,
-        is_published: false,
-        is_tip: true,
-        created_by: userId,
-      })
-      .select()
-      .single();
-
-    if (newVersionError || !newVersionData) {
-      const message =
-        newVersionError?.message || "Error al crear la versión de la rama";
-      throw new Error(message);
+    if (rpcError) {
+      throw new Error(rpcError.message || "Error al crear la rama del curso");
     }
 
+    if (!rpcResult || rpcResult.length === 0) {
+      throw new Error("No se obtuvo respuesta al crear la rama");
+    }
+
+    const result = rpcResult[0] as {
+      branch_id: string | null;
+      version_id: string | null;
+      success: boolean;
+      error_message: string;
+    };
+
+    if (!result.success || !result.branch_id || !result.version_id) {
+      throw new Error(
+        result.error_message || "Error al crear la rama del curso"
+      );
+    }
+
+    // Clonar módulos y lecciones de la versión base
     await this.cloneModulesAndLessons(
       supabase,
-      baseVersion.id,
-      newVersionData.id,
+      input.baseVersionId,
+      result.version_id,
       input.courseId
     );
 
@@ -508,10 +454,34 @@ export class SupabaseCourseBranchingRepository
         }
       }
 
+      const { error: deleteAssignmentsError } = await supabase
+        .from("course_version_teachers")
+        .delete()
+        .in("course_version_id", versionIds);
+
+      if (deleteAssignmentsError) {
+        throw new Error(
+          deleteAssignmentsError.message ||
+            "Error al eliminar las asignaciones de docentes de la rama"
+        );
+      }
+
+      const { error: deleteEditorsError } = await supabase
+        .from("course_version_editors")
+        .delete()
+        .in("course_version_id", versionIds);
+
+      if (deleteEditorsError) {
+        throw new Error(
+          deleteEditorsError.message ||
+            "Error al eliminar los editores de la rama"
+        );
+      }
+
       const { error: deleteVersionsError } = await supabase
         .from("course_versions")
         .delete()
-        .in("id", versionIds);
+        .eq("branch_id", input.branchId);
 
       if (deleteVersionsError) {
         throw new Error(

@@ -33,6 +33,7 @@ export interface CourseOverview {
   defaultBranch: CourseBranchOverview | null;
   branches: CourseBranchOverview[];
   pendingMergeRequests: CourseMergeRequestOverview[];
+  canEditCourse?: boolean;
 }
 
 export interface CourseBranchOverview {
@@ -48,6 +49,7 @@ export interface CourseBranchOverview {
   tipVersionStatus: CourseVersionStatus | null;
   tipVersionUpdatedAt: string | null;
   updatedAt: string;
+  canManage?: boolean;
 }
 
 export interface CourseMergeRequestOverview {

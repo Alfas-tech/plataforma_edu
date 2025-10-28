@@ -29,7 +29,7 @@ export class DeleteLessonUseCase {
         };
       }
 
-      // Get module
+      // Get module to get course version ID
       const moduleData = await this.moduleRepository.getModuleById(
         lesson.moduleId
       );
@@ -40,7 +40,7 @@ export class DeleteLessonUseCase {
         };
       }
 
-      // Only admins can delete lessons
+      // Verify current user is authenticated
       const currentUser = await this.authRepository.getCurrentUser();
       if (!currentUser) {
         return {
@@ -59,18 +59,39 @@ export class DeleteLessonUseCase {
         };
       }
 
-      if (!profile.isAdmin()) {
-        return {
-          success: false,
-          error: "Solo los administradores pueden eliminar lecciones",
-        };
+      // Admins can delete any lesson
+      if (profile.isAdmin()) {
+        await this.lessonRepository.deleteLesson(lessonId);
+        return { success: true };
       }
 
-      // Delete lesson
-      await this.lessonRepository.deleteLesson(lessonId);
+      // Teachers can delete lessons if they are assigned to the course/version
+      if (profile.isTeacher()) {
+        const courseVersionId = moduleData.courseVersionId;
 
+        // Check if teacher is assigned to this version
+        const isAssigned =
+          await this.courseRepository.isTeacherAssignedToVersion(
+            courseVersionId,
+            currentUser.id
+          );
+
+        if (!isAssigned) {
+          return {
+            success: false,
+            error: "No tienes permisos para eliminar esta lección",
+          };
+        }
+
+        // Teacher is assigned, allow deletion
+        await this.lessonRepository.deleteLesson(lessonId);
+        return { success: true };
+      }
+
+      // Not admin or teacher
       return {
-        success: true,
+        success: false,
+        error: "No tienes permisos para eliminar lecciones",
       };
     } catch (error) {
       return {

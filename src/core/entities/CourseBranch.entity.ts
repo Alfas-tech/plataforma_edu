@@ -4,6 +4,8 @@ import { CourseVersionEntity } from "./CourseVersion.entity";
 interface CourseBranchExtras {
   baseVersion?: CourseVersionData | null;
   tipVersion?: CourseVersionData | null;
+  tipVersionTeacherIds?: string[];
+  assignedTeacherIds?: string[];
 }
 
 export class CourseBranchEntity {
@@ -19,7 +21,9 @@ export class CourseBranchEntity {
     public readonly updatedAt: Date,
     public readonly isDefault: boolean,
     public readonly baseVersion: CourseVersionEntity | null = null,
-    public readonly tipVersion: CourseVersionEntity | null = null
+    public readonly tipVersion: CourseVersionEntity | null = null,
+    public readonly tipVersionTeacherIds: string[] = [],
+    public readonly assignedTeacherIds: string[] = []
   ) {}
 
   static fromDatabase(
@@ -46,7 +50,9 @@ export class CourseBranchEntity {
       new Date(data.updated_at),
       data.is_default,
       baseVersionEntity,
-      tipVersionEntity
+      tipVersionEntity,
+      extras?.tipVersionTeacherIds ?? [],
+      extras?.assignedTeacherIds ?? []
     );
   }
 

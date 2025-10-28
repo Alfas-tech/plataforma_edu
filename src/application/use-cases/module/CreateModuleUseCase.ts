@@ -10,7 +10,7 @@ export interface CreateModuleInput {
   title: string;
   description: string | null;
   orderIndex: number;
-  content: string | null;
+  content?: string | null;
   isPublished: boolean;
 }
 
@@ -120,7 +120,7 @@ export class CreateModuleUseCase {
         title: input.title,
         description: input.description,
         order_index: input.orderIndex,
-        content: input.content,
+        content: input.content ?? null,
         is_published: input.isPublished,
       });
 

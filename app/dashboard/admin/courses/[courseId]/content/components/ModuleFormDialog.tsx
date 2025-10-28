@@ -29,7 +29,6 @@ interface ModuleData {
   title: string;
   description: string | null;
   orderIndex: number;
-  content: string | null;
   isPublished: boolean;
 }
 
@@ -61,20 +60,15 @@ export function ModuleFormDialog({
     handleSubmit,
     formState: { errors },
     reset,
-    setValue,
-    watch,
   } = useForm<ModuleInput>({
     resolver: zodResolver(moduleSchema),
     defaultValues: {
       title: "",
       description: "",
       orderIndex: maxOrderIndex + 1,
-      content: "",
       isPublished: false,
     },
   });
-
-  const isPublished = watch("isPublished");
 
   useEffect(() => {
     if (isOpen) {
@@ -83,7 +77,6 @@ export function ModuleFormDialog({
           title: module.title,
           description: module.description || "",
           orderIndex: module.orderIndex,
-          content: module.content || "",
           isPublished: module.isPublished,
         });
       } else {
@@ -91,7 +84,6 @@ export function ModuleFormDialog({
           title: "",
           description: "",
           orderIndex: maxOrderIndex + 1,
-          content: "",
           isPublished: false,
         });
       }
@@ -120,7 +112,6 @@ export function ModuleFormDialog({
           title: data.title,
           description: data.description || null,
           orderIndex: data.orderIndex,
-          content: data.content || null,
           isPublished: data.isPublished || false,
         });
       } else if (module) {
@@ -128,7 +119,6 @@ export function ModuleFormDialog({
           title: data.title,
           description: data.description || null,
           order_index: data.orderIndex,
-          content: data.content || null,
           is_published: data.isPublished || false,
         });
       }
@@ -214,20 +204,6 @@ export function ModuleFormDialog({
               Los módulos se reorganizarán automáticamente si hay conflictos de
               orden.
             </p>
-          </div>
-
-          {/* Content */}
-          <div className="space-y-2">
-            <Label htmlFor="content">Contenido</Label>
-            <Textarea
-              id="content"
-              placeholder="Contenido del módulo en formato Markdown..."
-              {...register("content")}
-              error={errors.content?.message}
-              disabled={isSubmitting}
-              rows={8}
-              className="font-mono text-sm"
-            />
           </div>
 
           {/* Published */}

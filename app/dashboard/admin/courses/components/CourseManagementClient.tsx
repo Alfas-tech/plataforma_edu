@@ -13,8 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type {
+  CourseOverview,
+  CourseVersionOverview,
+} from "@/src/presentation/types/course";
 import type { CourseVersionStatus } from "@/src/core/types/course.types";
-import type { CourseOverview } from "@/src/presentation/types/course";
 import type { LucideIcon } from "lucide-react";
 import {
   PlusCircle,
@@ -52,6 +55,7 @@ import { DeleteBranchDialog } from "./DeleteBranchDialog";
 
 interface CourseManagementClientProps {
   courses: CourseOverview[];
+  mode?: "admin" | "teacher";
 }
 
 type BranchOverview = CourseOverview["branches"][number];
@@ -136,9 +140,16 @@ function getMergeRequestCallout(
 function buildInitialSelectedBranches(courseList: CourseOverview[]) {
   const initial: Record<string, string> = {};
   courseList.forEach((course) => {
+    const manageableDefault = course.defaultBranch?.canManage
+      ? course.defaultBranch.id
+      : null;
+    const manageableAlternative = course.branches.find(
+      (branch) => branch.canManage
+    )?.id;
     const defaultId = course.defaultBranch?.id;
     const firstBranch = course.branches[0]?.id ?? null;
-    const selected = defaultId ?? firstBranch;
+    const selected =
+      manageableDefault ?? manageableAlternative ?? defaultId ?? firstBranch;
     if (selected) {
       initial[course.id] = selected;
     }
@@ -148,6 +159,7 @@ function buildInitialSelectedBranches(courseList: CourseOverview[]) {
 
 export function CourseManagementClient({
   courses,
+  mode = "admin",
 }: CourseManagementClientProps) {
   const router = useRouter();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -172,6 +184,8 @@ export function CourseManagementClient({
   >(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isActionPending, startActionTransition] = useTransition();
+  const isAdminMode = mode === "admin";
+  const isTeacherMode = mode === "teacher";
 
   useEffect(() => {
     setSelectedBranches((previous: Record<string, string>) => {
@@ -206,10 +220,36 @@ export function CourseManagementClient({
   };
 
   const handleEditClick = (course: CourseOverview) => {
+    if (!isAdminMode) {
+      const selectedBranchId = selectedBranches[course.id];
+      const selectedBranch = (() => {
+        if (selectedBranchId && course.defaultBranch?.id === selectedBranchId) {
+          return course.defaultBranch;
+        }
+        return (
+          course.branches.find((branch) => branch.id === selectedBranchId) ??
+          null
+        );
+      })();
+
+      const canManageSelectedBranch = selectedBranch?.canManage ?? false;
+
+      if (!course.canEditCourse || !canManageSelectedBranch) {
+        setActionError(
+          "No tienes permisos para editar la información del curso desde esta edición."
+        );
+        return;
+      }
+    }
+
+    setActionError(null);
     setEditingCourse(course);
   };
 
   const handleAssignTeachersClick = (courseId: string) => {
+    if (!isAdminMode) {
+      return;
+    }
     router.push(`/dashboard/admin/courses/${courseId}/teachers`);
   };
 
@@ -217,10 +257,14 @@ export function CourseManagementClient({
     course: CourseOverview,
     branch: BranchOverview
   ) => {
+    if (!isAdminMode) {
+      return;
+    }
     setBranchDeletionTarget({ course, branch });
   };
 
   const handleBranchChange = (courseId: string, branchId: string) => {
+    setActionError(null);
     setSelectedBranches((previous: Record<string, string>) => ({
       ...previous,
       [courseId]: branchId,
@@ -460,7 +504,7 @@ export function CourseManagementClient({
 
   return (
     <>
-      {courses.length === 0 && (
+      {isAdminMode && courses.length === 0 && (
         <div className="mb-6">
           <Button
             onClick={handleCreateClick}
@@ -474,11 +518,13 @@ export function CourseManagementClient({
 
       {courses.length > 0 && (
         <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-          <p className="font-semibold text-slate-800">Curso principal</p>
+          <p className="font-semibold text-slate-800">
+            {isAdminMode ? "Curso principal" : "Ediciones disponibles"}
+          </p>
           <p>
-            Esta cuenta administra un único curso base. Usa ediciones de trabajo
-            para preparar nuevas versiones sin afectar la experiencia publicada
-            en la edición principal.
+            {isAdminMode
+              ? "Esta cuenta administra un único curso base. Usa ediciones de trabajo para preparar nuevas versiones sin afectar la experiencia publicada en la edición principal."
+              : "Consulta todas las ediciones del curso y gestiona únicamente aquellas en las que fuiste asignado."}
           </p>
         </div>
       )}
@@ -489,15 +535,21 @@ export function CourseManagementClient({
             <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8">
               <Calendar className="mx-auto mb-3 h-12 w-12 text-slate-400" />
               <h3 className="mb-2 text-lg font-semibold text-slate-800">
-                No hay cursos creados
+                {isAdminMode
+                  ? "No hay cursos creados"
+                  : "No tienes cursos asignados"}
               </h3>
               <p className="mb-4 text-sm text-slate-600">
-                Comienza creando el primer curso de la plataforma
+                {isAdminMode
+                  ? "Comienza creando el primer curso de la plataforma"
+                  : "Un administrador deberá asignarte ediciones para empezar a trabajar."}
               </p>
-              <Button onClick={handleCreateClick} variant="outline">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Crear primer curso
-              </Button>
+              {isAdminMode && (
+                <Button onClick={handleCreateClick} variant="outline">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Crear primer curso
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -531,6 +583,9 @@ export function CourseManagementClient({
             const isDefaultBranchSelected =
               !!course.defaultBranch &&
               selectedBranchId === course.defaultBranch.id;
+            const canEditCourse = isAdminMode || Boolean(course.canEditCourse);
+            const canManageSelectedBranch =
+              isAdminMode || (selectedBranch?.canManage ?? false);
 
             const mainBranchId = course.defaultBranch?.id ?? null;
 
@@ -645,6 +700,12 @@ export function CourseManagementClient({
                         size="sm"
                         variant="outline"
                         onClick={() => handleEditClick(course)}
+                        disabled={!canEditCourse}
+                        className={
+                          !canEditCourse
+                            ? "cursor-not-allowed opacity-60"
+                            : undefined
+                        }
                       >
                         <Edit className="h-4 w-4 sm:mr-2" />
                         <span className="hidden sm:inline">Editar</span>
@@ -739,37 +800,66 @@ export function CourseManagementClient({
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setBranchDialogCourse(course)}
+                        onClick={() => {
+                          if (!isAdminMode && !canManageSelectedBranch) {
+                            setActionError(
+                              "No tienes permisos para crear ediciones desde esta rama."
+                            );
+                            return;
+                          }
+                          setActionError(null);
+                          setBranchDialogCourse(course);
+                        }}
+                        disabled={!isAdminMode && !canManageSelectedBranch}
+                        className={
+                          !isAdminMode && !canManageSelectedBranch
+                            ? "cursor-not-allowed opacity-60"
+                            : undefined
+                        }
                       >
                         <PlusCircle className="h-4 w-4 sm:mr-2" />
                         <span className="hidden sm:inline">Nueva edición</span>
                         <span className="sm:hidden">Edición</span>
                       </Button>
-                      {selectedBranchId && !isDefaultBranchSelected && (
-                        <Button
-                          size="sm"
-                          className="bg-indigo-600 text-white hover:bg-indigo-700"
-                          onClick={() =>
-                            setMergeDialogState({
-                              course,
-                              branchId: selectedBranchId,
-                            })
-                          }
-                        >
-                          <GitPullRequest className="h-4 w-4 sm:mr-2" />
-                          <span className="hidden sm:inline">
-                            Solicitar fusión
-                          </span>
-                          <span className="sm:hidden">Fusión</span>
-                        </Button>
-                      )}
+                      {selectedBranchId &&
+                        !isDefaultBranchSelected &&
+                        (isAdminMode || canManageSelectedBranch) && (
+                          <Button
+                            size="sm"
+                            className="bg-indigo-600 text-white hover:bg-indigo-700"
+                            onClick={() => {
+                              if (!isAdminMode && !canManageSelectedBranch) {
+                                setActionError(
+                                  "No puedes solicitar una fusión desde una edición que no administras."
+                                );
+                                return;
+                              }
+                              setActionError(null);
+                              setMergeDialogState({
+                                course,
+                                branchId: selectedBranchId,
+                              });
+                            }}
+                          >
+                            <GitPullRequest className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">
+                              Solicitar fusión
+                            </span>
+                            <span className="sm:hidden">Fusión</span>
+                          </Button>
+                        )}
                     </div>
                   </div>
                 </CardHeader>
 
                 <CardContent>
+                  {actionError && (
+                    <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+                      {actionError}
+                    </div>
+                  )}
                   <div className="space-y-6">
-                    {incomingRequests.length > 0 && (
+                    {isAdminMode && incomingRequests.length > 0 && (
                       <section className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
@@ -794,12 +884,6 @@ export function CourseManagementClient({
                             final.
                           </p>
                         </div>
-
-                        {actionError && (
-                          <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
-                            {actionError}
-                          </div>
-                        )}
 
                         <div className="space-y-3">
                           {incomingRequests.map(
@@ -1043,44 +1127,70 @@ export function CourseManagementClient({
                           </span>
                         )}
                       </div>
+                      {isTeacherMode && !canManageSelectedBranch && (
+                        <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                          Solo tienes acceso de lectura en esta edición. El
+                          administrador asignado podrá otorgarte permisos si
+                          necesitas colaborar aquí.
+                        </div>
+                      )}
                       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleAssignTeachersClick(course.id)}
-                          className="w-full sm:w-auto"
-                        >
-                          <Users className="h-4 w-4 sm:mr-2" />
-                          <span className="hidden sm:inline">Docentes</span>
-                          <span className="sm:hidden">Doc.</span>
-                        </Button>
-                        <Link href={contentHref} className="w-full sm:w-auto">
+                        {isAdminMode && (
                           <Button
                             size="sm"
                             variant="outline"
+                            onClick={() => handleAssignTeachersClick(course.id)}
                             className="w-full sm:w-auto"
+                          >
+                            <Users className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Docentes</span>
+                            <span className="sm:hidden">Doc.</span>
+                          </Button>
+                        )}
+                        {canManageSelectedBranch ? (
+                          <Link href={contentHref} className="w-full sm:w-auto">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full sm:w-auto"
+                            >
+                              <BookOpen className="h-4 w-4 sm:mr-2" />
+                              <span className="hidden sm:inline">
+                                Contenido
+                              </span>
+                              <span className="sm:hidden">Cont.</span>
+                            </Button>
+                          </Link>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full cursor-not-allowed opacity-60 sm:w-auto"
+                            disabled
                           >
                             <BookOpen className="h-4 w-4 sm:mr-2" />
                             <span className="hidden sm:inline">Contenido</span>
                             <span className="sm:hidden">Cont.</span>
                           </Button>
-                        </Link>
-                        {selectedBranch && !isDefaultBranchSelected && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="w-full border-red-300 text-red-600 hover:bg-red-50 sm:w-auto"
-                            onClick={() =>
-                              handleDeleteBranchClick(course, selectedBranch)
-                            }
-                          >
-                            <Trash2 className="h-4 w-4 sm:mr-2" />
-                            <span className="hidden sm:inline">
-                              Eliminar edición
-                            </span>
-                            <span className="sm:hidden">Eliminar</span>
-                          </Button>
                         )}
+                        {selectedBranch &&
+                          !isDefaultBranchSelected &&
+                          isAdminMode && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full border-red-300 text-red-600 hover:bg-red-50 sm:w-auto"
+                              onClick={() =>
+                                handleDeleteBranchClick(course, selectedBranch)
+                              }
+                            >
+                              <Trash2 className="h-4 w-4 sm:mr-2" />
+                              <span className="hidden sm:inline">
+                                Eliminar edición
+                              </span>
+                              <span className="sm:hidden">Eliminar</span>
+                            </Button>
+                          )}
                       </div>
                       <div className="mt-4 grid gap-3 sm:grid-cols-3">
                         <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
@@ -1199,9 +1309,9 @@ export function CourseManagementClient({
 
                       {isDefaultBranchSelected ? (
                         <div className="rounded-lg border border-dashed border-slate-300 bg-white p-4 text-xs text-slate-600">
-                          Usa el panel de revisión superior para aprobar o
-                          fusionar los cambios que llegan a la edición
-                          principal.
+                          {isAdminMode
+                            ? "Usa el panel de revisión superior para aprobar o fusionar los cambios que llegan a la edición principal."
+                            : "Las solicitudes que llegan a la edición principal serán revisadas por el equipo administrador."}
                         </div>
                       ) : outgoingRequests.length === 0 ? (
                         <div className="rounded-lg border border-dashed border-slate-300 bg-white p-4 text-xs text-slate-600">
@@ -1303,7 +1413,7 @@ export function CourseManagementClient({
                       )}
                     </section>
 
-                    {course.visibilityOverride && (
+                    {course.visibilitySource === "override" && (
                       <div className="rounded-lg border border-purple-200 bg-purple-50 p-3 text-xs text-purple-900">
                         🔓 Visibilidad forzada: los estudiantes verán este curso
                         incluso si la versión activa no está publicada.
@@ -1325,11 +1435,13 @@ export function CourseManagementClient({
         </div>
       )}
 
-      <CourseFormDialog
-        isOpen={isCreateDialogOpen}
-        onClose={() => setIsCreateDialogOpen(false)}
-        mode="create"
-      />
+      {isAdminMode && (
+        <CourseFormDialog
+          isOpen={isCreateDialogOpen}
+          onClose={() => setIsCreateDialogOpen(false)}
+          mode="create"
+        />
+      )}
 
       <CourseFormDialog
         isOpen={!!editingCourse}

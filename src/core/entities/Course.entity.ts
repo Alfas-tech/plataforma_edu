@@ -13,6 +13,8 @@ interface CourseEntityExtras {
   branches?: CourseBranchData[];
   branchBaseVersions?: Record<string, CourseVersionData | null>;
   branchTipVersions?: Record<string, CourseVersionData | null>;
+  branchTipTeacherIds?: Record<string, string[]>;
+  branchTeacherIds?: Record<string, string[]>;
   mergeRequests?: CourseMergeRequestData[];
 }
 
@@ -34,17 +36,37 @@ export class CourseEntity {
     public readonly pendingMergeRequests: CourseMergeRequestEntity[] = []
   ) {}
 
+  getPrimaryVersion(): CourseVersionEntity | null {
+    if (this.activeVersion) {
+      return this.activeVersion;
+    }
+
+    if (this.defaultBranch?.tipVersion) {
+      return this.defaultBranch.tipVersion;
+    }
+
+    return null;
+  }
+
   static fromDatabase(
     data: CourseData,
     activeVersion?: CourseVersionData | null,
     extras?: CourseEntityExtras
   ): CourseEntity {
+    const activeVersionEntity = activeVersion
+      ? CourseVersionEntity.fromDatabase(activeVersion)
+      : null;
+
     const defaultBranchEntity = extras?.defaultBranch
       ? CourseBranchEntity.fromDatabase(extras.defaultBranch, {
           baseVersion:
             extras.branchBaseVersions?.[extras.defaultBranch.id] ?? null,
           tipVersion:
             extras.branchTipVersions?.[extras.defaultBranch.id] ?? null,
+          tipVersionTeacherIds:
+            extras.branchTipTeacherIds?.[extras.defaultBranch.id] ?? [],
+          assignedTeacherIds:
+            extras.branchTeacherIds?.[extras.defaultBranch.id] ?? [],
         })
       : null;
 
@@ -53,6 +75,9 @@ export class CourseEntity {
           CourseBranchEntity.fromDatabase(branch, {
             baseVersion: extras?.branchBaseVersions?.[branch.id] ?? null,
             tipVersion: extras?.branchTipVersions?.[branch.id] ?? null,
+            tipVersionTeacherIds:
+              extras?.branchTipTeacherIds?.[branch.id] ?? [],
+            assignedTeacherIds: extras?.branchTeacherIds?.[branch.id] ?? [],
           })
         )
       : [];
@@ -63,14 +88,22 @@ export class CourseEntity {
         )
       : [];
 
+    const primaryVersionCandidate =
+      activeVersionEntity ?? defaultBranchEntity?.tipVersion ?? null;
+
+    const visibilityOverrideActive = Boolean(data.visibility_override);
+    const shouldShowOverride =
+      visibilityOverrideActive &&
+      !(primaryVersionCandidate?.isPublishedAndVisible() ?? false);
+
     return new CourseEntity(
       data.id,
       data.title,
       data.summary,
       data.description,
       data.slug,
-      data.visibility_override,
-      activeVersion ? CourseVersionEntity.fromDatabase(activeVersion) : null,
+      shouldShowOverride,
+      activeVersionEntity,
       data.created_by,
       new Date(data.created_at),
       new Date(data.updated_at),
@@ -82,26 +115,28 @@ export class CourseEntity {
   }
 
   getActiveVersionLabel(): string | null {
-    return this.activeVersion?.versionLabel ?? null;
+    return this.getPrimaryVersion()?.versionLabel ?? null;
   }
 
   getActiveVersionSummary(): string | null {
-    return this.activeVersion?.summary ?? null;
+    return this.getPrimaryVersion()?.summary ?? null;
   }
 
   getActiveVersionStatus() {
-    return this.activeVersion?.status ?? null;
+    return this.getPrimaryVersion()?.status ?? null;
   }
 
   isVisibleForStudents(): boolean {
-    if (this.visibilityOverride) {
+    const version = this.getPrimaryVersion();
+
+    if (version?.isPublishedAndVisible()) {
       return true;
     }
 
-    return this.activeVersion?.isPublishedAndVisible() ?? false;
+    return this.visibilityOverride;
   }
 
   hasActiveVersion(): boolean {
-    return Boolean(this.activeVersion);
+    return this.getPrimaryVersion() !== null;
   }
 }

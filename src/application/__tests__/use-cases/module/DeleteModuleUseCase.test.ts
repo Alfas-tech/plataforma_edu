@@ -55,6 +55,7 @@ describe("DeleteModuleUseCase", () => {
       getCourseWithTeachers: jest.fn(),
       getTeacherCourses: jest.fn(),
       getCourseTeachers: jest.fn(),
+      isTeacherAssignedToVersion: jest.fn(),
     } as any;
 
     deleteModuleUseCase = new DeleteModuleUseCase(
@@ -71,6 +72,7 @@ describe("DeleteModuleUseCase", () => {
 
   describe("execute", () => {
     const moduleId = "module-123";
+    const courseVersionId = "version-123";
     const mockUser = new UserEntity(
       "admin-123",
       "admin@example.com",
@@ -90,6 +92,7 @@ describe("DeleteModuleUseCase", () => {
       const mockModule = {
         id: moduleId,
         courseId: "course-123",
+        courseVersionId: courseVersionId,
         title: "Module to Delete",
         description: "Description",
         orderIndex: 1,
@@ -97,6 +100,8 @@ describe("DeleteModuleUseCase", () => {
         isPublished: false,
         createdAt: new Date(),
         updatedAt: new Date(),
+        versionId: courseVersionId,
+        isAccessible: () => false,
       };
 
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
@@ -116,6 +121,7 @@ describe("DeleteModuleUseCase", () => {
       const mockModule = {
         id: moduleId,
         courseId: "course-123",
+        courseVersionId: courseVersionId,
         title: "Module to Delete",
         description: "Description",
         orderIndex: 1,
@@ -123,6 +129,8 @@ describe("DeleteModuleUseCase", () => {
         isPublished: false,
         createdAt: new Date(),
         updatedAt: new Date(),
+        versionId: courseVersionId,
+        isAccessible: () => false,
       };
 
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
@@ -135,10 +143,11 @@ describe("DeleteModuleUseCase", () => {
       expect(mockModuleRepository.deleteModule).not.toHaveBeenCalled();
     });
 
-    it("should return error when user is not admin", async () => {
+    it("should allow teacher to delete module if assigned to version", async () => {
       const mockModule = {
         id: moduleId,
         courseId: "course-123",
+        courseVersionId: courseVersionId,
         title: "Module to Delete",
         description: "Description",
         orderIndex: 1,
@@ -146,10 +155,12 @@ describe("DeleteModuleUseCase", () => {
         isPublished: false,
         createdAt: new Date(),
         updatedAt: new Date(),
+        versionId: courseVersionId,
+        isAccessible: () => false,
       };
 
       const teacherProfile = new ProfileEntity(
-        "user-123",
+        "teacher-123",
         "teacher@example.com",
         "Teacher User",
         null,
@@ -158,25 +169,34 @@ describe("DeleteModuleUseCase", () => {
         new Date()
       );
 
+      const teacherUser = new UserEntity(
+        "teacher-123",
+        "teacher@example.com",
+        "Teacher User"
+      );
+
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
-      mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
+      mockAuthRepository.getCurrentUser.mockResolvedValue(teacherUser);
       mockProfileRepository.getProfileByUserId.mockResolvedValue(
         teacherProfile
       );
+      mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(true);
+      mockModuleRepository.deleteModule.mockResolvedValue(undefined);
 
       const result = await deleteModuleUseCase.execute(moduleId);
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBe(
-        "Solo los administradores pueden eliminar módulos"
-      );
-      expect(mockModuleRepository.deleteModule).not.toHaveBeenCalled();
+      expect(result.success).toBe(true);
+      expect(
+        mockCourseRepository.isTeacherAssignedToVersion
+      ).toHaveBeenCalledWith(courseVersionId, "teacher-123");
+      expect(mockModuleRepository.deleteModule).toHaveBeenCalledWith(moduleId);
     });
 
-    it("should handle repository errors gracefully", async () => {
+    it("should prevent teacher from deleting module if not assigned to version", async () => {
       const mockModule = {
         id: moduleId,
         courseId: "course-123",
+        courseVersionId: courseVersionId,
         title: "Module to Delete",
         description: "Description",
         orderIndex: 1,
@@ -184,6 +204,99 @@ describe("DeleteModuleUseCase", () => {
         isPublished: false,
         createdAt: new Date(),
         updatedAt: new Date(),
+        versionId: courseVersionId,
+        isAccessible: () => false,
+      };
+
+      const teacherProfile = new ProfileEntity(
+        "teacher-123",
+        "teacher@example.com",
+        "Teacher User",
+        null,
+        "teacher",
+        new Date(),
+        new Date()
+      );
+
+      const teacherUser = new UserEntity(
+        "teacher-123",
+        "teacher@example.com",
+        "Teacher User"
+      );
+
+      mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
+      mockAuthRepository.getCurrentUser.mockResolvedValue(teacherUser);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        teacherProfile
+      );
+      mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(false);
+
+      const result = await deleteModuleUseCase.execute(moduleId);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("No tienes permisos para eliminar este módulo");
+      expect(mockModuleRepository.deleteModule).not.toHaveBeenCalled();
+    });
+
+    it("should prevent student from deleting module", async () => {
+      const mockModule = {
+        id: moduleId,
+        courseId: "course-123",
+        courseVersionId: courseVersionId,
+        title: "Module to Delete",
+        description: "Description",
+        orderIndex: 1,
+        content: "Content",
+        isPublished: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        versionId: courseVersionId,
+        isAccessible: () => false,
+      };
+
+      const studentProfile = new ProfileEntity(
+        "student-123",
+        "student@example.com",
+        "Student User",
+        null,
+        "student",
+        new Date(),
+        new Date()
+      );
+
+      const studentUser = new UserEntity(
+        "student-123",
+        "student@example.com",
+        "Student User"
+      );
+
+      mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
+      mockAuthRepository.getCurrentUser.mockResolvedValue(studentUser);
+      mockProfileRepository.getProfileByUserId.mockResolvedValue(
+        studentProfile
+      );
+
+      const result = await deleteModuleUseCase.execute(moduleId);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("No tienes permisos para eliminar módulos");
+      expect(mockModuleRepository.deleteModule).not.toHaveBeenCalled();
+    });
+
+    it("should handle repository errors gracefully", async () => {
+      const mockModule = {
+        id: moduleId,
+        courseId: "course-123",
+        courseVersionId: courseVersionId,
+        title: "Module to Delete",
+        description: "Description",
+        orderIndex: 1,
+        content: "Content",
+        isPublished: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        versionId: courseVersionId,
+        isAccessible: () => false,
       };
 
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
@@ -205,6 +318,7 @@ describe("DeleteModuleUseCase", () => {
       const mockModule = {
         id: moduleId,
         courseId: "course-123",
+        courseVersionId: courseVersionId,
         title: "Module to Delete",
         description: "Description",
         orderIndex: 1,
@@ -212,6 +326,8 @@ describe("DeleteModuleUseCase", () => {
         isPublished: false,
         createdAt: new Date(),
         updatedAt: new Date(),
+        versionId: courseVersionId,
+        isAccessible: () => false,
       };
 
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
@@ -231,6 +347,7 @@ describe("DeleteModuleUseCase", () => {
       const mockModule = {
         id: moduleId,
         courseId: "course-123",
+        courseVersionId: courseVersionId,
         title: "Module to Delete",
         description: "Description",
         orderIndex: 1,
@@ -238,6 +355,8 @@ describe("DeleteModuleUseCase", () => {
         isPublished: false,
         createdAt: new Date(),
         updatedAt: new Date(),
+        versionId: courseVersionId,
+        isAccessible: () => false,
       };
 
       mockModuleRepository.getModuleById.mockResolvedValue(mockModule);
@@ -247,9 +366,7 @@ describe("DeleteModuleUseCase", () => {
       const result = await deleteModuleUseCase.execute(moduleId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe(
-        "Solo los administradores pueden eliminar módulos"
-      );
+      expect(result.error).toBe("Perfil no encontrado");
     });
   });
 });

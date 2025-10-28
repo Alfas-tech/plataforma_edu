@@ -91,7 +91,6 @@ describe("CreateModuleUseCase", () => {
       title: "Test Module",
       description: "Test Description",
       orderIndex: 1,
-      content: "Test Content",
       isPublished: false,
     };
 
@@ -155,7 +154,7 @@ describe("CreateModuleUseCase", () => {
         "Test Module",
         "Test Description",
         1,
-        "Test Content",
+        null,
         false,
         new Date(),
         new Date()
@@ -183,7 +182,7 @@ describe("CreateModuleUseCase", () => {
           title: "Test Module",
           description: "Test Description",
           order_index: 1,
-          content: "Test Content",
+          content: null,
           is_published: false,
         })
       );
@@ -207,7 +206,7 @@ describe("CreateModuleUseCase", () => {
         "Test Module",
         "Test Description",
         1,
-        "Test Content",
+        null,
         false,
         new Date(),
         new Date()

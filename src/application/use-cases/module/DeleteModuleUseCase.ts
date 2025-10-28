@@ -27,7 +27,7 @@ export class DeleteModuleUseCase {
         };
       }
 
-      // Only admins can delete modules
+      // Verify current user is authenticated
       const currentUser = await this.authRepository.getCurrentUser();
       if (!currentUser) {
         return {
@@ -39,18 +39,47 @@ export class DeleteModuleUseCase {
       const profile = await this.profileRepository.getProfileByUserId(
         currentUser.id
       );
-      if (!profile || !profile.isAdmin()) {
+      if (!profile) {
         return {
           success: false,
-          error: "Solo los administradores pueden eliminar módulos",
+          error: "Perfil no encontrado",
         };
       }
 
-      // Delete module
-      await this.moduleRepository.deleteModule(moduleId);
+      // Admins can delete any module
+      if (profile.isAdmin()) {
+        await this.moduleRepository.deleteModule(moduleId);
+        return { success: true };
+      }
 
+      // Teachers can delete modules if they are assigned to the course/version
+      if (profile.isTeacher()) {
+        // Get course version ID from module
+        const courseVersionId = moduleData.courseVersionId;
+
+        // Check if teacher is assigned to this version
+        const isAssigned =
+          await this.courseRepository.isTeacherAssignedToVersion(
+            courseVersionId,
+            currentUser.id
+          );
+
+        if (!isAssigned) {
+          return {
+            success: false,
+            error: "No tienes permisos para eliminar este módulo",
+          };
+        }
+
+        // Teacher is assigned, allow deletion
+        await this.moduleRepository.deleteModule(moduleId);
+        return { success: true };
+      }
+
+      // Not admin or teacher
       return {
-        success: true,
+        success: false,
+        error: "No tienes permisos para eliminar módulos",
       };
     } catch (error) {
       return {
