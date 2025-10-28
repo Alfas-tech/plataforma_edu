@@ -12,6 +12,7 @@ import { LogOut, ArrowLeft, BookOpen, Plus } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { LessonManagementClient } from "./components/LessonManagementClient";
+import { LESSON_MANAGEMENT_ENABLED } from "../../../../featureFlags";
 
 interface PageProps {
   params: {
@@ -191,46 +192,64 @@ export default async function ModuleLessonsPage({
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:mb-8 sm:grid-cols-2">
-          <Card className="border-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <BookOpen className="h-5 w-5 text-blue-600" />
-                Total Lecciones
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-blue-600">
-                {lessons.length}
+        {LESSON_MANAGEMENT_ENABLED ? (
+          <>
+            {/* Stats */}
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:mb-8 sm:grid-cols-2">
+              <Card className="border-2">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <BookOpen className="h-5 w-5 text-blue-600" />
+                    Total Lecciones
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold text-blue-600">
+                    {lessons.length}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-2">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <Plus className="h-5 w-5 text-green-600" />
+                    Lecciones Publicadas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold text-green-600">
+                    {lessons.filter((l) => l.isPublished).length}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Lesson Management */}
+            <LessonManagementClient
+              moduleId={moduleId}
+              branchName={effectiveBranch?.name ?? "principal"}
+              isDefaultBranch={effectiveBranch?.isDefault ?? true}
+              courseVersionId={effectiveVersionId ?? null}
+              lessons={lessons}
+              isAdmin={profile.isAdmin}
+            />
+          </>
+        ) : (
+          <Card className="border-2 bg-white/70">
+            <CardContent className="space-y-4 p-6 text-center">
+              <BookOpen className="mx-auto h-12 w-12 text-blue-500" />
+              <h2 className="text-lg font-semibold text-slate-800">
+                La gestión de lecciones está deshabilitada
+              </h2>
+              <p className="text-sm text-slate-600">
+                La creación y edición de lecciones se encuentra oculta
+                temporalmente. Puedes continuar administrando los módulos del
+                curso desde la pantalla anterior.
               </p>
             </CardContent>
           </Card>
-
-          <Card className="border-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <Plus className="h-5 w-5 text-green-600" />
-                Lecciones Publicadas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-green-600">
-                {lessons.filter((l) => l.isPublished).length}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Lesson Management */}
-        <LessonManagementClient
-          moduleId={moduleId}
-          branchName={effectiveBranch?.name ?? "principal"}
-          isDefaultBranch={effectiveBranch?.isDefault ?? true}
-          courseVersionId={effectiveVersionId ?? null}
-          lessons={lessons}
-          isAdmin={profile.isAdmin}
-        />
+        )}
       </main>
     </div>
   );

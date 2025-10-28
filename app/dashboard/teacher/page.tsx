@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { CourseManagementClient } from "@/app/dashboard/admin/courses/components/CourseManagementClient";
 
 function formatVersionStatus(status?: string): string {
   switch (status) {
@@ -395,6 +396,19 @@ export default async function TeacherDashboardPage() {
         </div>
 
         {courses.length > 0 && (
+          <section className="mt-8">
+            <h2 className="mb-4 text-xl font-bold text-slate-800 sm:text-2xl">
+              Gestión de Ediciones
+            </h2>
+            <p className="mb-4 text-sm text-slate-600 sm:text-base">
+              Administra las ediciones asignadas, crea nuevas ramas y envía
+              solicitudes de fusión cuando tus cambios estén listos.
+            </p>
+            <CourseManagementClient courses={courses} mode="teacher" />
+          </section>
+        )}
+
+        {courses.length > 0 && (
           <Card className="border-2 border-emerald-200 bg-emerald-50">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-start gap-3">
@@ -406,12 +420,10 @@ export default async function TeacherDashboardPage() {
                     Permisos de Docente
                   </h4>
                   <ul className="space-y-1 text-xs text-emerald-700">
-                    <li>✓ Crear y editar módulos</li>
-                    <li>✓ Crear y editar lecciones</li>
-                    <li>✓ Publicar/ocultar contenido</li>
-                    <li>
-                      ✗ No puedes eliminar módulos ni lecciones (solo admins)
-                    </li>
+                    <li>✓ Crear y editar módulos y lecciones</li>
+                    <li>✓ Publicar u ocultar tus cambios</li>
+                    <li>✓ Crear nuevas ediciones y solicitar fusiones</li>
+                    <li>✗ No puedes aprobar fusiones ni eliminar ediciones</li>
                   </ul>
                 </div>
               </div>

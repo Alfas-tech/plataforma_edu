@@ -101,7 +101,6 @@ export const courseSchema = z.object({
     .max(500, "El resumen de la versión no puede exceder 500 caracteres")
     .optional()
     .or(z.literal("")),
-  visibilityOverride: z.boolean().optional(),
 });
 
 // ============================================
@@ -123,11 +122,6 @@ export const moduleSchema = z.object({
     .number()
     .int("El orden debe ser un número entero")
     .positive("El orden debe ser mayor a 0"),
-  content: z
-    .string()
-    .max(10000, "El contenido no puede exceder 10000 caracteres")
-    .optional()
-    .or(z.literal("")),
   isPublished: z.boolean().optional(),
 });
 

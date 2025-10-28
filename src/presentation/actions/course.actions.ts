@@ -42,21 +42,22 @@ const authRepository = new SupabaseAuthRepository();
 const profileRepository = new SupabaseProfileRepository();
 
 function getVisibilitySource(course: CourseEntity): CourseVisibilitySource {
-  const version = course.activeVersion;
-
-  if (course.visibilityOverride) {
-    return "override";
-  }
+  const version = course.getPrimaryVersion();
 
   if (version?.isPublishedAndVisible()) {
     return "version";
+  }
+
+  if (course.visibilityOverride) {
+    return "override";
   }
 
   return "hidden";
 }
 
 function mapBranchToPresentation(
-  branch: CourseBranchEntity
+  branch: CourseBranchEntity,
+  options?: { canManage?: boolean }
 ): CourseOverview["branches"][number] {
   return {
     id: branch.id,
@@ -73,16 +74,25 @@ function mapBranchToPresentation(
       ? branch.tipVersion.updatedAt.toISOString()
       : null,
     updatedAt: branch.updatedAt.toISOString(),
+    canManage: options?.canManage,
   };
 }
 
-function mapCourseToPresentation(course: CourseEntity): CourseOverview {
-  const version = course.activeVersion;
+function mapCourseToPresentation(
+  course: CourseEntity,
+  options?: { manageableBranchIds?: Iterable<string> }
+): CourseOverview {
+  const version = course.getPrimaryVersion();
   const visibilitySource = getVisibilitySource(course);
   const isVisibleForStudents = visibilitySource !== "hidden";
   const hasActiveVersion = course.hasActiveVersion();
   const createdAt = course.createdAt.toISOString();
   const lastUpdatedAt = (version?.updatedAt ?? course.updatedAt).toISOString();
+
+  const manageableSet = options?.manageableBranchIds
+    ? new Set(options.manageableBranchIds)
+    : new Set<string>();
+  const shouldAnnotateManagement = Boolean(options?.manageableBranchIds);
 
   const branchNameById = new Map<string, string>();
   const branchTipVersionMap = new Map<string, string>();
@@ -149,10 +159,20 @@ function mapCourseToPresentation(course: CourseEntity): CourseOverview {
     versionLabelById.set(activeVersion.id, activeVersion.label);
   }
 
-  const branches = course.branches.map(mapBranchToPresentation);
+  const branches = course.branches.map((branch) =>
+    mapBranchToPresentation(branch, {
+      canManage: shouldAnnotateManagement
+        ? manageableSet.has(branch.id)
+        : undefined,
+    })
+  );
 
   const defaultBranch = course.defaultBranch
-    ? mapBranchToPresentation(course.defaultBranch)
+    ? mapBranchToPresentation(course.defaultBranch, {
+        canManage: shouldAnnotateManagement
+          ? manageableSet.has(course.defaultBranch.id)
+          : undefined,
+      })
     : null;
 
   const branchNameFallback = (branchId: string) =>
@@ -191,6 +211,12 @@ function mapCourseToPresentation(course: CourseEntity): CourseOverview {
     mergedAt: mr.mergedAt ? mr.mergedAt.toISOString() : null,
   }));
 
+  const computedCanEditCourse = options?.manageableBranchIds
+    ? course.defaultBranch
+      ? manageableSet.has(course.defaultBranch.id)
+      : manageableSet.size > 0
+    : undefined;
+
   return {
     id: course.id,
     title: course.title,
@@ -207,6 +233,7 @@ function mapCourseToPresentation(course: CourseEntity): CourseOverview {
     defaultBranch,
     branches,
     pendingMergeRequests,
+    canEditCourse: computedCanEditCourse,
   };
 }
 
@@ -286,7 +313,7 @@ export async function getAllCourses() {
     }
 
     const courseOverviews = await enrichMergeRequestParticipants(
-      result.courses.map(mapCourseToPresentation)
+  result.courses.map((course) => mapCourseToPresentation(course))
     );
 
     return { courses: courseOverviews };
@@ -376,6 +403,7 @@ export async function createCourseBranch(input: CreateCourseBranchInput) {
   revalidateTag("admin-courses");
   revalidatePath("/dashboard/admin");
   revalidatePath("/dashboard/admin/courses");
+  revalidatePath("/dashboard/teacher");
 
   return {
     success: true,
@@ -403,6 +431,7 @@ export async function createCourseMergeRequest(
   revalidateTag("admin-courses");
   revalidatePath("/dashboard/admin");
   revalidatePath("/dashboard/admin/courses");
+  revalidatePath("/dashboard/teacher");
 
   return {
     success: true,
@@ -430,6 +459,7 @@ export async function reviewCourseMergeRequest(
   revalidateTag("admin-courses");
   revalidatePath("/dashboard/admin");
   revalidatePath("/dashboard/admin/courses");
+  revalidatePath("/dashboard/teacher");
 
   return {
     success: true,
@@ -477,6 +507,8 @@ export async function deleteCourseBranch(input: DeleteCourseBranchInput) {
   revalidateTag("admin-courses");
   revalidatePath("/dashboard/admin");
   revalidatePath("/dashboard/admin/courses");
+  revalidatePath(`/dashboard/admin/courses/${input.courseId}/teachers`);
+  revalidatePath(`/dashboard/admin/courses/${input.courseId}/content`);
 
   return {
     success: true,
@@ -674,13 +706,50 @@ export async function getTeacherCourses(teacherId: string) {
   const result = await useCase.execute(teacherId);
 
   if (result.success && result.courses) {
-    return {
-      courses: await Promise.all(
-        result.courses.map((course) =>
-          enrichCourseMergeRequests(mapCourseToPresentation(course))
-        )
-      ),
-    };
+    const courses = await Promise.all(
+      result.courses.map(async (course) => {
+        const manageableBranchIds = new Set<string>();
+
+        const branchHasTeacher = (branch: typeof course.defaultBranch) => {
+          if (!branch) {
+            return false;
+          }
+
+          const tipAssignments = branch.tipVersionTeacherIds.includes(
+            teacherId
+          );
+          const branchAssignments = branch.assignedTeacherIds.includes(
+            teacherId
+          );
+
+          return tipAssignments || branchAssignments;
+        };
+
+        if (branchHasTeacher(course.defaultBranch)) {
+          manageableBranchIds.add(course.defaultBranch!.id);
+        }
+
+        course.branches.forEach((branch) => {
+          if (branchHasTeacher(branch)) {
+            manageableBranchIds.add(branch.id);
+          }
+        });
+
+        const overview = mapCourseToPresentation(course, {
+          manageableBranchIds,
+        });
+
+        // El docente puede editar el curso si está asignado a nivel de curso o a cualquier versión
+        const canEditCourse = manageableBranchIds.size > 0;
+
+        return enrichCourseMergeRequests({
+          ...overview,
+          canEditCourse,
+        });
+      })
+    );
+
+    return { courses };
   }
 
   return { error: result.error || "Error al obtener cursos" };

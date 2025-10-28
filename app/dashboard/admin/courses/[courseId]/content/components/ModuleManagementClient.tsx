@@ -8,6 +8,7 @@ import { PlusCircle, Edit, Trash2, BookOpen, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { ModuleFormDialog } from "./ModuleFormDialog";
 import { DeleteModuleDialog } from "./DeleteModuleDialog";
+import { LESSON_MANAGEMENT_ENABLED } from "../../../featureFlags";
 
 interface ModuleData {
   id: string;
@@ -16,7 +17,6 @@ interface ModuleData {
   title: string;
   description: string | null;
   orderIndex: number;
-  content: string | null;
   isPublished: boolean;
   createdAt: string;
   updatedAt: string;
@@ -30,14 +30,6 @@ interface ModuleManagementClientProps {
   isDefaultBranch: boolean;
   modules: ModuleData[];
   isAdmin: boolean;
-}
-
-function formatContent(content: string | null): string {
-  if (!content) return "Sin descripción";
-  const maxLength = 100;
-  return content.length > maxLength
-    ? content.substring(0, maxLength) + "..."
-    : content;
 }
 
 export function ModuleManagementClient({
@@ -160,20 +152,22 @@ export function ModuleManagementClient({
                     )}
                   </div>
                   <div className="flex flex-shrink-0 gap-2">
-                    <Link
-                      href={{
-                        pathname: `/dashboard/admin/courses/${courseId}/modules/${module.id}/lessons`,
-                        query: {
-                          branchId: branchId ?? undefined,
-                          versionId: courseVersionId ?? undefined,
-                        },
-                      }}
-                    >
-                      <Button size="sm" variant="outline">
-                        <BookOpen className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Lecciones</span>
-                      </Button>
-                    </Link>
+                    {LESSON_MANAGEMENT_ENABLED && (
+                      <Link
+                        href={{
+                          pathname: `/dashboard/admin/courses/${courseId}/modules/${module.id}/lessons`,
+                          query: {
+                            branchId: branchId ?? undefined,
+                            versionId: courseVersionId ?? undefined,
+                          },
+                        }}
+                      >
+                        <Button size="sm" variant="outline">
+                          <BookOpen className="h-4 w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Lecciones</span>
+                        </Button>
+                      </Link>
+                    )}
                     <Button
                       size="sm"
                       variant="outline"
@@ -185,20 +179,18 @@ export function ModuleManagementClient({
                       <Edit className="h-4 w-4 sm:mr-2" />
                       <span className="hidden sm:inline">Editar</span>
                     </Button>
-                    {isAdmin && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          canMutateContent && setDeletingModule(module)
-                        }
-                        className="border-red-300 text-red-600 hover:bg-red-50"
-                        disabled={!canMutateContent}
-                      >
-                        <Trash2 className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Eliminar</span>
-                      </Button>
-                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        canMutateContent && setDeletingModule(module)
+                      }
+                      className="border-red-300 text-red-600 hover:bg-red-50"
+                      disabled={!canMutateContent}
+                    >
+                      <Trash2 className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Eliminar</span>
+                    </Button>
                   </div>
                 </div>
               </CardHeader>

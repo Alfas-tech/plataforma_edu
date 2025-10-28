@@ -54,7 +54,6 @@ export function CourseFormDialog({
       description: "",
       initialVersionLabel: "v1.0.0",
       initialVersionSummary: "",
-      visibilityOverride: false,
     },
   });
 
@@ -67,7 +66,6 @@ export function CourseFormDialog({
           description: course.description || "",
           initialVersionLabel: "",
           initialVersionSummary: "",
-          visibilityOverride: course.visibilityOverride,
         });
       } else {
         reset({
@@ -76,7 +74,6 @@ export function CourseFormDialog({
           description: "",
           initialVersionLabel: "v1.0.0",
           initialVersionSummary: "",
-          visibilityOverride: false,
         });
       }
       setError(null);
@@ -102,7 +99,6 @@ export function CourseFormDialog({
           title: data.title,
           summary: data.summary || null,
           description: data.description || null,
-          visibility_override: data.visibilityOverride,
         });
       }
 
@@ -209,25 +205,6 @@ export function CourseFormDialog({
                   rows={3}
                 />
               </div>
-            </div>
-          )}
-
-          {/* Visibility override (edit only) */}
-          {mode === "edit" && (
-            <div className="flex items-center space-x-2 rounded-lg border border-purple-200 bg-purple-50 p-3">
-              <input
-                type="checkbox"
-                id="visibilityOverride"
-                {...register("visibilityOverride")}
-                disabled={isSubmitting}
-                className="h-4 w-4 rounded border-purple-300 text-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              />
-              <Label
-                htmlFor="visibilityOverride"
-                className="cursor-pointer text-sm font-medium text-purple-900"
-              >
-                Mostrar curso públicamente aunque la versión no esté publicada
-              </Label>
             </div>
           )}
 
