@@ -1,754 +1,469 @@
 "use server";
 
 import { revalidatePath, revalidateTag } from "next/cache";
-import { GetAllCoursesUseCase } from "@/src/application/use-cases/course/GetAllCoursesUseCase";
-import { CreateCourseUseCase } from "@/src/application/use-cases/course/CreateCourseUseCase";
-import { UpdateCourseUseCase } from "@/src/application/use-cases/course/UpdateCourseUseCase";
-import { DeleteCourseUseCase } from "@/src/application/use-cases/course/DeleteCourseUseCase";
-import { AssignTeacherToCourseVersionUseCase } from "@/src/application/use-cases/course/AssignTeacherToCourseVersionUseCase";
-import { RemoveTeacherFromCourseVersionUseCase } from "@/src/application/use-cases/course/RemoveTeacherFromCourseVersionUseCase";
-import { GetCourseVersionAssignmentsUseCase } from "@/src/application/use-cases/course/GetCourseVersionAssignmentsUseCase";
-import { GetTeacherCoursesUseCase } from "@/src/application/use-cases/course/GetTeacherCoursesUseCase";
-import { CreateCourseBranchUseCase } from "@/src/application/use-cases/course/CreateCourseBranchUseCase";
+import {
+	ArchiveCourseVersionUseCase,
+	AssignTeacherToCourseVersionUseCase,
+	CreateCourseDraftUseCase,
+	CreateCourseUseCase,
+	DeleteCourseUseCase,
+	GetAllCoursesUseCase,
+	GetCourseVersionAssignmentsUseCase,
+	GetTeacherCoursesUseCase,
+	PublishCourseVersionUseCase,
+	RemoveTeacherFromCourseVersionUseCase,
+	UpdateCourseDraftUseCase,
+	UpdateCourseUseCase,
+} from "@/src/application/use-cases/course";
 import { GetCourseWithTeachersUseCase } from "@/src/application/use-cases/course/GetCourseWithTeachersUseCase";
-import { CreateCourseMergeRequestUseCase } from "@/src/application/use-cases/course/CreateCourseMergeRequestUseCase";
-import { ReviewCourseMergeRequestUseCase } from "@/src/application/use-cases/course/ReviewCourseMergeRequestUseCase";
-import { MergeCourseBranchUseCase } from "@/src/application/use-cases/course/MergeCourseBranchUseCase";
-import { DeleteCourseBranchUseCase } from "@/src/application/use-cases/course/DeleteCourseBranchUseCase";
 import { SupabaseCourseRepository } from "@/src/infrastructure/repositories/SupabaseCourseRepository";
-import { SupabaseCourseBranchingRepository } from "@/src/infrastructure/repositories/SupabaseCourseBranchingRepository";
 import { SupabaseAuthRepository } from "@/src/infrastructure/repositories/SupabaseAuthRepository";
 import { SupabaseProfileRepository } from "@/src/infrastructure/repositories/SupabaseProfileRepository";
 import { CourseEntity } from "@/src/core/entities/Course.entity";
-import { CourseBranchEntity } from "@/src/core/entities/CourseBranch.entity";
+import { CourseVersionEntity } from "@/src/core/entities/CourseVersion.entity";
 import { ProfileEntity } from "@/src/core/entities/Profile.entity";
-import {
-  CreateCourseBranchInput,
-  CreateCourseInput,
-  CreateCourseMergeRequestInput,
-  DeleteCourseBranchInput,
-  MergeCourseBranchInput,
-  ReviewCourseMergeRequestInput,
-  UpdateCourseInput,
-} from "@/src/core/types/course.types";
+import type { CreateCourseDraftRequest } from "@/src/application/use-cases/course/CreateCourseDraftUseCase";
+import type { PublishCourseVersionRequest } from "@/src/application/use-cases/course/PublishCourseVersionUseCase";
+import type { ArchiveCourseVersionRequest } from "@/src/application/use-cases/course/ArchiveCourseVersionUseCase";
 import type {
-  CourseOverview,
-  CourseVisibilitySource,
+	CourseOverview,
+	CourseVersionOverview,
 } from "@/src/presentation/types/course";
+import type {
+	CreateCourseInput,
+	UpdateCourseInput,
+	UpdateCourseDraftInput,
+} from "@/src/core/types/course.types";
 
 const courseRepository = new SupabaseCourseRepository();
-const courseBranchingRepository = new SupabaseCourseBranchingRepository();
 const authRepository = new SupabaseAuthRepository();
 const profileRepository = new SupabaseProfileRepository();
 
-function getVisibilitySource(course: CourseEntity): CourseVisibilitySource {
-  const version = course.getPrimaryVersion();
+function mapVersionToOverview(
+	version: CourseVersionEntity
+): CourseVersionOverview {
+	const label = version.versionLabel;
+	const summary = version.summary;
+	const isPublished = version.isActive();
 
-  if (version?.isPublishedAndVisible()) {
-    return "version";
-  }
-
-  if (course.visibilityOverride) {
-    return "override";
-  }
-
-  return "hidden";
+	return {
+		id: version.id,
+		versionNumber: version.versionNumber,
+		title: version.title,
+		description: version.description,
+		status: version.status,
+		startDate: version.startDate ? version.startDate.toISOString() : null,
+		endDate: version.endDate ? version.endDate.toISOString() : null,
+		publishedAt: version.publishedAt
+			? version.publishedAt.toISOString()
+			: null,
+		publishedBy: version.publishedBy,
+		createdAt: version.createdAt.toISOString(),
+		updatedAt: version.updatedAt.toISOString(),
+		label,
+		summary,
+		branchId: null,
+		branchName: null,
+		isPublished,
+	};
 }
 
-function mapBranchToPresentation(
-  branch: CourseBranchEntity,
-  options?: { canManage?: boolean }
-): CourseOverview["branches"][number] {
-  return {
-    id: branch.id,
-    name: branch.name,
-    description: branch.description,
-    isDefault: branch.isDefault,
-    parentBranchId: branch.parentBranchId,
-    baseVersionId: branch.baseVersion?.id ?? branch.baseVersionId,
-    baseVersionLabel: branch.baseVersion?.versionLabel ?? null,
-    tipVersionId: branch.tipVersion?.id ?? null,
-    tipVersionLabel: branch.tipVersion?.versionLabel ?? null,
-    tipVersionStatus: branch.tipVersion?.status ?? null,
-    tipVersionUpdatedAt: branch.tipVersion
-      ? branch.tipVersion.updatedAt.toISOString()
-      : null,
-    updatedAt: branch.updatedAt.toISOString(),
-    canManage: options?.canManage,
-  };
+function mapCourseToOverview(course: CourseEntity): CourseOverview {
+	const activeVersion = course.activeVersion
+		? mapVersionToOverview(course.activeVersion)
+		: null;
+	const draftVersion = course.draftVersion
+		? mapVersionToOverview(course.draftVersion)
+		: null;
+	const archivedVersions = course.archivedVersions.map(mapVersionToOverview);
+	const hasActiveVersion = course.hasActiveVersion();
+	const summary =
+		activeVersion?.description ?? draftVersion?.description ?? null;
+	const lastUpdatedAt = course.updatedAt.toISOString();
+	const visibilitySource = hasActiveVersion ? "version" : "hidden";
+
+	return {
+		id: course.id,
+		name: course.name,
+		description: course.description,
+		createdAt: course.createdAt.toISOString(),
+		updatedAt: course.updatedAt.toISOString(),
+		activeVersion,
+		draftVersion,
+		archivedVersions,
+		hasActiveVersion,
+		hasDraft: course.hasDraft(),
+		canEditCourse: true,
+		title: course.name,
+		summary,
+		visibilityOverride: false,
+		visibilitySource,
+		isVisibleForStudents: hasActiveVersion,
+		lastUpdatedAt,
+		defaultBranch: null,
+		branches: [],
+		pendingMergeRequests: [],
+	};
 }
 
-function mapCourseToPresentation(
-  course: CourseEntity,
-  options?: { manageableBranchIds?: Iterable<string> }
-): CourseOverview {
-  const version = course.getPrimaryVersion();
-  const visibilitySource = getVisibilitySource(course);
-  const isVisibleForStudents = visibilitySource !== "hidden";
-  const hasActiveVersion = course.hasActiveVersion();
-  const createdAt = course.createdAt.toISOString();
-  const lastUpdatedAt = (version?.updatedAt ?? course.updatedAt).toISOString();
-
-  const manageableSet = options?.manageableBranchIds
-    ? new Set(options.manageableBranchIds)
-    : new Set<string>();
-  const shouldAnnotateManagement = Boolean(options?.manageableBranchIds);
-
-  const branchNameById = new Map<string, string>();
-  const branchTipVersionMap = new Map<string, string>();
-  const versionLabelById = new Map<string, string>();
-
-  course.branches.forEach((branch) => {
-    branchNameById.set(branch.id, branch.name);
-    if (branch.tipVersion) {
-      branchTipVersionMap.set(branch.id, branch.tipVersion.versionLabel);
-      versionLabelById.set(
-        branch.tipVersion.id,
-        branch.tipVersion.versionLabel
-      );
-    }
-    if (branch.baseVersion) {
-      versionLabelById.set(
-        branch.baseVersion.id,
-        branch.baseVersion.versionLabel
-      );
-    }
-  });
-
-  if (course.defaultBranch) {
-    branchNameById.set(course.defaultBranch.id, course.defaultBranch.name);
-    if (course.defaultBranch.tipVersion) {
-      branchTipVersionMap.set(
-        course.defaultBranch.id,
-        course.defaultBranch.tipVersion.versionLabel
-      );
-      versionLabelById.set(
-        course.defaultBranch.tipVersion.id,
-        course.defaultBranch.tipVersion.versionLabel
-      );
-    }
-    if (course.defaultBranch.baseVersion) {
-      versionLabelById.set(
-        course.defaultBranch.baseVersion.id,
-        course.defaultBranch.baseVersion.versionLabel
-      );
-    }
-  }
-
-  const activeVersion = version
-    ? {
-        id: version.id,
-        label: version.versionLabel,
-        summary: version.summary,
-        status: version.status,
-        isActive: version.isActive,
-        isPublished: version.isPublished,
-        approvedAt: version.approvedAt
-          ? version.approvedAt.toISOString()
-          : null,
-        createdAt: version.createdAt.toISOString(),
-        updatedAt: version.updatedAt.toISOString(),
-        branchId: version.branchId,
-        branchName: version.branchId
-          ? (branchNameById.get(version.branchId) ?? null)
-          : null,
-      }
-    : null;
-
-  if (activeVersion) {
-    versionLabelById.set(activeVersion.id, activeVersion.label);
-  }
-
-  const branches = course.branches.map((branch) =>
-    mapBranchToPresentation(branch, {
-      canManage: shouldAnnotateManagement
-        ? manageableSet.has(branch.id)
-        : undefined,
-    })
-  );
-
-  const defaultBranch = course.defaultBranch
-    ? mapBranchToPresentation(course.defaultBranch, {
-        canManage: shouldAnnotateManagement
-          ? manageableSet.has(course.defaultBranch.id)
-          : undefined,
-      })
-    : null;
-
-  const branchNameFallback = (branchId: string) =>
-    branchNameById.get(branchId) ?? "Desconocida";
-
-  const pendingMergeRequests = course.pendingMergeRequests.map((mr) => ({
-    id: mr.id,
-    title: mr.title,
-    summary: mr.summary,
-    status: mr.status,
-    sourceBranchId: mr.sourceBranchId,
-    sourceBranchName: branchNameFallback(mr.sourceBranchId),
-    sourceVersionId: mr.sourceVersionId,
-    sourceVersionLabel:
-      versionLabelById.get(mr.sourceVersionId) ??
-      branchTipVersionMap.get(mr.sourceBranchId) ??
-      mr.sourceVersionId,
-    targetBranchId: mr.targetBranchId,
-    targetBranchName: branchNameFallback(mr.targetBranchId),
-    targetVersionId: mr.targetVersionId,
-    targetVersionLabel: mr.targetVersionId
-      ? (versionLabelById.get(mr.targetVersionId) ??
-        branchTipVersionMap.get(mr.targetBranchId) ??
-        mr.targetVersionId)
-      : null,
-    openedAt: mr.openedAt.toISOString(),
-    openedById: mr.openedBy,
-    openedByName: null,
-    openedByEmail: null,
-    openedByAvatarUrl: null,
-    reviewerId: mr.reviewerId,
-    reviewerName: null,
-    reviewerEmail: null,
-    reviewerAvatarUrl: null,
-    closedAt: mr.closedAt ? mr.closedAt.toISOString() : null,
-    mergedAt: mr.mergedAt ? mr.mergedAt.toISOString() : null,
-  }));
-
-  const computedCanEditCourse = options?.manageableBranchIds
-    ? course.defaultBranch
-      ? manageableSet.has(course.defaultBranch.id)
-      : manageableSet.size > 0
-    : undefined;
-
-  return {
-    id: course.id,
-    title: course.title,
-    summary: course.summary,
-    description: course.description,
-    slug: course.slug,
-    visibilityOverride: course.visibilityOverride,
-    isVisibleForStudents,
-    visibilitySource,
-    hasActiveVersion,
-    createdAt,
-    lastUpdatedAt,
-    activeVersion,
-    defaultBranch,
-    branches,
-    pendingMergeRequests,
-    canEditCourse: computedCanEditCourse,
-  };
+function revalidateCourses(): void {
+	revalidateTag("admin-courses");
+	revalidatePath("/dashboard/admin");
+	revalidatePath("/dashboard/admin/courses");
+	revalidatePath("/dashboard/teacher");
 }
 
-async function enrichMergeRequestParticipants(
-  courses: CourseOverview[]
-): Promise<CourseOverview[]> {
-  const userIds = new Set<string>();
-
-  courses.forEach((course) => {
-    course.pendingMergeRequests.forEach((mr) => {
-      if (mr.openedById) {
-        userIds.add(mr.openedById);
-      }
-      if (mr.reviewerId) {
-        userIds.add(mr.reviewerId);
-      }
-    });
-  });
-
-  if (userIds.size === 0) {
-    return courses;
-  }
-
-  const profiles = await Promise.all(
-    Array.from(userIds).map(async (id) => {
-      const profile = await profileRepository.getProfileByUserId(id);
-      return profile ? { id, profile } : null;
-    })
-  );
-
-  const profileById = new Map<string, ProfileEntity>();
-
-  profiles.forEach((entry) => {
-    if (entry) {
-      profileById.set(entry.id, entry.profile);
-    }
-  });
-
-  return courses.map((course) => ({
-    ...course,
-    pendingMergeRequests: course.pendingMergeRequests.map((mr) => {
-      const author = mr.openedById
-        ? (profileById.get(mr.openedById) ?? null)
-        : null;
-      const reviewer = mr.reviewerId
-        ? (profileById.get(mr.reviewerId) ?? null)
-        : null;
-
-      return {
-        ...mr,
-        openedByName: author?.getDisplayName() ?? mr.openedByName,
-        openedByEmail: author?.email ?? mr.openedByEmail,
-        openedByAvatarUrl: author?.avatarUrl ?? mr.openedByAvatarUrl,
-        reviewerName: reviewer?.getDisplayName() ?? mr.reviewerName,
-        reviewerEmail: reviewer?.email ?? mr.reviewerEmail,
-        reviewerAvatarUrl: reviewer?.avatarUrl ?? mr.reviewerAvatarUrl,
-      };
-    }),
-  }));
-}
-
-async function enrichCourseMergeRequests(
-  course: CourseOverview
-): Promise<CourseOverview> {
-  const [enriched] = await enrichMergeRequestParticipants([course]);
-  return enriched;
+function revalidateCourseDetails(courseId: string): void {
+	revalidatePath(`/dashboard/admin/courses/${courseId}/teachers`);
+	revalidatePath(`/dashboard/admin/courses/${courseId}/content`);
 }
 
 export async function getAllCourses() {
-  const getAllCoursesUseCase = new GetAllCoursesUseCase(courseRepository);
+	const useCase = new GetAllCoursesUseCase(courseRepository);
 
-  try {
-    const result = await getAllCoursesUseCase.execute();
+	try {
+		const result = await useCase.execute();
 
-    if (!result.success || !result.courses) {
-      return { error: result.error || "Error al obtener cursos" };
-    }
+		if (!result.success || !result.courses) {
+			return { error: result.error || "Error al obtener cursos" };
+		}
 
-    const courseOverviews = await enrichMergeRequestParticipants(
-      result.courses.map((course) => mapCourseToPresentation(course))
-    );
-
-    return { courses: courseOverviews };
-  } catch (error) {
-    console.error("getAllCourses action error", error);
-    return {
-      error:
-        error instanceof Error
-          ? error.message
-          : "Error inesperado al obtener cursos",
-    };
-  }
+		const courses = result.courses.map(mapCourseToOverview);
+		return { courses };
+	} catch (error) {
+		console.error("getAllCourses action error", error);
+		return {
+			error:
+				error instanceof Error
+					? error.message
+					: "Error inesperado al obtener cursos",
+		};
+	}
 }
 
 export async function createCourse(input: CreateCourseInput) {
-  const createCourseUseCase = new CreateCourseUseCase(
-    courseRepository,
-    authRepository,
-    profileRepository
-  );
+	const useCase = new CreateCourseUseCase(
+		courseRepository,
+		authRepository,
+		profileRepository
+	);
 
-  const result = await createCourseUseCase.execute(input);
+	const result = await useCase.execute(input);
 
-  if (!result.success) {
-    return { error: result.error || "Error al crear curso" };
-  }
+	if (!result.success) {
+		return { error: result.error || "Error al crear curso" };
+	}
 
-  revalidateTag("admin-courses");
-  revalidatePath("/dashboard/admin");
-  revalidatePath("/dashboard/admin/courses");
-
-  return { success: true };
+	revalidateCourses();
+	return { success: true };
 }
 
 export async function updateCourse(courseId: string, input: UpdateCourseInput) {
-  const updateCourseUseCase = new UpdateCourseUseCase(
-    courseRepository,
-    authRepository,
-    profileRepository
-  );
+	const useCase = new UpdateCourseUseCase(
+		courseRepository,
+		authRepository,
+		profileRepository
+	);
 
-  const result = await updateCourseUseCase.execute(courseId, input);
+	const result = await useCase.execute(courseId, input);
 
-  if (!result.success) {
-    return { error: result.error || "Error al actualizar curso" };
-  }
+	if (!result.success) {
+		return { error: result.error || "Error al actualizar curso" };
+	}
 
-  revalidateTag("admin-courses");
-  revalidatePath("/dashboard/admin");
-  revalidatePath("/dashboard/admin/courses");
-  revalidatePath("/dashboard/teacher");
-
-  return { success: true };
+	revalidateCourses();
+	revalidateCourseDetails(courseId);
+	return { success: true };
 }
 
 export async function deleteCourse(courseId: string) {
-  const deleteCourseUseCase = new DeleteCourseUseCase(
-    courseRepository,
-    authRepository,
-    profileRepository
-  );
+	const useCase = new DeleteCourseUseCase(
+		courseRepository,
+		authRepository,
+		profileRepository
+	);
 
-  const result = await deleteCourseUseCase.execute(courseId);
+	const result = await useCase.execute(courseId);
 
-  if (!result.success) {
-    return { error: result.error || "Error al eliminar curso" };
-  }
+	if (!result.success) {
+		return { error: result.error || "Error al eliminar curso" };
+	}
 
-  revalidateTag("admin-courses");
-  revalidatePath("/dashboard/admin");
-  revalidatePath("/dashboard/admin/courses");
-
-  return { success: true };
+	revalidateCourses();
+	revalidateCourseDetails(courseId);
+	return { success: true };
 }
 
-export async function createCourseBranch(input: CreateCourseBranchInput) {
-  const useCase = new CreateCourseBranchUseCase(courseBranchingRepository);
+export async function createCourseDraft(input: CreateCourseDraftRequest) {
+	const useCase = new CreateCourseDraftUseCase(
+		courseRepository,
+		authRepository,
+		profileRepository
+	);
 
-  const result = await useCase.execute(input);
+	const result = await useCase.execute(input);
 
-  if (!result.success || !result.course) {
-    return {
-      error: result.error || "Error al crear la rama del curso",
-    };
-  }
+	if (!result.success || !result.draft) {
+		return {
+			error: result.error || "Error al crear el borrador del curso",
+		};
+	}
 
-  revalidateTag("admin-courses");
-  revalidatePath("/dashboard/admin");
-  revalidatePath("/dashboard/admin/courses");
-  revalidatePath("/dashboard/teacher");
-
-  return {
-    success: true,
-    course: await enrichCourseMergeRequests(
-      mapCourseToPresentation(result.course)
-    ),
-  };
+	revalidateCourses();
+	revalidateCourseDetails(result.draft.courseId);
+	return { draft: mapVersionToOverview(result.draft) };
 }
 
-export async function createCourseMergeRequest(
-  input: CreateCourseMergeRequestInput
+export async function updateCourseDraft(
+	versionId: string,
+	updates: UpdateCourseDraftInput
 ) {
-  const useCase = new CreateCourseMergeRequestUseCase(
-    courseBranchingRepository
-  );
+	const useCase = new UpdateCourseDraftUseCase(
+		courseRepository,
+		authRepository,
+		profileRepository
+	);
 
-  const result = await useCase.execute(input);
+	const result = await useCase.execute(versionId, updates);
 
-  if (!result.success || !result.course) {
-    return {
-      error: result.error || "Error al crear la solicitud de fusión del curso",
-    };
-  }
+	if (!result.success || !result.draft) {
+		return {
+			error: result.error || "Error al actualizar el borrador",
+		};
+	}
 
-  revalidateTag("admin-courses");
-  revalidatePath("/dashboard/admin");
-  revalidatePath("/dashboard/admin/courses");
-  revalidatePath("/dashboard/teacher");
-
-  return {
-    success: true,
-    course: await enrichCourseMergeRequests(
-      mapCourseToPresentation(result.course)
-    ),
-  };
+	revalidateCourses();
+	revalidateCourseDetails(result.draft.courseId);
+	return { draft: mapVersionToOverview(result.draft) };
 }
 
-export async function reviewCourseMergeRequest(
-  input: ReviewCourseMergeRequestInput
+export async function getDraftById(draftId: string) {
+	try {
+		const currentUser = await authRepository.getCurrentUser();
+		if (!currentUser) {
+			return { error: "No autenticado" };
+		}
+
+		const draft = await courseRepository.getCourseVersionById(draftId);
+		if (!draft) {
+			return { error: "Borrador no encontrado" };
+		}
+
+		if (draft.status !== "draft") {
+			return { error: "La versión no es un borrador" };
+		}
+
+		return {
+			draft: {
+				id: draft.id,
+				title: draft.title,
+				description: draft.description,
+				courseId: draft.courseId,
+			},
+		};
+	} catch (error) {
+		return {
+			error: error instanceof Error ? error.message : "Error al obtener borrador",
+		};
+	}
+}
+
+export async function publishCourseVersion(
+	input: PublishCourseVersionRequest
 ) {
-  const useCase = new ReviewCourseMergeRequestUseCase(
-    courseBranchingRepository
-  );
+	const useCase = new PublishCourseVersionUseCase(
+		courseRepository,
+		authRepository,
+		profileRepository
+	);
 
-  const result = await useCase.execute(input);
+	const result = await useCase.execute(input);
 
-  if (!result.success || !result.course) {
-    return {
-      error: result.error || "Error al actualizar la solicitud de fusión",
-    };
-  }
+	if (!result.success || !result.course) {
+		return {
+			error: result.error || "Error al publicar la versión del curso",
+		};
+	}
 
-  revalidateTag("admin-courses");
-  revalidatePath("/dashboard/admin");
-  revalidatePath("/dashboard/admin/courses");
-  revalidatePath("/dashboard/teacher");
-
-  return {
-    success: true,
-    course: await enrichCourseMergeRequests(
-      mapCourseToPresentation(result.course)
-    ),
-  };
+	revalidateCourses();
+	revalidateCourseDetails(result.course.id);
+	return { course: mapCourseToOverview(result.course) };
 }
 
-export async function mergeCourseBranch(input: MergeCourseBranchInput) {
-  const useCase = new MergeCourseBranchUseCase(courseBranchingRepository);
+export async function archiveCourseVersion(
+	input: ArchiveCourseVersionRequest
+) {
+	const useCase = new ArchiveCourseVersionUseCase(
+		courseRepository,
+		authRepository,
+		profileRepository
+	);
 
-  const result = await useCase.execute(input);
+	const result = await useCase.execute(input);
 
-  if (!result.success || !result.course) {
-    return {
-      error: result.error || "Error al fusionar la rama",
-    };
-  }
+	if (!result.success || !result.course) {
+		return {
+			error: result.error || "Error al archivar la versión del curso",
+		};
+	}
 
-  revalidateTag("admin-courses");
-  revalidatePath("/dashboard/admin");
-  revalidatePath("/dashboard/admin/courses");
-  revalidatePath("/dashboard/teacher");
-
-  return {
-    success: true,
-    course: await enrichCourseMergeRequests(
-      mapCourseToPresentation(result.course)
-    ),
-  };
-}
-
-export async function deleteCourseBranch(input: DeleteCourseBranchInput) {
-  const useCase = new DeleteCourseBranchUseCase(courseBranchingRepository);
-
-  const result = await useCase.execute(input);
-
-  if (!result.success || !result.course) {
-    return {
-      error: result.error || "Error al eliminar la rama",
-    };
-  }
-
-  revalidateTag("admin-courses");
-  revalidatePath("/dashboard/admin");
-  revalidatePath("/dashboard/admin/courses");
-  revalidatePath(`/dashboard/admin/courses/${input.courseId}/teachers`);
-  revalidatePath(`/dashboard/admin/courses/${input.courseId}/content`);
-
-  return {
-    success: true,
-    course: await enrichCourseMergeRequests(
-      mapCourseToPresentation(result.course)
-    ),
-  };
+	revalidateCourses();
+	revalidateCourseDetails(result.course.id);
+	return { course: mapCourseToOverview(result.course) };
 }
 
 export async function getCourseWithTeachers(courseId: string) {
-  const useCase = new GetCourseWithTeachersUseCase(
-    courseRepository,
-    profileRepository
-  );
+	const useCase = new GetCourseWithTeachersUseCase(
+		courseRepository,
+		profileRepository
+	);
 
-  const result = await useCase.execute(courseId);
+	const result = await useCase.execute(courseId);
 
-  if (!result.success || !result.data) {
-    return {
-      error: result.error || "Error al obtener el curso",
-    };
-  }
+	if (!result.success || !result.data) {
+		return {
+			error: result.error || "Error al obtener el curso",
+		};
+	}
 
-  const course = await enrichCourseMergeRequests(
-    mapCourseToPresentation(result.data.course)
-  );
+	const course = mapCourseToOverview(result.data.course);
+	const teachers = result.data.teachers.map((teacher: ProfileEntity) => ({
+		id: teacher.id,
+		email: teacher.email,
+		fullName: teacher.fullName,
+		avatarUrl: teacher.avatarUrl,
+		displayName: teacher.getDisplayName(),
+	}));
 
-  const teachers = result.data.teachers.map((teacher) => ({
-    id: teacher.id,
-    email: teacher.email,
-    fullName: teacher.fullName,
-    avatarUrl: teacher.avatarUrl,
-    displayName: teacher.getDisplayName(),
-  }));
-
-  return {
-    course,
-    teachers,
-  };
+	return {
+		course,
+		teachers,
+	};
 }
 
 export async function assignTeacherToCourseVersion(
-  courseId: string,
-  courseVersionId: string,
-  teacherId: string
+	courseId: string,
+	courseVersionId: string,
+	teacherId: string
 ) {
-  const assignTeacherUseCase = new AssignTeacherToCourseVersionUseCase(
-    courseRepository,
-    authRepository,
-    profileRepository
-  );
+	const useCase = new AssignTeacherToCourseVersionUseCase(
+		courseRepository,
+		authRepository,
+		profileRepository
+	);
 
-  const result = await assignTeacherUseCase.execute(
-    courseId,
-    courseVersionId,
-    teacherId
-  );
+	const result = await useCase.execute(courseId, courseVersionId, teacherId);
 
-  if (!result.success) {
-    return {
-      error: result.error || "Error al asignar docente a la versión",
-    };
-  }
+	if (!result.success) {
+		return {
+			error: result.error || "Error al asignar docente a la versión",
+		};
+	}
 
-  revalidateTag("admin-courses");
-  revalidatePath("/dashboard/admin");
-  revalidatePath("/dashboard/admin/courses");
-  revalidatePath(`/dashboard/admin/courses/${courseId}/teachers`);
-  revalidatePath(`/dashboard/admin/courses/${courseId}/content`);
-  revalidatePath("/dashboard/teacher");
-
-  return { success: true };
+	revalidateCourses();
+	revalidateCourseDetails(courseId);
+	return { success: true };
 }
 
 export async function removeTeacherFromCourseVersion(
-  courseId: string,
-  courseVersionId: string,
-  teacherId: string
+	courseId: string,
+	courseVersionId: string,
+	teacherId: string
 ) {
-  const removeTeacherUseCase = new RemoveTeacherFromCourseVersionUseCase(
-    courseRepository,
-    authRepository,
-    profileRepository
-  );
+	const useCase = new RemoveTeacherFromCourseVersionUseCase(
+		courseRepository,
+		authRepository,
+		profileRepository
+	);
 
-  const result = await removeTeacherUseCase.execute(
-    courseId,
-    courseVersionId,
-    teacherId
-  );
+	const result = await useCase.execute(courseId, courseVersionId, teacherId);
 
-  if (!result.success) {
-    return {
-      error: result.error || "Error al remover docente de la versión",
-    };
-  }
+	if (!result.success) {
+		return {
+			error: result.error || "Error al remover docente de la versión",
+		};
+	}
 
-  revalidateTag("admin-courses");
-  revalidatePath("/dashboard/admin");
-  revalidatePath("/dashboard/admin/courses");
-  revalidatePath(`/dashboard/admin/courses/${courseId}/teachers`);
-  revalidatePath(`/dashboard/admin/courses/${courseId}/content`);
-  revalidatePath("/dashboard/teacher");
-
-  return { success: true };
+	revalidateCourses();
+	revalidateCourseDetails(courseId);
+	return { success: true };
 }
 
 export async function getCourseVersionAssignments(courseId: string) {
-  const useCase = new GetCourseVersionAssignmentsUseCase(
-    courseRepository,
-    authRepository,
-    profileRepository
-  );
+	const useCase = new GetCourseVersionAssignmentsUseCase(
+		courseRepository,
+		authRepository,
+		profileRepository
+	);
 
-  const result = await useCase.execute(courseId);
+	const result = await useCase.execute(courseId);
 
-  if (!result.success || !result.course || !result.assignments) {
-    return {
-      error: result.error || "Error al obtener las versiones del curso",
-    };
-  }
+	if (!result.success || !result.course || !result.assignments) {
+		return {
+			error: result.error || "Error al obtener las versiones del curso",
+		};
+	}
 
-  const courseOverview = await enrichCourseMergeRequests(
-    mapCourseToPresentation(result.course)
-  );
+	const teacherIdSet = new Set<string>();
+	result.assignments.forEach((assignment) => {
+		assignment.teacherIds.forEach((id) => teacherIdSet.add(id));
+	});
 
-  const branchNameById = new Map<string, string>();
+	const teacherProfiles = await Promise.all(
+		Array.from(teacherIdSet).map(async (id) => {
+			const profile = await profileRepository.getProfileByUserId(id);
+			return profile ? { id, profile } : null;
+		})
+	);
 
-  if (courseOverview.defaultBranch) {
-    branchNameById.set(
-      courseOverview.defaultBranch.id,
-      courseOverview.defaultBranch.name
-    );
-  }
+	const profileById = new Map<string, ProfileEntity>();
+	teacherProfiles.forEach((entry) => {
+		if (entry) {
+			profileById.set(entry.id, entry.profile);
+		}
+	});
 
-  courseOverview.branches.forEach((branch) => {
-    branchNameById.set(branch.id, branch.name);
-  });
+	const versions = result.assignments.map(({ version, teacherIds }) => ({
+		id: version.id,
+		versionNumber: version.versionNumber,
+		title: version.title,
+		description: version.description,
+		status: version.status,
+		isDraft: version.isDraft(),
+		isActive: version.isActive(),
+		isArchived: version.isArchived(),
+		startDate: version.startDate ? version.startDate.toISOString() : null,
+		endDate: version.endDate ? version.endDate.toISOString() : null,
+		createdAt: version.createdAt.toISOString(),
+		updatedAt: version.updatedAt.toISOString(),
+		teacherIds,
+		teachers: teacherIds
+			.map((id) => profileById.get(id))
+			.filter((profile): profile is ProfileEntity => Boolean(profile))
+			.map((profile) => ({
+				id: profile.id,
+				email: profile.email,
+				fullName: profile.fullName,
+				avatarUrl: profile.avatarUrl,
+				displayName: profile.getDisplayName(),
+			})),
+	}));
 
-  const teacherIdSet = new Set<string>();
-  result.assignments.forEach((assignment) => {
-    assignment.teacherIds.forEach((id) => teacherIdSet.add(id));
-  });
-
-  const teacherProfiles = await Promise.all(
-    Array.from(teacherIdSet).map(async (id) => {
-      const profile = await profileRepository.getProfileByUserId(id);
-      return profile ? { id, profile } : null;
-    })
-  );
-
-  const profileById = new Map<string, ProfileEntity>();
-  teacherProfiles.forEach((entry) => {
-    if (entry) {
-      profileById.set(entry.id, entry.profile);
-    }
-  });
-
-  const versions = result.assignments.map(({ version, teacherIds }) => ({
-    id: version.id,
-    label: version.versionLabel,
-    summary: version.summary,
-    status: version.status,
-    isActive: version.isActive,
-    isPublished: version.isPublished,
-    isTip: version.isTip,
-    createdAt: version.createdAt.toISOString(),
-    updatedAt: version.updatedAt.toISOString(),
-    branchId: version.branchId,
-    branchName: version.branchId
-      ? (branchNameById.get(version.branchId) ?? null)
-      : null,
-    teacherIds,
-    teachers: teacherIds
-      .map((id) => profileById.get(id))
-      .filter((profile): profile is ProfileEntity => Boolean(profile))
-      .map((profile) => ({
-        id: profile.id,
-        email: profile.email,
-        fullName: profile.fullName,
-        avatarUrl: profile.avatarUrl,
-        displayName: profile.getDisplayName(),
-      })),
-  }));
-
-  return {
-    course: courseOverview,
-    versions,
-  };
+	return {
+		course: mapCourseToOverview(result.course),
+		versions,
+	};
 }
 
 export async function getTeacherCourses(teacherId: string) {
-  const useCase = new GetTeacherCoursesUseCase(courseRepository);
+	const useCase = new GetTeacherCoursesUseCase(courseRepository);
 
-  const result = await useCase.execute(teacherId);
+	const result = await useCase.execute(teacherId);
 
-  if (result.success && result.courses) {
-    const courses = await Promise.all(
-      result.courses.map(async (course) => {
-        const manageableBranchIds = new Set<string>();
+	if (result.success && result.courses) {
+		const courses = result.courses.map(mapCourseToOverview);
+		return { courses };
+	}
 
-        const branchHasTeacher = (branch: typeof course.defaultBranch) => {
-          if (!branch) {
-            return false;
-          }
-
-          const tipAssignments =
-            branch.tipVersionTeacherIds.includes(teacherId);
-          const branchAssignments =
-            branch.assignedTeacherIds.includes(teacherId);
-
-          return tipAssignments || branchAssignments;
-        };
-
-        if (branchHasTeacher(course.defaultBranch)) {
-          manageableBranchIds.add(course.defaultBranch!.id);
-        }
-
-        course.branches.forEach((branch) => {
-          if (branchHasTeacher(branch)) {
-            manageableBranchIds.add(branch.id);
-          }
-        });
-
-        const overview = mapCourseToPresentation(course, {
-          manageableBranchIds,
-        });
-
-        // El docente puede editar el curso si está asignado a nivel de curso o a cualquier versión
-        const canEditCourse = manageableBranchIds.size > 0;
-
-        return enrichCourseMergeRequests({
-          ...overview,
-          canEditCourse,
-        });
-      })
-    );
-
-    return { courses };
-  }
-
-  return { error: result.error || "Error al obtener cursos" };
+	return { error: result.error || "Error al obtener cursos" };
 }

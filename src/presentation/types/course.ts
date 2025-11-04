@@ -1,79 +1,85 @@
 import type { CourseVersionStatus } from "@/src/core/types/course.types";
-import type { CourseMergeRequestStatus } from "@/src/core/types/course.types";
-
-export type CourseVisibilitySource = "override" | "version" | "hidden";
 
 export interface CourseVersionOverview {
-  id: string;
-  label: string;
-  summary: string | null;
-  status: CourseVersionStatus;
-  isActive: boolean;
-  isPublished: boolean;
-  approvedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  branchId: string | null;
-  branchName: string | null;
+	id: string;
+	versionNumber: number;
+	title: string;
+	description: string | null;
+	status: CourseVersionStatus;
+	startDate: string | null;
+	endDate: string | null;
+	publishedAt: string | null;
+	publishedBy: string | null;
+	createdAt: string;
+	updatedAt: string;
+	/**
+	 * Compatibilidad histórica: etiqueta legible usada en la UI previa.
+	 */
+	label?: string;
+	/**
+	 * Compatibilidad histórica: resumen corto de la versión.
+	 */
+	summary?: string | null;
+	/**
+	 * Compatibilidad histórica: identificador de rama (ya no se usa).
+	 */
+	branchId?: string | null;
+	/**
+	 * Compatibilidad histórica: nombre de la rama asociada (ya no se usa).
+	 */
+	branchName?: string | null;
+	/**
+	 * Compatibilidad histórica: indicador de publicación en la capa anterior.
+	 */
+	isPublished?: boolean;
 }
 
 export interface CourseOverview {
-  id: string;
-  title: string;
-  summary: string | null;
-  description: string | null;
-  slug: string;
-  visibilityOverride: boolean;
-  isVisibleForStudents: boolean;
-  visibilitySource: CourseVisibilitySource;
-  hasActiveVersion: boolean;
-  createdAt: string;
-  lastUpdatedAt: string;
-  activeVersion: CourseVersionOverview | null;
-  defaultBranch: CourseBranchOverview | null;
-  branches: CourseBranchOverview[];
-  pendingMergeRequests: CourseMergeRequestOverview[];
-  canEditCourse?: boolean;
-}
-
-export interface CourseBranchOverview {
-  id: string;
-  name: string;
-  description: string | null;
-  isDefault: boolean;
-  parentBranchId: string | null;
-  baseVersionId: string | null;
-  baseVersionLabel: string | null;
-  tipVersionId: string | null;
-  tipVersionLabel: string | null;
-  tipVersionStatus: CourseVersionStatus | null;
-  tipVersionUpdatedAt: string | null;
-  updatedAt: string;
-  canManage?: boolean;
-}
-
-export interface CourseMergeRequestOverview {
-  id: string;
-  title: string;
-  summary: string | null;
-  status: CourseMergeRequestStatus;
-  sourceBranchId: string;
-  sourceBranchName: string;
-  sourceVersionId: string;
-  sourceVersionLabel: string;
-  targetBranchId: string;
-  targetBranchName: string;
-  targetVersionId: string | null;
-  targetVersionLabel: string | null;
-  openedAt: string;
-  openedById: string | null;
-  openedByName: string | null;
-  openedByEmail: string | null;
-  openedByAvatarUrl: string | null;
-  reviewerId: string | null;
-  reviewerName: string | null;
-  reviewerEmail: string | null;
-  reviewerAvatarUrl: string | null;
-  closedAt: string | null;
-  mergedAt: string | null;
+	id: string;
+	name: string;
+	description: string | null;
+	createdAt: string;
+	updatedAt: string;
+	activeVersion: CourseVersionOverview | null;
+	draftVersion: CourseVersionOverview | null;
+	archivedVersions: CourseVersionOverview[];
+	hasActiveVersion: boolean;
+	hasDraft: boolean;
+	canEditCourse?: boolean;
+	/**
+	 * Compatibilidad histórica: título usado por componentes existentes.
+	 */
+	title?: string;
+	/**
+	 * Compatibilidad histórica: resumen breve mostrado en tarjetas.
+	 */
+	summary?: string | null;
+	/**
+	 * Compatibilidad histórica: indicador de visibilidad forzada.
+	 */
+	visibilityOverride?: boolean;
+	/**
+	 * Compatibilidad histórica: origen de la visibilidad.
+	 */
+	visibilitySource?: "version" | "override" | "hidden";
+	/**
+	 * Compatibilidad histórica: indica visibilidad para estudiantes.
+	 */
+	isVisibleForStudents?: boolean;
+	/**
+	 * Compatibilidad histórica: marca de tiempo de última actualización usada en UI.
+	 */
+	lastUpdatedAt?: string;
+	/**
+	 * Compatibilidad histórica: rama principal (ya no se usa).
+	 */
+	defaultBranch?: unknown;
+	/**
+	 * Compatibilidad histórica: ramas auxiliares (ya no se usan).
+	 */
+	branches?: unknown[];
+	/**
+	 * Compatibilidad histórica: solicitudes de fusión (ya no se usan).
+	 */
+	pendingMergeRequests?: unknown[];
 }

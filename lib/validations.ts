@@ -104,10 +104,10 @@ export const courseSchema = z.object({
 });
 
 // ============================================
-// MODULE SCHEMAS
+// TOPIC SCHEMAS
 // ============================================
 
-export const moduleSchema = z.object({
+export const topicSchema = z.object({
   title: z
     .string()
     .min(3, "El título debe tener al menos 3 caracteres")
@@ -118,45 +118,58 @@ export const moduleSchema = z.object({
     .max(500, "La descripción no puede exceder 500 caracteres")
     .optional()
     .or(z.literal("")),
-  orderIndex: z
-    .number()
-    .int("El orden debe ser un número entero")
-    .positive("El orden debe ser mayor a 0"),
-  isPublished: z.boolean().optional(),
 });
 
 // ============================================
-// LESSON SCHEMAS
+// RESOURCE SCHEMAS
 // ============================================
 
-export const lessonSchema = z.object({
+export const resourceSchema = z.object({
   title: z
     .string()
     .min(3, "El título debe tener al menos 3 caracteres")
     .max(200, "El título no puede exceder 200 caracteres"),
-  content: z
+  description: z
     .string()
-    .max(50000, "El contenido no puede exceder 50000 caracteres")
+    .max(1000, "La descripción no puede exceder 1000 caracteres")
     .optional()
     .or(z.literal("")),
+  resourceType: z.enum([
+    "pdf",
+    "video",
+    "audio",
+    "document",
+    "link",
+    "image",
+    "other",
+  ]),
+  fileUrl: z.string().url("URL inválida").optional().or(z.literal("")),
+  externalUrl: z.string().url("URL inválida").optional().or(z.literal("")),
   orderIndex: z
     .number()
-    .int("El orden debe ser un número entero")
-    .positive("El orden debe ser mayor a 0"),
-  durationMinutes: z
-    .number()
-    .int("La duración debe ser un número entero")
-    .positive("La duración debe ser mayor a 0")
-    .max(480, "La duración no puede exceder 480 minutos (8 horas)")
+    .int("El orden debe ser un entero")
+    .min(1, "El orden debe ser al menos 1")
+    .optional(),
+  fileName: z
+    .string()
+    .max(255, "El nombre del archivo es demasiado largo")
     .optional()
-    .or(z.literal(0)),
-  isPublished: z.boolean().optional(),
+    .or(z.literal("")),
+  fileSize: z
+    .number()
+    .int("El tamaño debe ser un entero")
+    .positive("El tamaño debe ser mayor a 0")
+    .optional(),
+  mimeType: z
+    .string()
+    .max(120, "El tipo MIME es demasiado largo")
+    .optional()
+    .or(z.literal("")),
 });
 
 // ============================================
 // PROFILE SCHEMAS
 // ============================================
-
 export const updateProfileSchema = z.object({
   fullName: z
     .string()
@@ -177,6 +190,6 @@ export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type CourseInput = z.infer<typeof courseSchema>;
-export type ModuleInput = z.infer<typeof moduleSchema>;
-export type LessonInput = z.infer<typeof lessonSchema>;
+export type TopicInput = z.infer<typeof topicSchema>;
+export type ResourceInput = z.infer<typeof resourceSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

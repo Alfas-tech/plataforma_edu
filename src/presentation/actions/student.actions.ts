@@ -3,17 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentProfile } from "./profile.actions";
 import { SupabaseStudentRepository } from "@/src/infrastructure/repositories/SupabaseStudentRepository";
-import { GetCourseWithModulesAndLessonsUseCase } from "@/src/application/use-cases/student/GetCourseWithModulesAndLessonsUseCase";
-import { MarkLessonCompleteUseCase } from "@/src/application/use-cases/student/MarkLessonCompleteUseCase";
-import { MarkLessonIncompleteUseCase } from "@/src/application/use-cases/student/MarkLessonIncompleteUseCase";
+import { GetCourseContentUseCase } from "@/src/application/use-cases/student/GetCourseContentUseCase";
+import { MarkTopicCompleteUseCase } from "@/src/application/use-cases/student/MarkTopicCompleteUseCase";
+import { MarkTopicIncompleteUseCase } from "@/src/application/use-cases/student/MarkTopicIncompleteUseCase";
 
 // Initialize repository
 const studentRepository = new SupabaseStudentRepository();
 
 /**
- * Server Action: Get course with modules, lessons, and student progress
+ * Server Action: Get course content (topics/resources) and student progress
  */
-export async function getCourseWithModulesAndLessons(courseId: string) {
+export async function getCourseContent(courseId: string) {
   try {
     const profileResult = await getCurrentProfile();
     if ("error" in profileResult) {
@@ -26,9 +26,7 @@ export async function getCourseWithModulesAndLessons(courseId: string) {
       return { error: "Solo estudiantes pueden acceder a este contenido" };
     }
 
-    const useCase = new GetCourseWithModulesAndLessonsUseCase(
-      studentRepository
-    );
+    const useCase = new GetCourseContentUseCase(studentRepository);
     const result = await useCase.execute(courseId, profile.id);
 
     if (!result.success || !result.data) {
@@ -37,7 +35,8 @@ export async function getCourseWithModulesAndLessons(courseId: string) {
 
     return {
       course: result.data.course,
-      modules: result.data.modules,
+      version: result.data.version,
+      topics: result.data.topics,
       progress: result.data.progress,
     };
   } catch (error) {
@@ -48,9 +47,9 @@ export async function getCourseWithModulesAndLessons(courseId: string) {
 }
 
 /**
- * Server Action: Mark a lesson as completed
+ * Server Action: Mark a topic as completed
  */
-export async function markLessonComplete(lessonId: string) {
+export async function markTopicComplete(topicId: string) {
   try {
     const profileResult = await getCurrentProfile();
     if ("error" in profileResult) {
@@ -61,30 +60,30 @@ export async function markLessonComplete(lessonId: string) {
 
     if (!profile.isStudent) {
       return {
-        error: "Solo estudiantes pueden marcar lecciones como completadas",
+        error: "Solo estudiantes pueden marcar tópicos como completados",
       };
     }
 
-    const useCase = new MarkLessonCompleteUseCase(studentRepository);
-    const result = await useCase.execute(lessonId, profile.id);
+    const useCase = new MarkTopicCompleteUseCase(studentRepository);
+    const result = await useCase.execute(topicId, profile.id);
 
     if (!result.success) {
-      return { error: result.error || "Error al marcar lección" };
+      return { error: result.error || "Error al marcar tópico" };
     }
 
     revalidatePath("/dashboard/student");
     return { success: true };
   } catch (error) {
     return {
-      error: error instanceof Error ? error.message : "Error al marcar lección",
+      error: error instanceof Error ? error.message : "Error al marcar tópico",
     };
   }
 }
 
 /**
- * Server Action: Mark a lesson as incomplete
+ * Server Action: Mark a topic as incomplete
  */
-export async function markLessonIncomplete(lessonId: string) {
+export async function markTopicIncomplete(topicId: string) {
   try {
     const profileResult = await getCurrentProfile();
     if ("error" in profileResult) {
@@ -97,11 +96,11 @@ export async function markLessonIncomplete(lessonId: string) {
       return { error: "Solo estudiantes pueden actualizar su progreso" };
     }
 
-    const useCase = new MarkLessonIncompleteUseCase(studentRepository);
-    const result = await useCase.execute(lessonId, profile.id);
+    const useCase = new MarkTopicIncompleteUseCase(studentRepository);
+    const result = await useCase.execute(topicId, profile.id);
 
     if (!result.success) {
-      return { error: result.error || "Error al actualizar lección" };
+      return { error: result.error || "Error al actualizar tópico" };
     }
 
     revalidatePath("/dashboard/student");
@@ -109,18 +108,17 @@ export async function markLessonIncomplete(lessonId: string) {
   } catch (error) {
     return {
       error:
-        error instanceof Error ? error.message : "Error al actualizar lección",
+        error instanceof Error ? error.message : "Error al actualizar tópico",
     };
   }
 }
 
 /**
- * Server Action: Get student progress (legacy - kept for compatibility)
- * @deprecated Use getCourseWithModulesAndLessons instead
+ * Server Action: Get student topic progress
  */
-export async function getStudentProgress(studentId: string) {
+export async function getStudentTopicProgress(studentId: string) {
   try {
-    const progress = await studentRepository.getStudentProgress(studentId);
+    const progress = await studentRepository.getStudentTopicProgress(studentId);
     return { progress };
   } catch (error) {
     return {
@@ -128,4 +126,22 @@ export async function getStudentProgress(studentId: string) {
         error instanceof Error ? error.message : "Error al obtener progreso",
     };
   }
+}
+
+// LEGACY EXPORTS ------------------------------------------------------------
+
+export async function getCourseWithModulesAndLessons(courseId: string) {
+  return getCourseContent(courseId);
+}
+
+export async function markLessonComplete(topicId: string) {
+  return markTopicComplete(topicId);
+}
+
+export async function markLessonIncomplete(topicId: string) {
+  return markTopicIncomplete(topicId);
+}
+
+export async function getStudentProgress(studentId: string) {
+  return getStudentTopicProgress(studentId);
 }

@@ -45,7 +45,7 @@ function CodeEditorPreview() {
 }
 
 export default async function Home() {
-  // Verificar si el usuario está autenticado
+  // Check if user is authenticated
   const supabase = createClient();
   const {
     data: { user },

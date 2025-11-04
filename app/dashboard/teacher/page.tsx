@@ -11,11 +11,9 @@ import {
   LogOut,
   BookOpen,
   FileEdit,
-  Eye,
-  EyeOff,
-  RefreshCcw,
   ShieldCheck,
   Calendar,
+  RefreshCcw,
   AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
@@ -50,16 +48,14 @@ function getVisibilityBadge(course: CourseOverview) {
   if (course.visibilitySource === "version") {
     return (
       <Badge className="bg-green-100 text-green-700">
-        <Eye className="mr-1 h-3 w-3" />
-        Visible
+        ✓ Visible
       </Badge>
     );
   }
 
   return (
     <Badge variant="outline" className="border-slate-300 text-slate-600">
-      <EyeOff className="mr-1 h-3 w-3" />
-      Oculto
+      ✗ Oculto
     </Badge>
   );
 }
@@ -108,16 +104,6 @@ export default async function TeacherDashboardPage() {
   const coursesResult = await getTeacherCourses(profile.id);
   const courses: CourseOverview[] =
     "error" in coursesResult ? [] : coursesResult.courses || [];
-
-  const visibleCourses = courses.filter(
-    (course) => course.isVisibleForStudents
-  );
-  const pendingCourses = courses.filter(
-    (course) => course.activeVersion?.status === "pending_review"
-  );
-  const draftCourses = courses.filter(
-    (course) => course.activeVersion?.status === "draft"
-  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50">
@@ -189,64 +175,6 @@ export default async function TeacherDashboardPage() {
             Bienvenido, {profile.displayName}. Gestiona el contenido de tus
             cursos asignados.
           </p>
-        </div>
-
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:mb-8 sm:gap-4 lg:grid-cols-4">
-          <Card className="border-2">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-                <BookOpen className="h-4 w-4 text-emerald-600 sm:h-5 sm:w-5" />
-                Total Cursos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-emerald-600 sm:text-3xl">
-                {courses.length}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-                <Eye className="h-4 w-4 text-green-600 sm:h-5 sm:w-5" />
-                Visibles
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-green-600 sm:text-3xl">
-                {visibleCourses.length}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-                <RefreshCcw className="h-4 w-4 text-blue-600 sm:h-5 sm:w-5" />
-                Pendientes revisión
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-blue-600 sm:text-3xl">
-                {pendingCourses.length}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-                <AlertTriangle className="h-4 w-4 text-amber-600 sm:h-5 sm:w-5" />
-                Borradores
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-amber-600 sm:text-3xl">
-                {draftCourses.length}
-              </p>
-            </CardContent>
-          </Card>
         </div>
 
         <div className="mb-6 sm:mb-8">

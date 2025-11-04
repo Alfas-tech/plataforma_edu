@@ -1,45 +1,16 @@
-import { IStudentRepository } from "@/src/core/interfaces/repositories/IStudentRepository";
-import { GetCourseResult } from "@/src/core/types/student.types";
+import { GetCourseContentUseCase } from "./GetCourseContentUseCase";
+import { GetCourseContentResult } from "@/src/core/types/student.types";
 
 /**
- * Use Case: Get course with modules and lessons for a student
- * Business logic for retrieving course content including student progress
+ * @deprecated Mantener por compatibilidad; usar GetCourseContentUseCase
  */
 export class GetCourseWithModulesAndLessonsUseCase {
-  constructor(private readonly studentRepository: IStudentRepository) {}
+  constructor(private readonly delegate: GetCourseContentUseCase) {}
 
-  async execute(courseId: string, studentId: string): Promise<GetCourseResult> {
-    try {
-      const data = await this.studentRepository.getCourseWithModulesAndLessons(
-        courseId,
-        studentId
-      );
-
-      // Merge progress with lessons
-      const modulesWithProgress = data.modules.map((module) => ({
-        ...module,
-        lessons: module.lessons.map((lesson) => {
-          const progress = data.progress.find((p) => p.lessonId === lesson.id);
-          return {
-            ...lesson,
-            completed: progress?.completed || false,
-          };
-        }),
-      }));
-
-      return {
-        success: true,
-        data: {
-          ...data,
-          modules: modulesWithProgress,
-        },
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error:
-          error instanceof Error ? error.message : "Error al obtener curso",
-      };
-    }
+  async execute(
+    courseId: string,
+    studentId: string
+  ): Promise<GetCourseContentResult> {
+    return this.delegate.execute(courseId, studentId);
   }
 }

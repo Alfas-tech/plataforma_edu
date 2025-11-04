@@ -1,7 +1,7 @@
 import {
-  CourseWithModulesData,
-  StudentProgress,
-  MarkLessonResult,
+  CourseWithTopicsData,
+  StudentTopicProgress,
+  MarkTopicResult,
 } from "@/src/core/types/student.types";
 
 /**
@@ -10,42 +10,42 @@ import {
  */
 export interface IStudentRepository {
   /**
-   * Get a course with all its modules and lessons for a student
+   * Get a course with all its topics and resources for a student
    * @param courseId - The course ID
    * @param studentId - The student ID
-   * @returns Course data with modules, lessons, and student progress
+   * @returns Course data with topics, resources, and student progress
    */
-  getCourseWithModulesAndLessons(
+  getCourseWithTopicsAndResources(
     courseId: string,
     studentId: string
-  ): Promise<CourseWithModulesData>;
+  ): Promise<CourseWithTopicsData>;
 
   /**
    * Get all progress records for a student
    * @param studentId - The student ID
    * @returns Array of progress records
    */
-  getStudentProgress(studentId: string): Promise<StudentProgress[]>;
+  getStudentTopicProgress(studentId: string): Promise<StudentTopicProgress[]>;
 
   /**
-   * Mark a lesson as completed for a student
-   * @param lessonId - The lesson ID
+   * Mark a topic as completed for a student
+   * @param topicId - The topic ID
    * @param studentId - The student ID
    * @returns Result indicating success or failure
    */
-  markLessonComplete(
-    lessonId: string,
+  markTopicComplete(
+    topicId: string,
     studentId: string
-  ): Promise<MarkLessonResult>;
+  ): Promise<MarkTopicResult>;
 
   /**
-   * Mark a lesson as incomplete for a student
-   * @param lessonId - The lesson ID
+   * Mark a topic as incomplete for a student
+   * @param topicId - The topic ID
    * @param studentId - The student ID
    * @returns Result indicating success or failure
    */
-  markLessonIncomplete(
-    lessonId: string,
+  markTopicIncomplete(
+    topicId: string,
     studentId: string
-  ): Promise<MarkLessonResult>;
+  ): Promise<MarkTopicResult>;
 }

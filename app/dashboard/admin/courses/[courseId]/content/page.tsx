@@ -1,14 +1,15 @@
 import { redirect } from "next/navigation";
-import { getCurrentProfile } from "@/src/presentation/actions/profile.actions";
-import { getCourseWithTeachers } from "@/src/presentation/actions/course.actions";
-import { getModulesByCourse } from "@/src/presentation/actions/content.actions";
-import { signout } from "@/src/presentation/actions/auth.actions";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, ArrowLeft, BookMarked, Plus } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { ModuleManagementClient } from "./components/ModuleManagementClient";
+import { LogOut, ArrowLeft } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { getCurrentProfile } from "@/src/presentation/actions/profile.actions";
+import { signout } from "@/src/presentation/actions/auth.actions";
+import { getCourseWithTeachers } from "@/src/presentation/actions/course.actions";
+import { getTopicsByCourse } from "@/src/presentation/actions/content.actions";
+
+import { TopicManagementClient } from "./components/TopicManagementClient";
 
 interface PageProps {
   params: {
@@ -17,6 +18,7 @@ interface PageProps {
   searchParams?: {
     branchId?: string;
     versionId?: string;
+    from?: string;
   };
 }
 
@@ -27,6 +29,7 @@ export default async function CourseContentPage({
   const { courseId } = params;
   const requestedBranchId = searchParams?.branchId ?? null;
   const requestedVersionId = searchParams?.versionId ?? null;
+  const comingFrom = searchParams?.from ?? null;
 
   const profileResult = await getCurrentProfile();
 
@@ -36,12 +39,10 @@ export default async function CourseContentPage({
 
   const { profile } = profileResult;
 
-  // Admin o Teacher pueden gestionar contenido
-  if (!profile.isAdmin && !profile.isTeacher) {
+  if (!profile.isAdmin && !profile.isTeacher && !profile.isEditor) {
     redirect("/dashboard");
   }
 
-  // Obtener curso
   const courseResult = await getCourseWithTeachers(courseId);
 
   if ("error" in courseResult) {
@@ -58,16 +59,19 @@ export default async function CourseContentPage({
 
   const { course } = courseResult;
 
-  const branchCandidates = [course.defaultBranch, ...course.branches].filter(
-    Boolean
-  ) as typeof course.branches;
+  // Type guard to filter valid branches
+  type ValidBranch = { id: string; name: string; isDefault: boolean; tipVersionId: string | null };
+  const isValidBranch = (b: unknown): b is ValidBranch => {
+    return b !== null && typeof b === 'object' && 'id' in b && 'name' in b;
+  };
+  
+  const branchCandidates = [course.defaultBranch, ...(course.branches ?? [])].filter(isValidBranch);
 
   const selectedBranch = requestedBranchId
-    ? (branchCandidates.find((branch) => branch.id === requestedBranchId) ??
-      null)
-    : (course.defaultBranch ?? null);
+    ? branchCandidates.find((branch) => branch.id === requestedBranchId) ?? null
+    : (isValidBranch(course.defaultBranch) ? course.defaultBranch : null);
 
-  const effectiveBranch = selectedBranch ?? course.defaultBranch ?? null;
+  const effectiveBranch = selectedBranch ?? (isValidBranch(course.defaultBranch) ? course.defaultBranch : null);
 
   const effectiveVersionId = (() => {
     if (requestedVersionId) {
@@ -79,21 +83,44 @@ export default async function CourseContentPage({
     }
 
     if (effectiveBranch?.isDefault) {
+      // Los editores y docentes ven el borrador por defecto, los admins ven la versión activa
+      if (profile.isEditor || profile.isTeacher) {
+        return course.draftVersion?.id ?? course.activeVersion?.id ?? null;
+      }
       return course.activeVersion?.id ?? null;
     }
 
     return null;
   })();
 
-  // Obtener módulos
-  const modulesResult = await getModulesByCourse(courseId, {
+  // Determinar si estamos viendo una versión borrador
+  const isViewingDraftVersion = Boolean(
+    effectiveVersionId && 
+    course.draftVersion?.id === effectiveVersionId
+  );
+
+  // Determinar si estamos viendo una versión publicada (activa)
+  const isViewingPublishedVersion = Boolean(
+    effectiveVersionId && 
+    course.activeVersion?.id === effectiveVersionId
+  );
+
+  // Determinar si estamos viendo una versión archivada
+  const isViewingArchivedVersion = Boolean(
+    effectiveVersionId && 
+    course.archivedVersions?.some(v => v.id === effectiveVersionId)
+  );
+
+  // Los administradores pueden editar versiones activas, los docentes y editores solo borradores
+  const canEditPublishedVersion = Boolean(profile.isAdmin && isViewingPublishedVersion);
+
+  const topicsResult = await getTopicsByCourse(courseId, {
     courseVersionId: effectiveVersionId ?? undefined,
   });
-  const modules = "error" in modulesResult ? [] : modulesResult.modules || [];
+  const topics = "error" in topicsResult ? [] : topicsResult.topics ?? [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
-      {/* Header */}
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white shadow-sm">
         <div className="container mx-auto px-3 py-3 sm:px-4 sm:py-4 lg:px-6">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
@@ -117,7 +144,11 @@ export default async function CourseContentPage({
 
             <div className="flex items-center gap-2 sm:gap-3">
               <span className="hidden text-xs font-medium text-purple-600 sm:inline sm:text-sm">
-                {profile.isAdmin ? "🛡️ Administrador" : "👨‍🏫 Docente"}
+                {profile.isAdmin
+                  ? "🛡️ Administrador"
+                  : profile.isEditor
+                    ? "✏️ Editor"
+                    : "👨‍🏫 Docente"}
               </span>
               {profile.avatarUrl ? (
                 <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-full sm:h-10 sm:w-10">
@@ -153,15 +184,17 @@ export default async function CourseContentPage({
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8">
-        {/* Header Section */}
         <div className="mb-6 flex items-center gap-4 sm:mb-8">
           <Link
             href={
-              profile.isAdmin
-                ? "/dashboard/admin/courses"
-                : "/dashboard/teacher"
+              comingFrom === "archived"
+                ? "/dashboard/editor/archived"
+                : profile.isAdmin
+                  ? "/dashboard/admin/courses"
+                  : profile.isEditor
+                    ? "/dashboard/editor"
+                    : "/dashboard/teacher"
             }
           >
             <Button variant="outline" size="sm">
@@ -171,7 +204,7 @@ export default async function CourseContentPage({
           </Link>
           <div>
             <h1 className="mb-1 text-balance text-2xl font-bold text-slate-800 sm:mb-2 sm:text-3xl md:text-4xl">
-              Gestión de Contenido
+              Gestión de contenido
             </h1>
             <p className="text-pretty text-sm text-slate-600 sm:text-base md:text-lg">
               {course.title}
@@ -179,46 +212,18 @@ export default async function CourseContentPage({
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:mb-8 sm:grid-cols-2">
-          <Card className="border-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <BookMarked className="h-5 w-5 text-purple-600" />
-                Total Módulos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-purple-600">
-                {modules.length}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <Plus className="h-5 w-5 text-green-600" />
-                Módulos Publicados
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-green-600">
-                {modules.filter((m) => m.isPublished).length}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Module Management */}
-        <ModuleManagementClient
+        <TopicManagementClient
           courseId={courseId}
           branchId={effectiveBranch?.id ?? null}
           courseVersionId={effectiveVersionId ?? null}
           branchName={effectiveBranch?.name ?? "principal"}
           isDefaultBranch={effectiveBranch?.isDefault ?? true}
-          modules={modules}
+          isViewingDraftVersion={isViewingDraftVersion}
+          isViewingPublishedVersion={isViewingPublishedVersion}
+          isViewingArchivedVersion={isViewingArchivedVersion}
+          canEditPublishedVersion={canEditPublishedVersion}
           isAdmin={profile.isAdmin}
+          topics={topics}
         />
       </main>
     </div>

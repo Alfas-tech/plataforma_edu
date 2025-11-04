@@ -21,7 +21,7 @@ export default async function UsersManagementPage() {
 
   const { profile } = profileResult;
 
-  // Verificar que sea administrador
+  // Verify user is administrator
   if (!profile.isAdmin) {
     redirect("/dashboard");
   }
@@ -111,7 +111,7 @@ export default async function UsersManagementPage() {
         </div>
 
         <Suspense fallback={<UsersPageSkeleton />}>
-          <UsersManagementContent usersPromise={usersPromise} />
+          <UsersManagementContent usersPromise={usersPromise} currentUserId={profile.id} />
         </Suspense>
       </main>
     </div>
@@ -122,8 +122,10 @@ type UsersResult = Awaited<ReturnType<typeof getAllUsers>>;
 
 async function UsersManagementContent({
   usersPromise,
+  currentUserId,
 }: {
   usersPromise: Promise<UsersResult>;
+  currentUserId: string;
 }) {
   const usersResult = await usersPromise;
 
@@ -135,77 +137,49 @@ async function UsersManagementContent({
     );
   }
 
-  const { students = [], teachers = [] } = usersResult;
+  const { students = [], teachers = [], editors = [], admins = [] } = usersResult;
 
   return (
-    <>
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:mb-8 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="border-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <Users className="h-5 w-5 text-blue-600" />
-              Total Usuarios
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-slate-800">
-              {students.length + teachers.length}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <Users className="h-5 w-5 text-blue-600" />
-              Estudiantes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-blue-600">
-              {students.length}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <GraduationCap className="h-5 w-5 text-emerald-600" />
-              Docentes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-emerald-600">
-              {teachers.length}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <UserManagementClient students={students} teachers={teachers} />
-    </>
+    <UserManagementClient 
+      students={students} 
+      teachers={teachers} 
+      editors={editors} 
+      admins={admins}
+      currentUserId={currentUserId}
+    />
   );
 }
 
 function UsersPageSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {[0, 1, 2].map((item) => (
+      {/* Skeleton para barra de búsqueda y botón */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="h-10 w-full max-w-md animate-pulse rounded-lg bg-slate-200" />
+        <div className="h-10 w-40 animate-pulse rounded-lg bg-slate-200" />
+      </div>
+      
+      {/* Skeleton para filtros */}
+      <div className="flex gap-2">
+        {[0, 1, 2, 3, 4].map((item) => (
           <div
             key={item}
-            className="h-32 animate-pulse rounded-lg border bg-white"
+            className="h-9 w-28 animate-pulse rounded-lg bg-slate-200"
           />
         ))}
       </div>
-      <div className="grid gap-4 lg:grid-cols-2">
-        {[0, 1].map((card) => (
-          <div
-            key={card}
-            className="h-[360px] animate-pulse rounded-lg border bg-white"
-          />
-        ))}
+
+      {/* Skeleton para lista de usuarios */}
+      <div className="rounded-lg border bg-white p-6">
+        <div className="mb-4 h-6 w-48 animate-pulse rounded bg-slate-200" />
+        <div className="space-y-3">
+          {[0, 1, 2, 3, 4].map((item) => (
+            <div
+              key={item}
+              className="h-24 animate-pulse rounded-lg border bg-slate-50"
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -5,6 +5,8 @@ export interface GetAllUsersResult {
   success: boolean;
   students?: ProfileEntity[];
   teachers?: ProfileEntity[];
+  editors?: ProfileEntity[];
+  admins?: ProfileEntity[];
   error?: string;
 }
 
@@ -13,15 +15,19 @@ export class GetAllUsersUseCase {
 
   async execute(): Promise<GetAllUsersResult> {
     try {
-      const [students, teachers] = await Promise.all([
+      const [students, teachers, editors, admins] = await Promise.all([
         this.profileRepository.getAllStudents(),
         this.profileRepository.getAllTeachers(),
+        this.profileRepository.getAllEditors(),
+        this.profileRepository.getAllAdmins(),
       ]);
 
       return {
         success: true,
         students,
         teachers,
+        editors,
+        admins,
       };
     } catch (error) {
       return {

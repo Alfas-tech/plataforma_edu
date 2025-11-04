@@ -32,13 +32,17 @@ export class ProfileEntity {
     return this.avatarUrl !== null && this.avatarUrl !== "";
   }
 
-  // NUEVOS MÉTODOS
+  // Role checking methods
   isStudent(): boolean {
     return this.role === "student";
   }
 
   isTeacher(): boolean {
     return this.role === "teacher";
+  }
+
+  isEditor(): boolean {
+    return this.role === "editor";
   }
 
   isAdmin(): boolean {
@@ -55,6 +59,15 @@ export class ProfileEntity {
           canAssignTeachers: true,
           canPromoteUsers: true,
           canViewAllProgress: true,
+        };
+      case "editor":
+        return {
+          canCreateCourse: false,
+          canEditCourse: true,
+          canDeleteCourse: false,
+          canAssignTeachers: false,
+          canPromoteUsers: false,
+          canViewAllProgress: false,
         };
       case "teacher":
         return {
@@ -79,6 +92,6 @@ export class ProfileEntity {
   }
 
   canAccessAdminPanel(): boolean {
-    return this.role === "admin" || this.role === "teacher";
+    return this.role === "admin" || this.role === "teacher" || this.role === "editor";
   }
 }

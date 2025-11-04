@@ -29,12 +29,12 @@ export default async function CourseTeachersPage({ params }: PageProps) {
 
   const { profile } = profileResult;
 
-  // Verificar que sea administrador
+  // Verify user is administrator
   if (!profile.isAdmin) {
     redirect("/dashboard");
   }
 
-  // Obtener curso con versiones y docentes asignados
+  // Get course with versions and assigned teachers
   const courseResult = await getCourseVersionAssignments(courseId);
 
   if ("error" in courseResult) {
@@ -51,7 +51,7 @@ export default async function CourseTeachersPage({ params }: PageProps) {
 
   const { course, versions } = courseResult;
 
-  // Obtener todos los docentes disponibles
+  // Get all available teachers
   const usersResult = await getAllUsers();
 
   if ("error" in usersResult) {
@@ -81,7 +81,6 @@ export default async function CourseTeachersPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
-      {/* Header */}
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white shadow-sm">
         <div className="container mx-auto px-3 py-3 sm:px-4 sm:py-4 lg:px-6">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
@@ -141,9 +140,7 @@ export default async function CourseTeachersPage({ params }: PageProps) {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8">
-        {/* Header Section */}
         <div className="mb-6 flex items-center gap-4 sm:mb-8">
           <Link href="/dashboard/admin/courses">
             <Button variant="outline" size="sm">
@@ -161,7 +158,6 @@ export default async function CourseTeachersPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Stats Cards */}
         <div className="mb-6 grid grid-cols-1 gap-4 sm:mb-8 sm:grid-cols-2">
           <Card className="border-2">
             <CardHeader className="pb-3">
@@ -192,7 +188,6 @@ export default async function CourseTeachersPage({ params }: PageProps) {
           </Card>
         </div>
 
-        {/* Teacher Assignment Client Component */}
         <TeacherAssignmentClient
           courseId={courseId}
           versions={versions}
