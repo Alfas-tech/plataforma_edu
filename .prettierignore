@@ -57,9 +57,3 @@ coverage
 
 # Workflow files
 .github/workflows
-
-# SQL
-*.sql
-*.sqlite
-*.sqlite3
-.superbase/migrations

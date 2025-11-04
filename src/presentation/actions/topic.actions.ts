@@ -3,10 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { SupabaseCourseRepository } from "@/src/infrastructure/repositories/SupabaseCourseRepository";
 import { SupabaseAuthRepository } from "@/src/infrastructure/repositories/SupabaseAuthRepository";
-import type {
-  CreateTopicInput,
-  UpdateTopicInput,
-} from "@/src/core/types/course.types";
+import type { CreateTopicInput, UpdateTopicInput } from "@/src/core/types/course.types";
 
 const courseRepository = new SupabaseCourseRepository();
 const authRepository = new SupabaseAuthRepository();
@@ -24,8 +21,7 @@ export async function getTopicsByVersion(versionId: string) {
     };
   } catch (error) {
     return {
-      error:
-        error instanceof Error ? error.message : "Error al obtener tópicos",
+      error: error instanceof Error ? error.message : "Error al obtener tópicos",
     };
   }
 }
@@ -42,7 +38,7 @@ export async function createTopic(input: Omit<CreateTopicInput, "createdBy">) {
       createdBy: currentUser.id,
     });
     revalidatePath("/dashboard/admin/courses");
-
+    
     return {
       topic: {
         id: topic.id,
@@ -67,7 +63,7 @@ export async function updateTopic(topicId: string, input: UpdateTopicInput) {
 
     const topic = await courseRepository.updateTopic(topicId, input);
     revalidatePath("/dashboard/admin/courses");
-
+    
     return {
       topic: {
         id: topic.id,
@@ -78,8 +74,7 @@ export async function updateTopic(topicId: string, input: UpdateTopicInput) {
     };
   } catch (error) {
     return {
-      error:
-        error instanceof Error ? error.message : "Error al actualizar tópico",
+      error: error instanceof Error ? error.message : "Error al actualizar tópico",
     };
   }
 }
@@ -93,12 +88,11 @@ export async function deleteTopic(topicId: string) {
 
     await courseRepository.deleteTopic(topicId);
     revalidatePath("/dashboard/admin/courses");
-
+    
     return { success: true };
   } catch (error) {
     return {
-      error:
-        error instanceof Error ? error.message : "Error al eliminar tópico",
+      error: error instanceof Error ? error.message : "Error al eliminar tópico",
     };
   }
 }

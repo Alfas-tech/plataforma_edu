@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BookOpen } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -95,29 +95,28 @@ export default async function EditDraftPage({
       </header>
 
       <main className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8">
-        <div className="mb-6 flex items-center gap-4">
-          <Link
-            href={
-              profile.isEditor
-                ? "/dashboard/editor"
-                : profile.isTeacher
-                  ? "/dashboard/teacher"
-                  : "/dashboard/admin/courses"
-            }
-          >
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Volver
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Link href={profile.isEditor ? "/dashboard/editor" : profile.isTeacher ? "/dashboard/teacher" : "/dashboard/admin/courses"}>
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Volver
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-800">Editar borrador</h1>
+              <p className="text-sm text-slate-600">
+                Modifica el contenido del curso y guarda los cambios
+              </p>
+            </div>
+          </div>
+          
+          <Link href={`/dashboard/admin/courses/${params.courseId}/content?versionId=${params.draftId}`}>
+            <Button variant="outline" className="border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100">
+              <BookOpen className="mr-2 h-4 w-4" />
+              Gestionar Contenido y Recursos
             </Button>
           </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">
-              Editar borrador
-            </h1>
-            <p className="text-sm text-slate-600">
-              Modifica el contenido del curso y guarda los cambios
-            </p>
-          </div>
         </div>
 
         <DraftEditorClient

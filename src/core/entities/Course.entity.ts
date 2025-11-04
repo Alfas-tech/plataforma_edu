@@ -42,9 +42,8 @@ export class CourseEntity {
     return (
       this.versions.find((version) => version.isActive()) ??
       (this.activeVersionId
-        ? (this.versions.find(
-            (version) => version.id === this.activeVersionId
-          ) ?? null)
+        ? this.versions.find((version) => version.id === this.activeVersionId) ??
+          null
         : null)
     );
   }
@@ -87,3 +86,4 @@ export class CourseEntity {
     return this.versions.find((version) => version.id === versionId) ?? null;
   }
 }
+

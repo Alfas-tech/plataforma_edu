@@ -1,1 +1,3 @@
-export { CourseGroupStudentEntity as CourseMergeRequestEntity } from "./CourseGroupStudent.entity";
+export {
+  CourseGroupStudentEntity as CourseMergeRequestEntity,
+} from "./CourseGroupStudent.entity";

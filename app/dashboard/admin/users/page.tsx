@@ -111,10 +111,7 @@ export default async function UsersManagementPage() {
         </div>
 
         <Suspense fallback={<UsersPageSkeleton />}>
-          <UsersManagementContent
-            usersPromise={usersPromise}
-            currentUserId={profile.id}
-          />
+          <UsersManagementContent usersPromise={usersPromise} currentUserId={profile.id} />
         </Suspense>
       </main>
     </div>
@@ -140,18 +137,13 @@ async function UsersManagementContent({
     );
   }
 
-  const {
-    students = [],
-    teachers = [],
-    editors = [],
-    admins = [],
-  } = usersResult;
+  const { students = [], teachers = [], editors = [], admins = [] } = usersResult;
 
   return (
-    <UserManagementClient
-      students={students}
-      teachers={teachers}
-      editors={editors}
+    <UserManagementClient 
+      students={students} 
+      teachers={teachers} 
+      editors={editors} 
       admins={admins}
       currentUserId={currentUserId}
     />
@@ -166,7 +158,7 @@ function UsersPageSkeleton() {
         <div className="h-10 w-full max-w-md animate-pulse rounded-lg bg-slate-200" />
         <div className="h-10 w-40 animate-pulse rounded-lg bg-slate-200" />
       </div>
-
+      
       {/* Skeleton para filtros */}
       <div className="flex gap-2">
         {[0, 1, 2, 3, 4].map((item) => (

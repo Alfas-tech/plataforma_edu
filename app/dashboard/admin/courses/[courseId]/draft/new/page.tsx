@@ -96,24 +96,14 @@ export default async function NewDraftPage({
 
       <main className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8">
         <div className="mb-6 flex items-center gap-4">
-          <Link
-            href={
-              profile.isEditor
-                ? "/dashboard/editor"
-                : profile.isTeacher
-                  ? "/dashboard/teacher"
-                  : "/dashboard/admin/courses"
-            }
-          >
+          <Link href={profile.isEditor ? "/dashboard/editor" : profile.isTeacher ? "/dashboard/teacher" : "/dashboard/admin/courses"}>
             <Button variant="ghost" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Volver
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">
-              Crear borrador
-            </h1>
+            <h1 className="text-2xl font-bold text-slate-800">Crear borrador</h1>
             <p className="text-sm text-slate-600">
               Crea el contenido del curso y guarda los cambios
             </p>

@@ -138,14 +138,11 @@ export async function demoteToStudent(userId: string) {
   return { success: true };
 }
 
-export async function changeUserRole(
-  userId: string,
-  newRole: "admin" | "teacher" | "editor" | "student"
-) {
+export async function changeUserRole(userId: string, newRole: "admin" | "teacher" | "editor" | "student") {
   try {
     // Get current user
     const currentUser = await authRepository.getCurrentUser();
-
+    
     if (!currentUser) {
       return { error: "No autenticado" };
     }
@@ -156,28 +153,23 @@ export async function changeUserRole(
     }
 
     // Verify current user is admin
-    const currentProfile = await profileRepository.getProfileByUserId(
-      currentUser.id
-    );
-
+    const currentProfile = await profileRepository.getProfileByUserId(currentUser.id);
+    
     if (!currentProfile || currentProfile.role !== "admin") {
       return { error: "Solo los administradores pueden cambiar roles" };
     }
 
     // Update user role
     await profileRepository.updateRole(userId, newRole);
-
+    
     revalidateTag("admin-users");
     revalidatePath("/dashboard/admin");
     revalidatePath("/dashboard/admin/users");
 
     return { success: true };
   } catch (error) {
-    return {
-      error:
-        error instanceof Error
-          ? error.message
-          : "Error al cambiar el rol del usuario",
+    return { 
+      error: error instanceof Error ? error.message : "Error al cambiar el rol del usuario" 
     };
   }
 }

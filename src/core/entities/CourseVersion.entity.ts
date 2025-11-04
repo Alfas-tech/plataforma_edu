@@ -1,4 +1,7 @@
-import { CourseStatus, CourseVersionData } from "@/src/core/types/course.types";
+import {
+  CourseStatus,
+  CourseVersionData,
+} from "@/src/core/types/course.types";
 
 export class CourseVersionEntity {
   constructor(

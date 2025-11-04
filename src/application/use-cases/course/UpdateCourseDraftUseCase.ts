@@ -31,18 +31,16 @@ export class UpdateCourseDraftUseCase {
         currentUser.id
       );
 
-      if (
-        !profile ||
-        (!profile.isAdmin() && !profile.isEditor() && !profile.isTeacher())
-      ) {
+      if (!profile || (!profile.isAdmin() && !profile.isEditor() && !profile.isTeacher())) {
         return {
           success: false,
           error: "No tienes permisos para editar borradores",
         };
       }
 
-      const existing =
-        await this.courseRepository.getCourseVersionById(versionId);
+      const existing = await this.courseRepository.getCourseVersionById(
+        versionId
+      );
 
       if (!existing) {
         return { success: false, error: "Versión no encontrada" };

@@ -23,12 +23,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FileUpload } from "@/components/ui/file-upload";
 import { Loader2 } from "lucide-react";
-import { resourceSchema, type ResourceInput } from "@/lib/validations";
+import {
+  resourceSchema,
+  type ResourceInput,
+} from "@/lib/validations";
 import {
   createResource,
   updateResource,
 } from "@/src/presentation/actions/content.actions";
+import { useFileUpload } from "@/lib/hooks/useFileUpload";
+import { MAX_FILE_SIZES, formatFileSize, getResourceTypeFromMime } from "@/lib/storage.utils";
 
 interface ResourceData {
   id: string;
@@ -48,6 +54,7 @@ interface ResourceFormDialogProps {
   onClose: () => void;
   mode: "create" | "edit";
   topicId: string;
+  courseId: string; // NUEVO: necesario para upload
   resource?: ResourceData | null;
   defaultOrderIndex: number;
   canMutateContent: boolean;
@@ -58,13 +65,12 @@ const RESOURCE_TYPE_OPTIONS: Array<{
   label: string;
   helper: string;
 }> = [
-  { value: "pdf", label: "PDF", helper: "Documentos descargables" },
-  { value: "video", label: "Video", helper: "Contenido audiovisual" },
-  { value: "audio", label: "Audio", helper: "Clases o podcasts" },
-  { value: "document", label: "Documento", helper: "Material de referencia" },
-  { value: "link", label: "Enlace", helper: "Recursos externos" },
-  { value: "image", label: "Imagen", helper: "Diagramas o gráficos" },
-  { value: "other", label: "Otro", helper: "Otro tipo de recurso" },
+  { value: "pdf", label: "PDF (.pdf)", helper: "Documentos PDF descargables" },
+  { value: "document", label: "Documento (.doc, .docx)", helper: "Archivos Word" },
+  { value: "image", label: "Imagen (.jpg, .png)", helper: "Diagramas o gráficos" },
+  { value: "audio", label: "Audio (.mp3)", helper: "Clases o podcasts en MP3" },
+  { value: "video", label: "Video (.mp4)", helper: "Videos en formato MP4" },
+  { value: "link", label: "Enlace externo", helper: "YouTube, artículos web, etc." },
 ];
 
 export function ResourceFormDialog({
@@ -72,6 +78,7 @@ export function ResourceFormDialog({
   onClose,
   mode,
   topicId,
+  courseId, // NUEVO
   resource,
   defaultOrderIndex,
   canMutateContent,
@@ -79,6 +86,10 @@ export function ResourceFormDialog({
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  
+  // Hook para subir archivos
+  const { isUploading, progress, error: uploadError, uploadedFile, uploadFile, reset: resetUpload } = useFileUpload();
 
   const {
     register,
@@ -86,6 +97,7 @@ export function ResourceFormDialog({
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<ResourceInput>({
     resolver: zodResolver(resourceSchema),
@@ -111,6 +123,19 @@ export function ResourceFormDialog({
     );
   }, [selectedType]);
 
+  // Efecto para actualizar metadatos cuando se selecciona un archivo
+  useEffect(() => {
+    if (selectedFile) {
+      setValue("fileName", selectedFile.name);
+      setValue("fileSize", selectedFile.size);
+      setValue("mimeType", selectedFile.type);
+      
+      // Auto-detectar y cambiar el tipo de recurso basado en el archivo
+      const detectedType = getResourceTypeFromMime(selectedFile.type);
+      setValue("resourceType", detectedType as ResourceInput["resourceType"]);
+    }
+  }, [selectedFile, setValue]);
+
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -128,7 +153,9 @@ export function ResourceFormDialog({
         fileSize: resource.fileSize ?? undefined,
         mimeType: resource.mimeType ?? "",
       });
+      setSelectedFile(null);
     } else {
+      // Modo crear: limpiar completamente el formulario
       reset({
         title: "",
         description: "",
@@ -140,10 +167,31 @@ export function ResourceFormDialog({
         fileSize: undefined,
         mimeType: "",
       });
+      setSelectedFile(null);
+      resetUpload(); // Limpiar estado de upload
     }
 
     setFormError(null);
-  }, [isOpen, mode, resource, reset, defaultOrderIndex]);
+  }, [isOpen, mode, resource, reset, defaultOrderIndex, resetUpload]);
+
+  const handleClose = () => {
+    // Limpiar completamente el formulario al cerrar
+    reset({
+      title: "",
+      description: "",
+      resourceType: "pdf",
+      fileUrl: "",
+      externalUrl: "",
+      orderIndex: defaultOrderIndex,
+      fileName: "",
+      fileSize: undefined,
+      mimeType: "",
+    });
+    setSelectedFile(null);
+    resetUpload();
+    setFormError(null);
+    onClose();
+  };
 
   const onSubmit = async (data: ResourceInput) => {
     setIsSubmitting(true);
@@ -158,19 +206,47 @@ export function ResourceFormDialog({
     }
 
     try {
+      let fileData = {
+        fileUrl: data.fileUrl || null,
+        fileName: data.fileName || null,
+        fileSize:
+          typeof data.fileSize === "number" && !Number.isNaN(data.fileSize)
+            ? data.fileSize
+            : undefined,
+        mimeType: data.mimeType || null,
+      };
+
+      // Si hay un archivo seleccionado y no es tipo "link", subirlo primero
+      if (selectedFile && data.resourceType !== "link") {
+        const uploadResult = await uploadFile(
+          selectedFile,
+          courseId,
+          topicId,
+          data.resourceType
+        );
+
+        if (!uploadResult.success) {
+          setFormError(uploadResult.error || "Error al subir el archivo");
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Usar los datos del archivo subido
+        fileData = {
+          fileUrl: uploadResult.data!.url || null,
+          fileName: uploadResult.data!.fileName,
+          fileSize: uploadResult.data!.fileSize,
+          mimeType: uploadResult.data!.mimeType,
+        };
+      }
+
       if (mode === "create") {
         const result = await createResource({
           topicId,
           title: data.title,
           description: data.description || null,
           resourceType: data.resourceType,
-          fileUrl: data.fileUrl || null,
-          fileName: data.fileName || null,
-          fileSize:
-            typeof data.fileSize === "number" && !Number.isNaN(data.fileSize)
-              ? data.fileSize
-              : undefined,
-          mimeType: data.mimeType || null,
+          ...fileData,
           externalUrl: data.externalUrl || null,
           orderIndex:
             typeof data.orderIndex === "number" &&
@@ -182,7 +258,7 @@ export function ResourceFormDialog({
         if (result && "error" in result) {
           setFormError(result.error || "Error al crear el recurso");
         } else {
-          onClose();
+          handleClose();
           router.refresh();
         }
       } else if (resource) {
@@ -190,20 +266,14 @@ export function ResourceFormDialog({
           title: data.title,
           description: data.description || null,
           resourceType: data.resourceType,
-          fileUrl: data.fileUrl || null,
-          fileName: data.fileName || null,
-          fileSize:
-            typeof data.fileSize === "number" && !Number.isNaN(data.fileSize)
-              ? data.fileSize
-              : undefined,
-          mimeType: data.mimeType || null,
+          ...fileData,
           externalUrl: data.externalUrl || null,
         });
 
         if (result && "error" in result) {
           setFormError(result.error || "Error al actualizar el recurso");
         } else {
-          onClose();
+          handleClose();
           router.refresh();
         }
       }
@@ -217,7 +287,7 @@ export function ResourceFormDialog({
   return (
     <Dialog
       open={isOpen}
-      onOpenChange={(open) => !open && !isSubmitting && onClose()}
+      onOpenChange={(open) => !open && !isSubmitting && handleClose()}
     >
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
@@ -251,17 +321,65 @@ export function ResourceFormDialog({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Descripción</Label>
-            <Textarea
-              id="description"
-              placeholder="Describe el contenido del recurso..."
-              rows={3}
-              disabled={isSubmitting}
-              error={errors.description?.message}
-              {...register("description")}
-            />
-          </div>
+          {/* Upload de archivo o URL externa - MOVIDO ARRIBA */}
+          {selectedType === "link" ? (
+            <div className="space-y-2">
+              <Label htmlFor="externalUrl">
+                URL externa <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="externalUrl"
+                placeholder="https://youtube.com/watch?v=..."
+                disabled={isSubmitting}
+                error={errors.externalUrl?.message}
+                {...register("externalUrl")}
+              />
+              <p className="text-xs text-slate-500">
+                Enlace a plataformas externas (YouTube, artículos, etc.).
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label>
+                Archivo {mode === "create" && <span className="text-red-500">*</span>}
+              </Label>
+              <FileUpload
+                onFileSelect={(file) => {
+                  // 🔥 DETECTAR TIPO PRIMERO, ANTES DE TODO
+                  const detectedType = getResourceTypeFromMime(file.type);
+                  
+                  // Actualizar el formulario con el tipo detectado
+                  setValue("resourceType", detectedType as ResourceInput["resourceType"]);
+                  setValue("fileName", file.name);
+                  setValue("fileSize", file.size);
+                  setValue("mimeType", file.type);
+                  
+                  // Establecer el archivo seleccionado
+                  setSelectedFile(file);
+                  resetUpload();
+                }}
+                onFileRemove={() => {
+                  setSelectedFile(null);
+                  resetUpload();
+                }}
+                resourceType={undefined} // 🔥 NO VALIDAR POR TIPO - dejamos que auto-detecte
+                maxSize={MAX_FILE_SIZES.RESOURCE}
+                selectedFile={selectedFile}
+                uploadProgress={progress?.percentage}
+                uploadError={uploadError}
+                uploadSuccess={!!uploadedFile}
+                disabled={isSubmitting || isUploading}
+              />
+              {mode === "edit" && resource?.fileUrl && !selectedFile && (
+                <p className="text-xs text-slate-500">
+                  Archivo actual: {resource.fileName || resource.fileUrl}
+                </p>
+              )}
+              <p className="text-xs text-purple-600">
+                💡 <strong>Sugerencia:</strong> El tipo de recurso se detectará automáticamente al seleccionar el archivo.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label>Tipo de recurso</Label>
@@ -272,7 +390,7 @@ export function ResourceFormDialog({
                 <Select
                   onValueChange={field.onChange}
                   value={field.value}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || (selectedFile !== null && selectedType !== "link")}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona un tipo" />
@@ -287,7 +405,13 @@ export function ResourceFormDialog({
                 </Select>
               )}
             />
-            <p className="text-xs text-slate-500">{resourceTypeHelper}</p>
+            {selectedFile ? (
+              <p className="text-xs text-green-600">
+                ✓ Tipo detectado automáticamente: <strong>{RESOURCE_TYPE_OPTIONS.find(opt => opt.value === selectedType)?.label}</strong>
+              </p>
+            ) : (
+              <p className="text-xs text-slate-500">{resourceTypeHelper}</p>
+            )}
             {errors.resourceType?.message && (
               <p className="text-xs text-red-600">
                 {errors.resourceType.message}
@@ -295,109 +419,75 @@ export function ResourceFormDialog({
             )}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="fileUrl">URL de archivo</Label>
-              <Input
-                id="fileUrl"
-                placeholder="https://..."
-                disabled={isSubmitting}
-                error={errors.fileUrl?.message}
-                {...register("fileUrl")}
-              />
-              <p className="text-xs text-slate-500">
-                Proporciona la URL directa al archivo (si aplica).
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="externalUrl">URL externa</Label>
-              <Input
-                id="externalUrl"
-                placeholder="https://..."
-                disabled={isSubmitting}
-                error={errors.externalUrl?.message}
-                {...register("externalUrl")}
-              />
-              <p className="text-xs text-slate-500">
-                Enlace a plataformas externas (YouTube, artículos, etc.).
-              </p>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Descripción</Label>
+            <Textarea
+              id="description"
+              placeholder="Describe el contenido del recurso..."
+              rows={3}
+              disabled={isSubmitting}
+              error={errors.description?.message}
+              {...register("description")}
+            />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="orderIndex">Orden en el tópico</Label>
-              <Input
-                id="orderIndex"
-                type="number"
-                disabled={isSubmitting}
-                error={errors.orderIndex?.message}
-                {...register("orderIndex", {
-                  setValueAs: (value) => {
-                    if (
-                      value === "" ||
-                      value === null ||
-                      typeof value === "undefined"
-                    ) {
-                      return undefined;
-                    }
-                    const parsed = Number(value);
-                    return Number.isNaN(parsed) ? value : parsed;
-                  },
-                })}
-              />
-            </div>
             <div className="space-y-2">
               <Label htmlFor="fileName">Nombre de archivo</Label>
               <Input
                 id="fileName"
-                placeholder="ej: guia-algoritmos.pdf"
-                disabled={isSubmitting}
+                placeholder={selectedFile ? "Capturado automáticamente" : "ej: guia-algoritmos.pdf"}
+                disabled={true}
+                className="bg-slate-50"
                 error={errors.fileName?.message}
                 {...register("fileName")}
               />
+              <p className="text-xs text-slate-500">
+                {selectedFile 
+                  ? `✓ Capturado: ${selectedFile.name}`
+                  : "Se capturará automáticamente al seleccionar el archivo"}
+              </p>
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="fileSize">Tamaño (bytes)</Label>
+              <Label htmlFor="fileSize">Tamaño</Label>
               <Input
                 id="fileSize"
-                type="number"
-                disabled={isSubmitting}
-                error={errors.fileSize?.message}
-                {...register("fileSize", {
-                  setValueAs: (value) => {
-                    if (
-                      value === "" ||
-                      value === null ||
-                      typeof value === "undefined"
-                    ) {
-                      return undefined;
-                    }
-                    const parsed = Number(value);
-                    return Number.isNaN(parsed) ? value : parsed;
-                  },
-                })}
+                type="text"
+                disabled={true}
+                className="bg-slate-50"
+                value={selectedFile ? formatFileSize(selectedFile.size) : ""}
+                placeholder={selectedFile ? "Capturado automáticamente" : "Se capturará automáticamente"}
               />
+              <p className="text-xs text-slate-500">
+                {selectedFile 
+                  ? `✓ ${formatFileSize(selectedFile.size)} (${selectedFile.size.toLocaleString()} bytes)`
+                  : "Se capturará automáticamente al seleccionar el archivo"}
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="mimeType">Tipo MIME</Label>
               <Input
                 id="mimeType"
-                placeholder="application/pdf"
-                disabled={isSubmitting}
+                placeholder={selectedFile ? "Capturado automáticamente" : "application/pdf"}
+                disabled={true}
+                className="bg-slate-50"
                 error={errors.mimeType?.message}
                 {...register("mimeType")}
               />
+              <p className="text-xs text-slate-500">
+                {selectedFile 
+                  ? `✓ Capturado: ${selectedFile.type || 'application/octet-stream'}`
+                  : "Se capturará automáticamente al seleccionar el archivo"}
+              </p>
             </div>
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-            Puedes dejar vacíos los campos que no apliquen. Si necesitas
-            adjuntar archivos, asegúrate de cargarlos previamente a tu proveedor
-            de almacenamiento y pega aquí la URL resultante.
+          <div className="rounded-lg border border-purple-200 bg-purple-50 p-3 text-xs text-purple-700">
+            <strong>💡 Sugerencia:</strong> Los metadatos del archivo (nombre, tamaño, tipo) se capturan automáticamente al seleccionar un archivo. 
+            {selectedType !== "link" && " Asegúrate de seleccionar primero el tipo de recurso correcto antes de cargar el archivo."}
           </div>
 
           {formError && (
@@ -410,7 +500,7 @@ export function ResourceFormDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={isSubmitting}
             >
               Cancelar

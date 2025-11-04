@@ -2,14 +2,7 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Plus,
-  Save,
-  Trash2,
-  Loader2,
-  GripVertical,
-  AlertCircle,
-} from "lucide-react";
+import { Plus, Save, Trash2, Loader2, GripVertical, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -73,7 +66,7 @@ export function DraftEditorClient({
     if (!idToLoad) return;
 
     setIsLoading(true);
-
+    
     // Load draft data
     const draftResult = await getDraftById(idToLoad);
     if ("error" in draftResult) {
@@ -126,15 +119,13 @@ export function DraftEditorClient({
     if (topics.length > 0) {
       const topicsWithoutTitle = topics.filter((t) => !t.title.trim());
       if (topicsWithoutTitle.length > 0) {
-        showToast(
-          "Completa el título de todos los tópicos o elimínalos",
-          "error"
-        );
+        showToast("Completa el título de todos los tópicos o elimínalos", "error");
         return;
       }
     }
 
     startTransition(async () => {
+
       try {
         let currentDraftId = savedDraftId;
 
@@ -153,18 +144,16 @@ export function DraftEditorClient({
           if (result && "draft" in result && result.draft) {
             currentDraftId = result.draft.id;
             setSavedDraftId(currentDraftId);
-
+            
             // Guardar tópicos si hay alguno
             if (topics.length > 0) {
               await saveTopics(currentDraftId);
             }
-
+            
             showToast("Borrador creado correctamente", "success");
-
+            
             // Redirigir a la página de edición
-            router.push(
-              `/dashboard/admin/courses/${courseId}/draft/${currentDraftId}/edit`
-            );
+            router.push(`/dashboard/admin/courses/${courseId}/draft/${currentDraftId}/edit`);
             return;
           }
         } else if (currentDraftId) {
@@ -177,17 +166,14 @@ export function DraftEditorClient({
             showToast(result.error || "Error desconocido", "error");
             return;
           }
-
+          
           await saveTopics(currentDraftId);
           showToast("Cambios guardados correctamente", "success");
         }
 
         router.refresh();
       } catch (err) {
-        showToast(
-          err instanceof Error ? err.message : "Error al guardar",
-          "error"
-        );
+        showToast(err instanceof Error ? err.message : "Error al guardar", "error");
       }
     });
   };
@@ -206,11 +192,9 @@ export function DraftEditorClient({
       }
     }
 
-    for (const topic of topics.filter(
-      (t) => !t.isNew && t.isModified && t.dbId
-    )) {
+    for (const topic of topics.filter((t) => !t.isNew && t.isModified && t.dbId)) {
       if (!topic.dbId) continue;
-
+      
       const result = await updateTopic(topic.dbId, {
         title: topic.title,
         description: topic.description || null,
@@ -226,10 +210,7 @@ export function DraftEditorClient({
     // Validate no topics without title before adding new one
     const hasEmptyTopics = topics.some((t) => !t.title.trim());
     if (hasEmptyTopics) {
-      showToast(
-        "Completa el tópico actual antes de agregar uno nuevo",
-        "error"
-      );
+      showToast("Completa el tópico actual antes de agregar uno nuevo", "error");
       return;
     }
 
@@ -284,7 +265,7 @@ export function DraftEditorClient({
 
   const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
-
+    
     if (draggedIndex === null || draggedIndex === dropIndex) {
       setDraggedIndex(null);
       return;
@@ -314,7 +295,7 @@ export function DraftEditorClient({
       setTopics(updatedTopics);
 
       // Save to database only if there are saved topics (with dbId)
-      const savedTopics = updatedTopics.filter((t) => t.dbId);
+      const savedTopics = updatedTopics.filter(t => t.dbId);
       if (savedTopics.length > 0) {
         const updates = savedTopics.map((topic) => ({
           topicId: topic.dbId!,
@@ -322,7 +303,7 @@ export function DraftEditorClient({
         }));
 
         const result = await reorderTopics(versionId, updates);
-
+        
         if (result.error) {
           showToast(result.error, "error");
           // Revertir cambios locales si falla
@@ -362,10 +343,7 @@ export function DraftEditorClient({
         </CardHeader>
         <CardContent className="space-y-5 p-6">
           <div>
-            <Label
-              htmlFor="title"
-              className="text-sm font-medium text-slate-700"
-            >
+            <Label htmlFor="title" className="text-sm font-medium text-slate-700">
               Título del curso *
             </Label>
             <Input
@@ -378,10 +356,7 @@ export function DraftEditorClient({
             />
           </div>
           <div>
-            <Label
-              htmlFor="description"
-              className="text-sm font-medium text-slate-700"
-            >
+            <Label htmlFor="description" className="text-sm font-medium text-slate-700">
               Descripción
             </Label>
             <Textarea
@@ -403,8 +378,7 @@ export function DraftEditorClient({
             <div>
               <CardTitle className="text-lg">Tópicos del curso</CardTitle>
               <p className="mt-1 text-sm text-slate-600">
-                Arrastra para reordenar · {topics.length} tópico
-                {topics.length !== 1 ? "s" : ""}
+                Arrastra para reordenar · {topics.length} tópico{topics.length !== 1 ? "s" : ""}
               </p>
             </div>
             <Button
@@ -454,17 +428,12 @@ export function DraftEditorClient({
                     <div className="flex-1 space-y-3">
                       <div>
                         <Label className="text-xs font-medium text-slate-700">
-                          Título del tópico{" "}
-                          <span className="text-rose-500">*</span>
+                          Título del tópico <span className="text-rose-500">*</span>
                         </Label>
                         <Input
                           value={topic.title}
                           onChange={(e) =>
-                            updateTopicField(
-                              topic.tempId,
-                              "title",
-                              e.target.value
-                            )
+                            updateTopicField(topic.tempId, "title", e.target.value)
                           }
                           placeholder="Ej: Introducción a variables"
                           disabled={isPending}
@@ -487,11 +456,7 @@ export function DraftEditorClient({
                         <Textarea
                           value={topic.description}
                           onChange={(e) =>
-                            updateTopicField(
-                              topic.tempId,
-                              "description",
-                              e.target.value
-                            )
+                            updateTopicField(topic.tempId, "description", e.target.value)
                           }
                           placeholder="Describe lo que aprenderán en este tópico..."
                           rows={2}
@@ -522,32 +487,29 @@ export function DraftEditorClient({
 
       <div className="sticky bottom-0 space-y-2 rounded-lg border border-slate-200 bg-white p-4 shadow-lg">
         {/* Mensaje de validación */}
-        {(!title.trim() || topics.some((t) => !t.title.trim())) &&
-          !isPending && (
-            <div className="flex items-center gap-2 rounded-md bg-amber-50 p-3 text-sm text-amber-700">
-              <AlertCircle className="h-4 w-4 flex-shrink-0" />
-              <p>
-                {!title.trim()
-                  ? "Completa el título del curso para guardar"
-                  : "Completa el título de todos los tópicos para guardar"}
-              </p>
-            </div>
-          )}
-
+        {(!title.trim() || topics.some((t) => !t.title.trim())) && !isPending && (
+          <div className="flex items-center gap-2 rounded-md bg-amber-50 p-3 text-sm text-amber-700">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <p>
+              {!title.trim() 
+                ? "Completa el título del curso para guardar" 
+                : "Completa el título de todos los tópicos para guardar"}
+            </p>
+          </div>
+        )}
+        
         <div className="flex justify-between gap-3">
-          <Button
-            variant="outline"
-            onClick={() => router.back()}
-            disabled={isPending}
-          >
+          <Button variant="outline" onClick={() => router.back()} disabled={isPending}>
             Cancelar
           </Button>
           <Button
             onClick={handleSave}
             disabled={
-              isPending || !title.trim() || topics.some((t) => !t.title.trim())
+              isPending || 
+              !title.trim() || 
+              topics.some((t) => !t.title.trim())
             }
-            className="bg-emerald-600 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isPending ? (
               <>

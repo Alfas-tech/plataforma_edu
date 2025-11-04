@@ -39,8 +39,9 @@ export function CourseManagementClient({
   const [editingCourse, setEditingCourse] = useState<CourseOverview | null>(
     null
   );
-  const [publishingCourse, setPublishingCourse] =
-    useState<CourseOverview | null>(null);
+  const [publishingCourse, setPublishingCourse] = useState<CourseOverview | null>(
+    null
+  );
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [actionTarget, setActionTarget] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -78,9 +79,9 @@ export function CourseManagementClient({
 
   const confirmPublishDraft = async () => {
     if (!publishingCourse?.draftVersion || isPending) return;
-
+    
     const draft = publishingCourse.draftVersion;
-
+    
     startTransition(async () => {
       setGlobalError(null);
       setActionTarget(publishingCourse.id);
@@ -150,9 +151,7 @@ export function CourseManagementClient({
   };
 
   const handleViewActive = (courseId: string, versionId: string) => {
-    router.push(
-      `/dashboard/admin/courses/${courseId}/content?versionId=${versionId}`
-    );
+    router.push(`/dashboard/admin/courses/${courseId}/content?versionId=${versionId}`);
   };
 
   const handleCreateDraft = (courseId: string) => {

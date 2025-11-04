@@ -104,7 +104,9 @@ export class CreateResourceUseCase {
       return {
         success: false,
         error:
-          error instanceof Error ? error.message : "Error al crear recurso",
+          error instanceof Error
+            ? error.message
+            : "Error al crear recurso",
       };
     }
   }

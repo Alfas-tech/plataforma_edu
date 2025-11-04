@@ -25,9 +25,7 @@ export class ProfileEntity {
   }
 
   getDisplayName(): string {
-    return (
-      this.fullName || (this.email && this.email.split("@")[0]) || "Usuario"
-    );
+    return this.fullName || (this.email && this.email.split("@")[0]) || "Usuario";
   }
 
   hasAvatar(): boolean {
@@ -94,8 +92,6 @@ export class ProfileEntity {
   }
 
   canAccessAdminPanel(): boolean {
-    return (
-      this.role === "admin" || this.role === "teacher" || this.role === "editor"
-    );
+    return this.role === "admin" || this.role === "teacher" || this.role === "editor";
   }
 }

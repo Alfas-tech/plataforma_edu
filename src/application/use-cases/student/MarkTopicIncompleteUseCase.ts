@@ -17,7 +17,8 @@ export class MarkTopicIncompleteUseCase {
       if (!result.success) {
         return {
           success: false,
-          error: result.error ?? "Error al marcar el tópico como pendiente",
+          error:
+            result.error ?? "Error al marcar el tópico como pendiente",
         };
       }
 

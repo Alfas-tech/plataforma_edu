@@ -46,7 +46,11 @@ function getVisibilityBadge(course: CourseOverview) {
   }
 
   if (course.visibilitySource === "version") {
-    return <Badge className="bg-green-100 text-green-700">✓ Visible</Badge>;
+    return (
+      <Badge className="bg-green-100 text-green-700">
+        ✓ Visible
+      </Badge>
+    );
   }
 
   return (
@@ -255,9 +259,7 @@ export default async function TeacherDashboardPage() {
                               Última actualización
                             </p>
                             <p className="text-sm font-semibold text-slate-800">
-                              {versionUpdatedAt
-                                ? formatDate(versionUpdatedAt)
-                                : "N/A"}
+                              {versionUpdatedAt ? formatDate(versionUpdatedAt) : "N/A"}
                             </p>
                           </div>
                         </div>

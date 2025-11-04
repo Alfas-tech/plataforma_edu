@@ -31,6 +31,7 @@ import {
 import { useRouter } from "next/navigation";
 import { signout } from "@/src/presentation/actions/auth.actions";
 import { useToast } from "@/components/ui/toast-provider";
+import { ResourceViewer } from "@/components/ui/resource-viewer";
 
 interface Resource {
   id: string;
@@ -39,6 +40,8 @@ interface Resource {
   description: string | null;
   resourceType: string;
   fileUrl: string | null;
+  fileName: string | null;
+  mimeType: string | null;
   externalUrl: string | null;
   orderIndex: number;
 }
@@ -87,6 +90,7 @@ export function StudentCourseView({
     new Set()
   );
   const [localTopics, setLocalTopics] = useState<Topic[]>(topics);
+  const [viewingResource, setViewingResource] = useState<Resource | null>(null);
 
   // Sync when topics change from server
   useEffect(() => {
@@ -363,7 +367,8 @@ export function StudentCourseView({
                             {topicResources.map((resource) => (
                               <div
                                 key={resource.id}
-                                className="group flex items-center justify-between rounded-lg border border-slate-200 p-3 transition-all hover:border-blue-300 hover:bg-blue-50/50 hover:shadow-md sm:p-4"
+                                className="group flex items-center justify-between rounded-lg border border-slate-200 p-3 transition-all hover:border-blue-300 hover:bg-blue-50/50 hover:shadow-md sm:p-4 cursor-pointer"
+                                onClick={() => setViewingResource(resource)}
                               >
                                 <div className="flex flex-1 items-center gap-3">
                                   <FileText className="h-5 w-5 flex-shrink-0 text-blue-600" />
@@ -385,19 +390,9 @@ export function StudentCourseView({
                                       </Badge>
                                       {(resource.fileUrl ||
                                         resource.externalUrl) && (
-                                        <a
-                                          href={
-                                            resource.fileUrl ||
-                                            resource.externalUrl ||
-                                            "#"
-                                          }
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-xs text-blue-600 hover:underline"
-                                          onClick={(e) => e.stopPropagation()}
-                                        >
-                                          Abrir recurso →
-                                        </a>
+                                        <span className="text-xs text-blue-600">
+                                          Clic para ver recurso →
+                                        </span>
                                       )}
                                     </div>
                                   </div>
@@ -477,6 +472,21 @@ export function StudentCourseView({
           </div>
         </div>
       </main>
+
+      {viewingResource && (
+        <ResourceViewer
+          isOpen={Boolean(viewingResource)}
+          onClose={() => setViewingResource(null)}
+          resource={{
+            title: viewingResource.title,
+            resourceType: viewingResource.resourceType,
+            fileUrl: viewingResource.fileUrl,
+            fileName: viewingResource.fileName || null,
+            mimeType: viewingResource.mimeType || null,
+            externalUrl: viewingResource.externalUrl,
+          }}
+        />
+      )}
     </div>
   );
 }

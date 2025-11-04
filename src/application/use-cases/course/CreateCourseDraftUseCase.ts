@@ -33,17 +33,14 @@ export class CreateCourseDraftUseCase {
         currentUser.id
       );
 
-      if (
-        !profile ||
-        (!profile.isAdmin() && !profile.isEditor() && !profile.isTeacher())
-      ) {
+      if (!profile || (!profile.isAdmin() && !profile.isEditor() && !profile.isTeacher())) {
         return {
           success: false,
           error: "No tienes permisos para crear borradores",
         };
       }
 
-      const payload: CreateCourseDraftInput = {
+    const payload: CreateCourseDraftInput = {
         ...input,
         createdBy: currentUser.id,
       };
