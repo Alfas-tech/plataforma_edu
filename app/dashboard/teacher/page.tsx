@@ -201,14 +201,11 @@ export default async function TeacherDashboardPage() {
             <div className="grid gap-4 md:grid-cols-2">
               {courses.map((course) => {
                 const versionVisibilityLabel = course.activeVersion
-                  ? course.activeVersion.isPublished &&
-                    course.activeVersion.isActive
-                    ? "Publicada y activa"
-                    : course.activeVersion.isPublished
-                      ? "Publicada (sin activar)"
-                      : course.activeVersion.isActive
-                        ? "Activa sin publicar"
-                        : "No publicada"
+                  ? course.activeVersion.status === "active"
+                    ? "Versión activa"
+                    : course.activeVersion.status === "draft"
+                      ? "En borrador"
+                      : "Archivada"
                   : "Sin versión activa";
 
                 const versionUpdatedAt =
@@ -262,7 +259,7 @@ export default async function TeacherDashboardPage() {
                               Última actualización
                             </p>
                             <p className="text-sm font-semibold text-slate-800">
-                              {formatDate(versionUpdatedAt)}
+                              {versionUpdatedAt ? formatDate(versionUpdatedAt) : "N/A"}
                             </p>
                           </div>
                         </div>

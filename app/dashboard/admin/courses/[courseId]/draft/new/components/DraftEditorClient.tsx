@@ -58,6 +58,7 @@ export function DraftEditorClient({
     if (mode === "edit" && draftId) {
       loadDraftData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, draftId]);
 
   const loadDraftData = async (explicitId?: string) => {

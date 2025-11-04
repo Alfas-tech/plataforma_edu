@@ -44,7 +44,7 @@ export function PublishDraftDialog({
           <DialogDescription className="pt-4 text-base">
             Estás a punto de publicar{" "}
             <span className="font-semibold text-slate-900">
-              "{draftTitle}"
+              &ldquo;{draftTitle}&rdquo;
             </span>
             .
           </DialogDescription>

@@ -78,16 +78,7 @@ export default async function TopicResourcesPage({
   const topic = resourcesResult.topic;
   const resources = resourcesResult.resources ?? [];
 
-  const branchCandidates = [course.defaultBranch, ...course.branches].filter(
-    Boolean
-  ) as typeof course.branches;
-
-  const selectedBranch = requestedBranchId
-    ? branchCandidates.find((branch) => branch.id === requestedBranchId) ?? null
-    : course.defaultBranch ?? null;
-
-  const effectiveBranch = selectedBranch ?? course.defaultBranch ?? null;
-
+  // Simplified version selection - branches system no longer exists
   const effectiveVersionId = (() => {
     if (topic.courseVersionId) {
       return topic.courseVersionId;
@@ -97,13 +88,7 @@ export default async function TopicResourcesPage({
       return requestedVersionId;
     }
 
-    if (effectiveBranch?.tipVersionId) {
-      return effectiveBranch.tipVersionId;
-    }
-
-    if (effectiveBranch?.isDefault) {
-      return course.activeVersion?.id ?? null;
-    }
+    return course.activeVersion?.id ?? null;
 
     return null;
   })();
@@ -196,11 +181,11 @@ export default async function TopicResourcesPage({
           </Link>
           <div className="text-right">
             <p className="text-xs uppercase tracking-wide text-purple-600">
-              {effectiveBranch?.isDefault ? "Edición principal" : `Edición ${effectiveBranch?.name ?? "desconocida"}`}
+              Versión activa
             </p>
             {effectiveVersionId && (
               <p className="text-xs text-slate-500">
-                Versión activa: {effectiveVersionId}
+                ID: {effectiveVersionId}
               </p>
             )}
           </div>
@@ -253,8 +238,8 @@ export default async function TopicResourcesPage({
 
         <ResourceManagementClient
           courseVersionId={effectiveVersionId}
-          branchName={effectiveBranch?.name ?? "principal"}
-          isDefaultBranch={effectiveBranch?.isDefault ?? true}
+          branchName="principal"
+          isDefaultBranch={true}
           topic={{
             id: topic.id,
             title: topic.title,
