@@ -24,10 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import {
-  resourceSchema,
-  type ResourceInput,
-} from "@/lib/validations";
+import { resourceSchema, type ResourceInput } from "@/lib/validations";
 import {
   createResource,
   updateResource,
@@ -337,7 +334,11 @@ export function ResourceFormDialog({
                 error={errors.orderIndex?.message}
                 {...register("orderIndex", {
                   setValueAs: (value) => {
-                    if (value === "" || value === null || typeof value === "undefined") {
+                    if (
+                      value === "" ||
+                      value === null ||
+                      typeof value === "undefined"
+                    ) {
                       return undefined;
                     }
                     const parsed = Number(value);
@@ -368,7 +369,11 @@ export function ResourceFormDialog({
                 error={errors.fileSize?.message}
                 {...register("fileSize", {
                   setValueAs: (value) => {
-                    if (value === "" || value === null || typeof value === "undefined") {
+                    if (
+                      value === "" ||
+                      value === null ||
+                      typeof value === "undefined"
+                    ) {
                       return undefined;
                     }
                     const parsed = Number(value);
@@ -390,9 +395,9 @@ export function ResourceFormDialog({
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-            Puedes dejar vacíos los campos que no apliquen. Si necesitas adjuntar
-            archivos, asegúrate de cargarlos previamente a tu proveedor de
-            almacenamiento y pega aquí la URL resultante.
+            Puedes dejar vacíos los campos que no apliquen. Si necesitas
+            adjuntar archivos, asegúrate de cargarlos previamente a tu proveedor
+            de almacenamiento y pega aquí la URL resultante.
           </div>
 
           {formError && (

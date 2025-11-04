@@ -81,9 +81,7 @@ export class DeleteResourceUseCase {
       return {
         success: false,
         error:
-          error instanceof Error
-            ? error.message
-            : "Error al eliminar recurso",
+          error instanceof Error ? error.message : "Error al eliminar recurso",
       };
     }
   }

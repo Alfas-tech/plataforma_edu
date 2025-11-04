@@ -111,8 +111,9 @@ export default async function ArchivedCoursesPage() {
             📦 Versiones Archivadas
           </h1>
           <p className="text-slate-600">
-            {archivedVersions.length} versión{archivedVersions.length !== 1 ? "es" : ""}{" "}
-            archivada{archivedVersions.length !== 1 ? "s" : ""}
+            {archivedVersions.length} versión
+            {archivedVersions.length !== 1 ? "es" : ""} archivada
+            {archivedVersions.length !== 1 ? "s" : ""}
           </p>
         </div>
 
@@ -146,7 +147,7 @@ export default async function ArchivedCoursesPage() {
                     </Badge>
                   </div>
                   {item.version.description && (
-                    <p className="mt-2 text-sm text-slate-600 line-clamp-2">
+                    <p className="mt-2 line-clamp-2 text-sm text-slate-600">
                       {item.version.description}
                     </p>
                   )}
@@ -157,7 +158,7 @@ export default async function ArchivedCoursesPage() {
                       <BookOpen className="h-4 w-4" />
                       <span className="font-medium">Curso:</span>
                     </div>
-                    <p className="pl-6 text-sm text-slate-700 line-clamp-2">
+                    <p className="line-clamp-2 pl-6 text-sm text-slate-700">
                       {item.courseTitle}
                     </p>
                   </div>

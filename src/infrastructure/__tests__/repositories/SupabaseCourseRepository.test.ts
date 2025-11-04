@@ -507,9 +507,11 @@ describe("SupabaseCourseRepository", () => {
       const assignmentsBuilder = createChainableBuilder();
       assignmentsBuilder.select.mockReturnValue(assignmentsBuilder);
       assignmentsBuilder.in.mockReturnValue(assignmentsBuilder);
-      assignmentsBuilder.not = jest.fn().mockImplementation(() =>
-        assignmentsBuilder.setResult(failure("boom"))
-      );
+      assignmentsBuilder.not = jest
+        .fn()
+        .mockImplementation(() =>
+          assignmentsBuilder.setResult(failure("boom"))
+        );
 
       mockSupabase.from
         .mockImplementationOnce(() => versionsBuilder)
@@ -533,18 +535,14 @@ describe("SupabaseCourseRepository", () => {
       const groupsBuilder = createChainableBuilder();
       groupsBuilder.select.mockReturnValue(groupsBuilder);
       groupsBuilder.eq.mockImplementation(() =>
-        groupsBuilder.setResult(
-          success([{ course_version_id: versionRow.id }])
-        )
+        groupsBuilder.setResult(success([{ course_version_id: versionRow.id }]))
       );
 
       // Mock for course_versions query (step 2 - to get course_id from version_id)
       const versionsBuilder = createChainableBuilder();
       versionsBuilder.select.mockReturnValue(versionsBuilder);
       versionsBuilder.in.mockImplementation(() =>
-        versionsBuilder.setResult(
-          success([{ course_id: courseRow.id }])
-        )
+        versionsBuilder.setResult(success([{ course_id: courseRow.id }]))
       );
 
       // Mock for courses query (step 3)
@@ -556,7 +554,9 @@ describe("SupabaseCourseRepository", () => {
 
       // Mock for course_versions query (step 4 - get versions for mapping)
       const versionsForMappingBuilder = createChainableBuilder();
-      versionsForMappingBuilder.select.mockReturnValue(versionsForMappingBuilder);
+      versionsForMappingBuilder.select.mockReturnValue(
+        versionsForMappingBuilder
+      );
       versionsForMappingBuilder.in.mockReturnValue(versionsForMappingBuilder);
       versionsForMappingBuilder.order.mockImplementation(() =>
         versionsForMappingBuilder.setResult(success([versionRow]))

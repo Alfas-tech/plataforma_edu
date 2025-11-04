@@ -1,7 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { ArrowLeft, BookOpen, Layers, Link as LinkIcon, LogOut } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpen,
+  Layers,
+  Link as LinkIcon,
+  LogOut,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,7 +74,11 @@ export default async function TopicResourcesPage({
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
         <div className="container mx-auto px-4 py-8">
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
-            <p>{"error" in resourcesResult ? resourcesResult.error : "Tópico no encontrado"}</p>
+            <p>
+              {"error" in resourcesResult
+                ? resourcesResult.error
+                : "Tópico no encontrado"}
+            </p>
           </div>
         </div>
       </div>
@@ -94,8 +104,8 @@ export default async function TopicResourcesPage({
   })();
 
   const totalResources = resources.length;
-  const externalResources = resources.filter(
-    (resource) => Boolean(resource.externalUrl)
+  const externalResources = resources.filter((resource) =>
+    Boolean(resource.externalUrl)
   ).length;
 
   return (
@@ -184,16 +194,17 @@ export default async function TopicResourcesPage({
               Versión activa
             </p>
             {effectiveVersionId && (
-              <p className="text-xs text-slate-500">
-                ID: {effectiveVersionId}
-              </p>
+              <p className="text-xs text-slate-500">ID: {effectiveVersionId}</p>
             )}
           </div>
         </div>
 
         <div className="mb-6 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary" className="gap-1 bg-purple-100 text-purple-700">
+            <Badge
+              variant="secondary"
+              className="gap-1 bg-purple-100 text-purple-700"
+            >
               <Layers className="h-3.5 w-3.5" />
               Tópico #{topic.orderIndex}
             </Badge>
@@ -207,7 +218,8 @@ export default async function TopicResourcesPage({
             </p>
           )}
           <p className="text-sm text-slate-500">
-            Curso: <span className="font-semibold text-slate-700">{course.title}</span>
+            Curso:{" "}
+            <span className="font-semibold text-slate-700">{course.title}</span>
           </p>
         </div>
 
@@ -220,7 +232,9 @@ export default async function TopicResourcesPage({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-purple-600">{totalResources}</p>
+              <p className="text-3xl font-bold text-purple-600">
+                {totalResources}
+              </p>
             </CardContent>
           </Card>
           <Card className="border-2">
@@ -231,7 +245,9 @@ export default async function TopicResourcesPage({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-blue-600">{externalResources}</p>
+              <p className="text-3xl font-bold text-blue-600">
+                {externalResources}
+              </p>
             </CardContent>
           </Card>
         </div>

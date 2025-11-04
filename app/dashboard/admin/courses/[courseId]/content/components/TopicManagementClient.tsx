@@ -9,7 +9,10 @@ import { BookOpen, Edit, PlusCircle, Trash2, GripVertical } from "lucide-react";
 import { TopicFormDialog } from "./TopicFormDialog";
 import { DeleteTopicDialog } from "./DeleteTopicDialog";
 import { RESOURCE_MANAGEMENT_ENABLED } from "../../../featureFlags";
-import { updateTopic, reorderTopics } from "@/src/presentation/actions/content.actions";
+import {
+  updateTopic,
+  reorderTopics,
+} from "@/src/presentation/actions/content.actions";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/toast-provider";
 
@@ -55,7 +58,7 @@ export function TopicManagementClient({
   const [editingTopic, setEditingTopic] = useState<TopicData | null>(null);
   const [deletingTopic, setDeletingTopic] = useState<TopicData | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  
+
   // Estado local para el orden de tópicos (permite reordenamiento visual inmediato)
   const [localTopics, setLocalTopics] = useState<TopicData[]>([]);
 
@@ -69,10 +72,11 @@ export function TopicManagementClient({
   // 1. Existe courseVersionId Y
   // 2. NO es versión archivada (las archivadas son solo lectura) Y
   // 3. (Es una versión NO publicada) O (Es admin editando versión publicada)
-  const canMutateContent = Boolean(courseVersionId) && 
+  const canMutateContent =
+    Boolean(courseVersionId) &&
     !isViewingArchivedVersion &&
     (!isViewingPublishedVersion || canEditPublishedVersion);
-  
+
   const branchLabel = isDefaultBranch
     ? "edición principal"
     : `edición ${branchName}`;
@@ -89,7 +93,7 @@ export function TopicManagementClient({
 
   const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
-    
+
     if (draggedIndex === null || draggedIndex === dropIndex) {
       setDraggedIndex(null);
       return;
@@ -117,7 +121,7 @@ export function TopicManagementClient({
       }));
 
       const result = await reorderTopics(courseVersionId, updates);
-      
+
       if (result.error) {
         showToast(result.error, "error");
         // Revertir cambios locales si falla
@@ -148,13 +152,15 @@ export function TopicManagementClient({
               Visualización de curso publicado
             </h3>
             <p className="mb-4 text-base text-blue-800">
-              Estás viendo la versión activa del curso que los estudiantes están experimentando.
+              Estás viendo la versión activa del curso que los estudiantes están
+              experimentando.
             </p>
             <div className="rounded-lg border border-blue-300 bg-white p-4">
               <p className="text-sm text-slate-700">
-                <span className="font-semibold">ℹ️ Información:</span> Los docentes solo pueden 
-                editar borradores. Para realizar cambios al contenido publicado, contacta a un administrador 
-                o crea un nuevo borrador desde el panel de administración.
+                <span className="font-semibold">ℹ️ Información:</span> Los
+                docentes solo pueden editar borradores. Para realizar cambios al
+                contenido publicado, contacta a un administrador o crea un nuevo
+                borrador desde el panel de administración.
               </p>
             </div>
           </div>
@@ -172,9 +178,9 @@ export function TopicManagementClient({
               📦 Versión archivada - Solo lectura
             </p>
             <p>
-              Estás visualizando una versión archivada del curso. Esta versión ya no está activa 
-              y su contenido no puede ser editado. Los tópicos se muestran tal como estaban cuando 
-              la versión fue archivada.
+              Estás visualizando una versión archivada del curso. Esta versión
+              ya no está activa y su contenido no puede ser editado. Los tópicos
+              se muestran tal como estaban cuando la versión fue archivada.
             </p>
           </>
         ) : (
@@ -184,25 +190,25 @@ export function TopicManagementClient({
             </p>
             {isViewingDraftVersion ? (
               <p>
-                📝 <strong>Versión borrador</strong> - Los cambios no afectarán a los estudiantes 
-                hasta que esta versión sea publicada.
+                📝 <strong>Versión borrador</strong> - Los cambios no afectarán
+                a los estudiantes hasta que esta versión sea publicada.
               </p>
             ) : isDefaultBranch ? (
               <p>
-                Los cambios impactan a los estudiantes una vez publicados. Utiliza
-                ediciones de trabajo para preparar modificaciones sin afectar la
-                experiencia vigente.
+                Los cambios impactan a los estudiantes una vez publicados.
+                Utiliza ediciones de trabajo para preparar modificaciones sin
+                afectar la experiencia vigente.
               </p>
             ) : (
               <p>
-                Todo lo que crees o edites aquí solo afectará a esta edición hasta
-                que apruebes una fusión hacia la edición principal.
+                Todo lo que crees o edites aquí solo afectará a esta edición
+                hasta que apruebes una fusión hacia la edición principal.
               </p>
             )}
             {!canMutateContent && !isViewingArchivedVersion && (
               <p className="mt-2 rounded-md border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-700">
-                Esta edición del curso no tiene una versión activa. Crea una versión
-                desde el panel del curso antes de agregar tópicos.
+                Esta edición del curso no tiene una versión activa. Crea una
+                versión desde el panel del curso antes de agregar tópicos.
               </p>
             )}
           </>
@@ -230,10 +236,9 @@ export function TopicManagementClient({
               Tópicos del curso
             </h3>
             <p className="mt-0.5 text-xs text-slate-600">
-              {canMutateContent 
+              {canMutateContent
                 ? `Arrastra para reordenar · ${localTopics.length} tópico${localTopics.length !== 1 ? "s" : ""}`
-                : `${localTopics.length} tópico${localTopics.length !== 1 ? "s" : ""}`
-              }
+                : `${localTopics.length} tópico${localTopics.length !== 1 ? "s" : ""}`}
             </p>
           </div>
         </div>
@@ -267,9 +272,7 @@ export function TopicManagementClient({
             <Card
               key={topic.id}
               className={`border-2 transition-all ${
-                draggedIndex === index 
-                  ? "opacity-50" 
-                  : "hover:shadow-lg"
+                draggedIndex === index ? "opacity-50" : "hover:shadow-lg"
               } ${canMutateContent ? "cursor-move" : ""}`}
               draggable={canMutateContent}
               onDragStart={() => canMutateContent && handleDragStart(index)}
@@ -279,9 +282,9 @@ export function TopicManagementClient({
             >
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3 flex-1">
+                  <div className="flex flex-1 items-start gap-3">
                     {canMutateContent && (
-                      <div className="flex-shrink-0 cursor-grab active:cursor-grabbing pt-1">
+                      <div className="flex-shrink-0 cursor-grab pt-1 active:cursor-grabbing">
                         <GripVertical className="h-5 w-5 text-slate-400 transition-colors group-hover:text-slate-600" />
                       </div>
                     )}
@@ -292,7 +295,8 @@ export function TopicManagementClient({
                         </span>
                         <CardTitle className="text-xl">{topic.title}</CardTitle>
                         <Badge variant="outline" className="border-slate-300">
-                          Última actualización: {new Date(topic.updatedAt).toLocaleDateString()}
+                          Última actualización:{" "}
+                          {new Date(topic.updatedAt).toLocaleDateString()}
                         </Badge>
                       </div>
                       {topic.description && (
@@ -303,28 +307,27 @@ export function TopicManagementClient({
                     </div>
                   </div>
                   <div className="flex flex-shrink-0 gap-2">
-                    {RESOURCE_MANAGEMENT_ENABLED && !isViewingArchivedVersion && (
-                      <Link
-                        href={{
-                          pathname: `/dashboard/admin/courses/${courseId}/topics/${topic.id}/resources`,
-                          query: {
-                            branchId: branchId ?? undefined,
-                            versionId: courseVersionId ?? undefined,
-                          },
-                        }}
-                      >
-                        <Button size="sm" variant="outline">
-                          <BookOpen className="h-4 w-4 sm:mr-2" />
-                          <span className="hidden sm:inline">Recursos</span>
-                        </Button>
-                      </Link>
-                    )}
+                    {RESOURCE_MANAGEMENT_ENABLED &&
+                      !isViewingArchivedVersion && (
+                        <Link
+                          href={{
+                            pathname: `/dashboard/admin/courses/${courseId}/topics/${topic.id}/resources`,
+                            query: {
+                              branchId: branchId ?? undefined,
+                              versionId: courseVersionId ?? undefined,
+                            },
+                          }}
+                        >
+                          <Button size="sm" variant="outline">
+                            <BookOpen className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Recursos</span>
+                          </Button>
+                        </Link>
+                      )}
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() =>
-                        canMutateContent && setEditingTopic(topic)
-                      }
+                      onClick={() => canMutateContent && setEditingTopic(topic)}
                       disabled={!canMutateContent}
                     >
                       <Edit className="h-4 w-4 sm:mr-2" />

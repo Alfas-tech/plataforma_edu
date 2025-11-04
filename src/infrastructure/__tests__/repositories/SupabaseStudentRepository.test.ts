@@ -125,8 +125,7 @@ describe("SupabaseStudentRepository", () => {
           courses: () => createSingleQuery({ data: courseRow, error: null }),
           course_versions: () =>
             createSingleQuery({ data: versionRow, error: null }),
-          topics: () =>
-            createTopicsQuery({ data: topicRows, error: null }),
+          topics: () => createTopicsQuery({ data: topicRows, error: null }),
           resources: () =>
             createResourcesQuery({ data: resourceRows, error: null }),
           student_progress: () =>

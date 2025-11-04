@@ -60,18 +60,31 @@ export default async function CourseContentPage({
   const { course } = courseResult;
 
   // Type guard to filter valid branches
-  type ValidBranch = { id: string; name: string; isDefault: boolean; tipVersionId: string | null };
-  const isValidBranch = (b: unknown): b is ValidBranch => {
-    return b !== null && typeof b === 'object' && 'id' in b && 'name' in b;
+  type ValidBranch = {
+    id: string;
+    name: string;
+    isDefault: boolean;
+    tipVersionId: string | null;
   };
-  
-  const branchCandidates = [course.defaultBranch, ...(course.branches ?? [])].filter(isValidBranch);
+  const isValidBranch = (b: unknown): b is ValidBranch => {
+    return b !== null && typeof b === "object" && "id" in b && "name" in b;
+  };
+
+  const branchCandidates = [
+    course.defaultBranch,
+    ...(course.branches ?? []),
+  ].filter(isValidBranch);
 
   const selectedBranch = requestedBranchId
-    ? branchCandidates.find((branch) => branch.id === requestedBranchId) ?? null
-    : (isValidBranch(course.defaultBranch) ? course.defaultBranch : null);
+    ? (branchCandidates.find((branch) => branch.id === requestedBranchId) ??
+      null)
+    : isValidBranch(course.defaultBranch)
+      ? course.defaultBranch
+      : null;
 
-  const effectiveBranch = selectedBranch ?? (isValidBranch(course.defaultBranch) ? course.defaultBranch : null);
+  const effectiveBranch =
+    selectedBranch ??
+    (isValidBranch(course.defaultBranch) ? course.defaultBranch : null);
 
   const effectiveVersionId = (() => {
     if (requestedVersionId) {
@@ -95,29 +108,29 @@ export default async function CourseContentPage({
 
   // Determinar si estamos viendo una versión borrador
   const isViewingDraftVersion = Boolean(
-    effectiveVersionId && 
-    course.draftVersion?.id === effectiveVersionId
+    effectiveVersionId && course.draftVersion?.id === effectiveVersionId
   );
 
   // Determinar si estamos viendo una versión publicada (activa)
   const isViewingPublishedVersion = Boolean(
-    effectiveVersionId && 
-    course.activeVersion?.id === effectiveVersionId
+    effectiveVersionId && course.activeVersion?.id === effectiveVersionId
   );
 
   // Determinar si estamos viendo una versión archivada
   const isViewingArchivedVersion = Boolean(
-    effectiveVersionId && 
-    course.archivedVersions?.some(v => v.id === effectiveVersionId)
+    effectiveVersionId &&
+      course.archivedVersions?.some((v) => v.id === effectiveVersionId)
   );
 
   // Los administradores pueden editar versiones activas, los docentes y editores solo borradores
-  const canEditPublishedVersion = Boolean(profile.isAdmin && isViewingPublishedVersion);
+  const canEditPublishedVersion = Boolean(
+    profile.isAdmin && isViewingPublishedVersion
+  );
 
   const topicsResult = await getTopicsByCourse(courseId, {
     courseVersionId: effectiveVersionId ?? undefined,
   });
-  const topics = "error" in topicsResult ? [] : topicsResult.topics ?? [];
+  const topics = "error" in topicsResult ? [] : (topicsResult.topics ?? []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">

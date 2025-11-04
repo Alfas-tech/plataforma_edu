@@ -30,7 +30,8 @@ export function CreateMergeRequestDialog({
         <DialogHeader>
           <DialogTitle>Función no disponible</DialogTitle>
           <DialogDescription>
-            El sistema de merge requests ha sido removido. Esta funcionalidad ya no está disponible.
+            El sistema de merge requests ha sido removido. Esta funcionalidad ya
+            no está disponible.
           </DialogDescription>
         </DialogHeader>
       </DialogContent>

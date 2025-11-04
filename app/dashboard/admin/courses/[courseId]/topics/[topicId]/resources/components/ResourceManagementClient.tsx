@@ -215,7 +215,8 @@ export function ResourceManagementClient({
                           {resource.title}
                         </CardTitle>
                         <Badge variant="outline" className="border-slate-300">
-                          Actualizado {new Date(resource.updatedAt).toLocaleDateString()}
+                          Actualizado{" "}
+                          {new Date(resource.updatedAt).toLocaleDateString()}
                         </Badge>
                       </div>
                       <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
@@ -245,8 +246,12 @@ export function ResourceManagementClient({
                         </p>
                       )}
                       <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                        {resource.fileName && <span>Archivo: {resource.fileName}</span>}
-                        {resource.mimeType && <span>Tipo: {resource.mimeType}</span>}
+                        {resource.fileName && (
+                          <span>Archivo: {resource.fileName}</span>
+                        )}
+                        {resource.mimeType && (
+                          <span>Tipo: {resource.mimeType}</span>
+                        )}
                       </div>
                     </div>
                     <div className="flex flex-shrink-0 flex-col gap-2 sm:flex-row">
@@ -278,7 +283,9 @@ export function ResourceManagementClient({
                       )}
                       <Button
                         variant="outline"
-                        onClick={() => canMutateContent && setEditingResource(resource)}
+                        onClick={() =>
+                          canMutateContent && setEditingResource(resource)
+                        }
                         disabled={!canMutateContent}
                         className="w-full sm:w-auto"
                       >
@@ -287,7 +294,9 @@ export function ResourceManagementClient({
                       </Button>
                       <Button
                         variant="outline"
-                        onClick={() => canMutateContent && setDeletingResource(resource)}
+                        onClick={() =>
+                          canMutateContent && setDeletingResource(resource)
+                        }
                         disabled={!canMutateContent}
                         className="w-full border-red-300 text-red-600 hover:bg-red-50 sm:w-auto"
                       >

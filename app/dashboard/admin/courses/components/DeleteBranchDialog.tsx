@@ -31,7 +31,8 @@ export function DeleteBranchDialog({
         <DialogHeader>
           <DialogTitle>Función no disponible</DialogTitle>
           <DialogDescription>
-            El sistema de branches ha sido removido. Esta funcionalidad ya no está disponible.
+            El sistema de branches ha sido removido. Esta funcionalidad ya no
+            está disponible.
           </DialogDescription>
         </DialogHeader>
       </DialogContent>

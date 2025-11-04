@@ -202,7 +202,7 @@ export default async function EditorDashboardPage() {
           {/* Archived Courses - Single Card Link */}
           {archivedCourses.length > 0 && (
             <Link href="/dashboard/editor/archived">
-              <Card className="flex flex-col border-2 border-slate-200 bg-slate-50 transition-all hover:shadow-lg cursor-pointer">
+              <Card className="flex cursor-pointer flex-col border-2 border-slate-200 bg-slate-50 transition-all hover:shadow-lg">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="line-clamp-2 text-lg">
@@ -216,11 +216,23 @@ export default async function EditorDashboardPage() {
                 <CardContent className="flex flex-1 flex-col space-y-3">
                   <div className="flex-1 space-y-1 text-sm text-slate-600">
                     <p>
-                      {archivedCourses.length} curso{archivedCourses.length !== 1 ? "s" : ""} con versiones archivadas
+                      {archivedCourses.length} curso
+                      {archivedCourses.length !== 1 ? "s" : ""} con versiones
+                      archivadas
                     </p>
                     <p className="text-xs text-slate-500">
-                      {archivedCourses.reduce((sum, c) => sum + (c.archivedVersions?.length || 0), 0)} versión
-                      {archivedCourses.reduce((sum, c) => sum + (c.archivedVersions?.length || 0), 0) !== 1 ? "es" : ""} en total
+                      {archivedCourses.reduce(
+                        (sum, c) => sum + (c.archivedVersions?.length || 0),
+                        0
+                      )}{" "}
+                      versión
+                      {archivedCourses.reduce(
+                        (sum, c) => sum + (c.archivedVersions?.length || 0),
+                        0
+                      ) !== 1
+                        ? "es"
+                        : ""}{" "}
+                      en total
                     </p>
                   </div>
                   <div className="mt-auto">
@@ -246,7 +258,8 @@ export default async function EditorDashboardPage() {
                   No hay cursos disponibles
                 </h3>
                 <p className="text-sm text-slate-500">
-                  Los cursos aparecerán aquí cuando estén disponibles para edición
+                  Los cursos aparecerán aquí cuando estén disponibles para
+                  edición
                 </p>
               </CardContent>
             </Card>

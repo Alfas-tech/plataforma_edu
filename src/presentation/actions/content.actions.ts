@@ -113,8 +113,9 @@ export async function reorderTopics(
 
     return { success: true };
   } catch (error) {
-    return { 
-      error: error instanceof Error ? error.message : "Error al reordenar tópicos" 
+    return {
+      error:
+        error instanceof Error ? error.message : "Error al reordenar tópicos",
     };
   }
 }
