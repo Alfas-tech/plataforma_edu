@@ -74,7 +74,7 @@ export class SupabaseProfileRepository implements IProfileRepository {
   ): Promise<ProfileEntity> {
     const supabase = createClient();
 
-    const updateData: any = {};
+    const updateData: Record<string, string | null> = {};
     if (profileData.fullName !== undefined)
       updateData.full_name = profileData.fullName;
     if (profileData.avatarUrl !== undefined)
@@ -163,9 +163,11 @@ export class SupabaseProfileRepository implements IProfileRepository {
       throw new Error("No se puede degradar a un administrador");
     }
 
+    // NOTE: In the current schema, teachers are assigned to groups, not to versions.
+    // When demoting to student, we remove the teacher from all groups where they are assigned.
     const { error: removeAssignmentsError } = await supabase
-      .from("course_version_teachers")
-      .delete()
+      .from("groups")
+      .update({ teacher_id: null })
       .eq("teacher_id", userId);
 
     if (removeAssignmentsError) {
@@ -240,6 +242,36 @@ export class SupabaseProfileRepository implements IProfileRepository {
       .from("profiles")
       .select(PROFILE_SELECT)
       .eq("role", "student");
+
+    if (error || !data) {
+      return [];
+    }
+
+    return mapListToEntities(data as ProfileRow[]);
+  }
+
+  async getAllEditors(): Promise<ProfileEntity[]> {
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select(PROFILE_SELECT)
+      .eq("role", "editor");
+
+    if (error || !data) {
+      return [];
+    }
+
+    return mapListToEntities(data as ProfileRow[]);
+  }
+
+  async getAllAdmins(): Promise<ProfileEntity[]> {
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select(PROFILE_SELECT)
+      .eq("role", "admin");
 
     if (error || !data) {
       return [];

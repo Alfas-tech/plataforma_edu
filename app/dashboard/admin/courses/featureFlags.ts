@@ -1,2 +1,2 @@
-// Centralized toggle so we can quickly show or hide lesson tooling without touching .env files.
-export const LESSON_MANAGEMENT_ENABLED = false;
+// Toggle to reveal resource-management tooling while the UI is still under construction.
+export const RESOURCE_MANAGEMENT_ENABLED = true;

@@ -1,26 +1,22 @@
-export type CourseVersionStatus =
-  | "draft"
-  | "pending_review"
-  | "approved"
-  | "published"
-  | "archived";
+export type CourseStatus = "draft" | "active" | "archived";
 
-export type CourseMergeRequestStatus =
-  | "open"
-  | "approved"
-  | "merged"
-  | "rejected";
+export type CourseVersionStatus = CourseStatus;
+
+export type ResourceType =
+  | "pdf"
+  | "video"
+  | "audio"
+  | "document"
+  | "link"
+  | "image"
+  | "other";
 
 export interface CourseData {
   id: string;
-  title: string;
-  summary: string | null;
+  name: string;
   description: string | null;
-  slug: string;
-  visibility_override: boolean;
+  created_by: string;
   active_version_id: string | null;
-  default_branch_id: string | null;
-  created_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -28,76 +24,57 @@ export interface CourseData {
 export interface CourseVersionData {
   id: string;
   course_id: string;
-  branch_id: string | null;
-  version_label: string;
-  summary: string | null;
-  status: CourseVersionStatus;
-  is_active: boolean;
-  is_published: boolean;
-  is_tip: boolean | null;
-  parent_version_id: string | null;
-  merged_into_version_id: string | null;
-  merge_request_id: string | null;
-  based_on_version_id: string | null;
-  created_by: string | null;
-  reviewed_by: string | null;
-  approved_at: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CourseBranchData {
-  id: string;
-  course_id: string;
-  name: string;
-  description: string | null;
-  parent_branch_id: string | null;
-  base_version_id: string | null;
-  created_by: string | null;
-  created_at: string;
-  updated_at: string;
-  is_default: boolean;
-}
-
-export interface CourseMergeRequestData {
-  id: string;
-  course_id: string;
-  source_branch_id: string;
-  target_branch_id: string;
-  source_version_id: string;
-  target_version_id: string | null;
+  version_number: number;
   title: string;
-  summary: string | null;
-  status: CourseMergeRequestStatus;
-  opened_by: string | null;
-  reviewer_id: string | null;
-  opened_at: string;
-  closed_at: string | null;
-  merged_at: string | null;
-  payload: Record<string, unknown> | null;
+  description: string | null;
+  content: string | null;
+  status: CourseVersionStatus;
+  start_date: string | null;
+  end_date: string | null;
+  published_at: string | null;
+  published_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface CourseModuleData {
+export interface GroupData {
   id: string;
-  course_id: string;
+  course_version_id: string;
+  name: string;
+  teacher_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GroupStudentData {
+  id: string;
+  group_id: string;
+  student_id: string;
+  enrolled_at: string;
+}
+
+export interface TopicData {
+  id: string;
   course_version_id: string;
   title: string;
   description: string | null;
   order_index: number;
-  content: string | null;
-  is_published: boolean;
   created_at: string;
   updated_at: string;
 }
 
-export interface LessonData {
+export interface ResourceData {
   id: string;
-  module_id: string;
+  topic_id: string;
   title: string;
-  content: string | null;
+  description: string | null;
+  resource_type: ResourceType;
+  file_url: string | null;
+  file_name: string | null;
+  file_size: number | null;
+  mime_type: string | null;
+  external_url: string | null;
   order_index: number;
-  duration_minutes: number | null;
-  is_published: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -105,92 +82,124 @@ export interface LessonData {
 export interface StudentProgressData {
   id: string;
   student_id: string;
-  lesson_id: string;
+  topic_id: string;
   completed: boolean;
   completed_at: string | null;
-  time_spent_minutes: number;
-}
-
-export interface CourseVersionTeacherData {
-  id: string;
-  course_version_id: string;
-  teacher_id: string;
-  assigned_by: string | null;
-  assigned_at: string;
-}
-
-export interface CourseVersionAssignmentData {
-  version: CourseVersionData;
-  teacherIds: string[];
-}
-
-export interface CourseVersionEditorData {
-  id: string;
-  course_version_id: string;
-  user_id: string;
-  role: string;
-  added_by: string | null;
-  created_at: string;
+  last_accessed_at: string;
 }
 
 export interface CreateCourseInput {
-  title: string;
-  summary?: string | null;
+  name: string;
   description?: string | null;
-  initialVersionLabel?: string;
-  initialVersionSummary?: string | null;
+  draft?: {
+    title?: string | null;
+    description?: string | null;
+    content?: string | null;
+  };
 }
 
 export interface UpdateCourseInput {
-  title?: string;
-  summary?: string | null;
+  name?: string;
   description?: string | null;
-  visibility_override?: boolean;
+  activeVersionId?: string | null;
 }
 
-export interface CreateCourseVersionInput {
+export interface CreateCourseDraftInput {
   courseId: string;
-  versionLabel: string;
-  summary?: string | null;
-  basedOnVersionId?: string | null;
-}
-
-export interface UpdateCourseVersionInput {
-  versionId: string;
-  summary?: string | null;
-  status?: CourseVersionStatus;
-  isActive?: boolean;
-  isPublished?: boolean;
-  reviewedBy?: string | null;
-  approvedAt?: string | null;
-}
-
-export interface CreateCourseBranchInput {
-  courseId: string;
-  branchName: string;
-  description?: string | null;
-  baseVersionId: string;
-  newVersionLabel: string;
-}
-
-export interface CreateCourseMergeRequestInput {
-  courseId: string;
-  sourceBranchId: string;
-  targetBranchId: string;
   title: string;
-  summary?: string | null;
+  description?: string | null;
+  content?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  createdBy: string;
 }
 
-export interface ReviewCourseMergeRequestInput {
-  mergeRequestId: string;
-  decision: "approve" | "reject";
+export interface UpdateCourseDraftInput {
+  title?: string;
+  description?: string | null;
+  content?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
 }
 
-export interface MergeCourseBranchInput {
-  mergeRequestId: string;
+export interface PublishCourseVersionInput {
+  versionId: string;
+  publishedBy: string;
+  startDate?: string | null;
+  endDate?: string | null;
 }
 
-export interface DeleteCourseBranchInput {
-  courseId: string;
-  branchId: string;
+export interface ArchiveCourseVersionInput {
+  versionId: string;
+  archivedBy: string;
+}
+
+export interface CreateTopicInput {
+  courseVersionId: string;
+  title: string;
+  description?: string | null;
+  orderIndex?: number;
+  createdBy: string;
+}
+
+export interface UpdateTopicInput {
+  title?: string;
+  description?: string | null;
+}
+
+export interface ReorderTopicInput {
+  topicId: string;
+  orderIndex: number;
+}
+
+export interface DeleteTopicInput {
+  topicId: string;
+}
+
+export interface AddResourceInput {
+  topicId: string;
+  title: string;
+  description?: string | null;
+  resourceType: ResourceType;
+  fileUrl?: string | null;
+  fileName?: string | null;
+  fileSize?: number | null;
+  mimeType?: string | null;
+  externalUrl?: string | null;
+  orderIndex?: number;
+  createdBy: string;
+}
+
+export interface UpdateResourceInput {
+  title?: string;
+  description?: string | null;
+  resourceType?: ResourceType;
+  fileUrl?: string | null;
+  fileName?: string | null;
+  fileSize?: number | null;
+  mimeType?: string | null;
+  externalUrl?: string | null;
+}
+
+export interface CreateGroupInput {
+  courseVersionId: string;
+  name: string;
+  teacherId?: string | null;
+  createdBy: string;
+}
+
+export interface AssignGroupTeacherInput {
+  groupId: string;
+  teacherId: string | null;
+  assignedBy: string;
+}
+
+export interface AddStudentToGroupInput {
+  groupId: string;
+  studentId: string;
+}
+
+export interface RemoveStudentFromGroupInput {
+  groupId: string;
+  studentId: string;
 }

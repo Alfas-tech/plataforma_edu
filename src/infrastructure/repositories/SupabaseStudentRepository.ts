@@ -1,223 +1,248 @@
 import { IStudentRepository } from "@/src/core/interfaces/repositories/IStudentRepository";
 import {
-  CourseWithModulesData,
-  StudentProgress,
-  MarkLessonResult,
-  ModuleWithLessons,
-  LessonWithProgress,
+  CourseWithTopicsData,
+  MarkTopicResult,
+  ResourceSummary,
+  StudentTopicProgress,
+  TopicWithResources,
 } from "@/src/core/types/student.types";
 import { createClient } from "@/src/infrastructure/supabase/server";
 
-/**
- * Supabase implementation of IStudentRepository
- * Handles all student-related database operations
- */
+const TABLES = {
+  courses: "courses",
+  versions: "course_versions",
+  topics: "topics",
+  resources: "resources",
+  topicProgress: "student_progress",
+} as const;
+
 export class SupabaseStudentRepository implements IStudentRepository {
-  async getCourseWithModulesAndLessons(
+  async getCourseWithTopicsAndResources(
     courseId: string,
     studentId: string
-  ): Promise<CourseWithModulesData> {
+  ): Promise<CourseWithTopicsData> {
     const supabase = createClient();
 
-    // Get course
-    const { data: courseData, error: courseError } = await supabase
-      .from("courses")
+    const { data: courseRow, error: courseError } = await supabase
+      .from(TABLES.courses)
       .select("*")
       .eq("id", courseId)
       .single();
 
-    if (courseError || !courseData) {
-      throw new Error(courseError?.message || "Curso no encontrado");
+    if (courseError || !courseRow) {
+      throw new Error(courseError?.message ?? "Curso no encontrado");
     }
 
-    // Ensure course has an active version
-    const activeVersionId = courseData.active_version_id;
+    const activeVersionId = courseRow.active_version_id;
     if (!activeVersionId) {
       throw new Error("El curso no tiene una versión activa");
     }
 
-    // Get published modules for the active version
-    const { data: modulesData, error: modulesError } = await supabase
-      .from("course_modules")
+    const { data: versionRow, error: versionError } = await supabase
+      .from(TABLES.versions)
       .select("*")
-      .eq("course_id", courseId)
+      .eq("id", activeVersionId)
+      .single();
+
+    if (versionError || !versionRow) {
+      throw new Error(
+        versionError?.message ?? "No se encontró la versión activa del curso"
+      );
+    }
+
+    const { data: topicsData, error: topicsError } = await supabase
+      .from(TABLES.topics)
+      .select("*")
       .eq("course_version_id", activeVersionId)
-      .eq("is_published", true)
       .order("order_index", { ascending: true });
 
-    if (modulesError) {
-      throw new Error(modulesError.message);
+    if (topicsError) {
+      throw new Error(topicsError.message);
     }
 
-    // Get lessons for each module with progress
-    const modulesWithLessons: ModuleWithLessons[] = await Promise.all(
-      (modulesData || []).map(async (module) => {
-        const { data: lessonsData, error: lessonsError } = await supabase
-          .from("lessons")
-          .select("*")
-          .eq("module_id", module.id)
-          .eq("is_published", true)
-          .order("order_index", { ascending: true });
+    const topicsRows = (topicsData ?? []) as {
+      id: string;
+      course_version_id: string;
+      title: string;
+      description: string | null;
+      order_index: number;
+    }[];
 
-        if (lessonsError) {
-          throw new Error(lessonsError.message);
-        }
+    const topicIds = topicsRows.map((topic) => topic.id);
 
-        // Convert to camelCase
-        const lessons: LessonWithProgress[] = (lessonsData || []).map(
-          (lesson) => ({
-            id: lesson.id,
-            moduleId: lesson.module_id,
-            title: lesson.title,
-            content: lesson.content,
-            orderIndex: lesson.order_index,
-            durationMinutes: lesson.duration_minutes,
-            isPublished: lesson.is_published,
-          })
-        );
+    let resourcesByTopic = new Map<string, ResourceSummary[]>();
+    if (topicIds.length > 0) {
+      const { data: resourcesData, error: resourcesError } = await supabase
+        .from(TABLES.resources)
+        .select("*")
+        .in("topic_id", topicIds)
+        .order("order_index", { ascending: true });
 
-        return {
-          id: module.id,
-          courseId: module.course_id,
-          courseVersionId: module.course_version_id,
-          title: module.title,
-          description: module.description,
-          orderIndex: module.order_index,
-          isPublished: module.is_published,
-          lessons,
-        };
-      })
-    );
+      if (resourcesError) {
+        throw new Error(resourcesError.message);
+      }
 
-    // Get student progress
-    const { data: progressData, error: progressError } = await supabase
-      .from("student_progress")
-      .select("*")
-      .eq("student_id", studentId);
+      const resources = (resourcesData ?? []).map((resource) => ({
+        id: resource.id as string,
+        topicId: resource.topic_id as string,
+        title: resource.title as string,
+        description: (resource.description as string | null) ?? null,
+        resourceType: resource.resource_type as string,
+        fileUrl: (resource.file_url as string | null) ?? null,
+        externalUrl: (resource.external_url as string | null) ?? null,
+        orderIndex: resource.order_index as number,
+      }));
 
-    if (progressError) {
-      throw new Error(progressError.message);
+      resourcesByTopic = this.groupResourcesByTopic(resources);
     }
 
-    // Convert progress to camelCase
-    const progress: StudentProgress[] = (progressData || []).map((p) => ({
-      studentId: p.student_id,
-      lessonId: p.lesson_id,
-      completed: p.completed,
-      completedAt: p.completed_at,
+    const topics: TopicWithResources[] = topicsRows.map((topic) => ({
+      id: topic.id,
+      courseVersionId: topic.course_version_id,
+      title: topic.title,
+      description: topic.description,
+      orderIndex: topic.order_index,
+      resources: resourcesByTopic.get(topic.id) ?? [],
     }));
+
+    const progress = await this.getTopicProgress(supabase, studentId, topicIds);
 
     return {
       course: {
-        id: courseData.id,
-        title: courseData.title,
-        description: courseData.description,
-        activeVersionId: courseData.active_version_id,
+        id: courseRow.id,
+        name: courseRow.name ?? courseRow.title ?? "",
+        description: courseRow.description,
+        activeVersionId: courseRow.active_version_id,
       },
-      modules: modulesWithLessons,
+      version: {
+        id: versionRow.id,
+        title: versionRow.title,
+        summary: versionRow.description,
+        status: versionRow.status,
+      },
+      topics,
       progress,
     };
   }
 
-  async getStudentProgress(studentId: string): Promise<StudentProgress[]> {
+  async getStudentTopicProgress(
+    studentId: string
+  ): Promise<StudentTopicProgress[]> {
+    const supabase = createClient();
+    return this.getTopicProgress(supabase, studentId);
+  }
+
+  async markTopicComplete(
+    topicId: string,
+    studentId: string
+  ): Promise<MarkTopicResult> {
     const supabase = createClient();
 
-    const { data, error } = await supabase
-      .from("student_progress")
+    const now = new Date().toISOString();
+
+    const { data: existing, error: fetchError } = await supabase
+      .from(TABLES.topicProgress)
+      .select("id")
+      .eq("student_id", studentId)
+      .eq("topic_id", topicId)
+      .single();
+
+    if (fetchError && fetchError.code !== "PGRST116") {
+      return { success: false, error: fetchError.message };
+    }
+
+    const payload = {
+      student_id: studentId,
+      topic_id: topicId,
+      completed: true,
+      completed_at: now,
+      last_accessed_at: now,
+    };
+
+    if (existing) {
+      const { error } = await supabase
+        .from(TABLES.topicProgress)
+        .update(payload)
+        .eq("id", existing.id);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+    } else {
+      const { error } = await supabase
+        .from(TABLES.topicProgress)
+        .insert(payload);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+    }
+
+    return { success: true };
+  }
+
+  async markTopicIncomplete(
+    topicId: string,
+    studentId: string
+  ): Promise<MarkTopicResult> {
+    const supabase = createClient();
+
+    const { error } = await supabase
+      .from(TABLES.topicProgress)
+      .update({
+        completed: false,
+        completed_at: null,
+        last_accessed_at: new Date().toISOString(),
+      })
+      .eq("student_id", studentId)
+      .eq("topic_id", topicId);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  }
+
+  private groupResourcesByTopic(
+    resources: ResourceSummary[]
+  ): Map<string, ResourceSummary[]> {
+    const map = new Map<string, ResourceSummary[]>();
+
+    resources.forEach((resource) => {
+      const list = map.get(resource.topicId) ?? [];
+      list.push(resource);
+      map.set(resource.topicId, list);
+    });
+
+    return map;
+  }
+
+  private async getTopicProgress(
+    supabase: ReturnType<typeof createClient>,
+    studentId: string,
+    topicIds?: readonly string[]
+  ): Promise<StudentTopicProgress[]> {
+    let query = supabase
+      .from(TABLES.topicProgress)
       .select("*")
       .eq("student_id", studentId);
+
+    if (topicIds && topicIds.length > 0) {
+      query = query.in("topic_id", topicIds);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       throw new Error(error.message);
     }
 
-    // Convert to camelCase
-    return (data || []).map((p) => ({
-      studentId: p.student_id,
-      lessonId: p.lesson_id,
-      completed: p.completed,
-      completedAt: p.completed_at,
+    return (data ?? []).map((record) => ({
+      studentId: record.student_id,
+      topicId: record.topic_id,
+      completed: record.completed,
+      completedAt: record.completed_at,
     }));
-  }
-
-  async markLessonComplete(
-    lessonId: string,
-    studentId: string
-  ): Promise<MarkLessonResult> {
-    try {
-      const supabase = createClient();
-
-      // Check if progress already exists
-      const { data: existing } = await supabase
-        .from("student_progress")
-        .select("*")
-        .eq("student_id", studentId)
-        .eq("lesson_id", lessonId)
-        .single();
-
-      if (existing) {
-        // Update existing
-        const { error } = await supabase
-          .from("student_progress")
-          .update({
-            completed: true,
-            completed_at: new Date().toISOString(),
-          })
-          .eq("student_id", studentId)
-          .eq("lesson_id", lessonId);
-
-        if (error) {
-          return { success: false, error: error.message };
-        }
-      } else {
-        // Insert new
-        const { error } = await supabase.from("student_progress").insert({
-          student_id: studentId,
-          lesson_id: lessonId,
-          completed: true,
-          completed_at: new Date().toISOString(),
-        });
-
-        if (error) {
-          return { success: false, error: error.message };
-        }
-      }
-
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Error desconocido",
-      };
-    }
-  }
-
-  async markLessonIncomplete(
-    lessonId: string,
-    studentId: string
-  ): Promise<MarkLessonResult> {
-    try {
-      const supabase = createClient();
-
-      const { error } = await supabase
-        .from("student_progress")
-        .update({
-          completed: false,
-          completed_at: null,
-        })
-        .eq("student_id", studentId)
-        .eq("lesson_id", lessonId);
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Error desconocido",
-      };
-    }
   }
 }

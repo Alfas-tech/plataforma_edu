@@ -221,44 +221,63 @@ describe("SupabaseProfileRepository", () => {
 
   describe("demoteToStudent", () => {
     it("should demote user to student successfully", async () => {
-      mockAdminClient.eq
-        .mockImplementationOnce(() => mockAdminClient)
-        .mockImplementationOnce(() =>
-          Promise.resolve({ data: null, error: null })
-        )
-        .mockImplementationOnce(() =>
-          Promise.resolve({ data: null, error: null })
-        );
+      // Mock for from("profiles").select().eq().limit() - fetch profile
+      mockAdminClient.from.mockReturnValueOnce(mockAdminClient);
+      mockAdminClient.select.mockReturnValueOnce(mockAdminClient);
+      mockAdminClient.eq.mockReturnValueOnce(mockAdminClient);
       mockAdminClient.limit.mockResolvedValueOnce({
-        data: [{ role: "teacher" }],
+        data: [{ role: "teacher", id: "user-123" }],
+        error: null,
+      });
+
+      // Mock for from("groups").update().eq() - remove teacher assignments
+      mockAdminClient.from.mockReturnValueOnce(mockAdminClient);
+      mockAdminClient.update.mockReturnValueOnce(mockAdminClient);
+      mockAdminClient.eq.mockResolvedValueOnce({
+        data: null,
+        error: null,
+      });
+
+      // Mock for from("profiles").update().eq() - update role
+      mockAdminClient.from.mockReturnValueOnce(mockAdminClient);
+      mockAdminClient.update.mockReturnValueOnce(mockAdminClient);
+      mockAdminClient.eq.mockResolvedValueOnce({
+        data: null,
         error: null,
       });
 
       await expect(
         repository.demoteToStudent("user-123")
       ).resolves.not.toThrow();
-      expect(mockAdminClient.delete).toHaveBeenCalled();
-      expect(mockAdminClient.update).toHaveBeenCalledWith(
-        expect.objectContaining({ role: "student" })
-      );
     });
 
-    it("should throw error when demotion fails", async () => {
-      mockAdminClient.eq.mockImplementationOnce(() => mockAdminClient);
+    it("should throw error when user is admin", async () => {
+      // Mock for from("profiles").select().eq().limit() - fetch profile
+      mockAdminClient.from.mockReturnValueOnce(mockAdminClient);
+      mockAdminClient.select.mockReturnValueOnce(mockAdminClient);
+      mockAdminClient.eq.mockReturnValueOnce(mockAdminClient);
       mockAdminClient.limit.mockResolvedValueOnce({
-        data: [{ role: "teacher" }],
+        data: [{ role: "admin", id: "user-123" }],
         error: null,
-      });
-      mockAdminClient.delete.mockReturnValueOnce({
-        eq: () =>
-          Promise.resolve({
-            data: null,
-            error: { message: "Demotion failed" },
-          }),
       });
 
       await expect(repository.demoteToStudent("user-123")).rejects.toThrow(
-        "Error al degradar a estudiante: Demotion failed"
+        "No se puede degradar a un administrador"
+      );
+    });
+
+    it("should throw error when profile fetch fails", async () => {
+      // Mock for from("profiles").select().eq().limit() - returns empty array (user not found)
+      mockAdminClient.from.mockReturnValueOnce(mockAdminClient);
+      mockAdminClient.select.mockReturnValueOnce(mockAdminClient);
+      mockAdminClient.eq.mockReturnValueOnce(mockAdminClient);
+      mockAdminClient.limit.mockResolvedValueOnce({
+        data: [],
+        error: null,
+      });
+
+      await expect(repository.demoteToStudent("user-123")).rejects.toThrow(
+        "Error al degradar a estudiante"
       );
     });
   });

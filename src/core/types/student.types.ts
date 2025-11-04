@@ -1,52 +1,57 @@
-// Student domain types
+// Student domain types aligned with topics/resources structure
 
-export interface StudentProgress {
+export interface StudentTopicProgress {
   studentId: string;
-  lessonId: string;
+  topicId: string;
   completed: boolean;
   completedAt: string | null;
 }
 
-export interface LessonWithProgress {
+export interface ResourceSummary {
   id: string;
-  moduleId: string;
+  topicId: string;
   title: string;
-  content: string | null;
+  description: string | null;
+  resourceType: string;
+  fileUrl: string | null;
+  externalUrl: string | null;
   orderIndex: number;
-  durationMinutes: number | null;
-  isPublished: boolean;
-  completed?: boolean;
 }
 
-export interface ModuleWithLessons {
+export interface TopicWithResources {
   id: string;
-  courseId: string;
   courseVersionId: string;
   title: string;
   description: string | null;
   orderIndex: number;
-  isPublished: boolean;
-  lessons: LessonWithProgress[];
+  resources: ResourceSummary[];
+  completed?: boolean;
 }
 
-export interface CourseWithModulesData {
+export interface CourseWithTopicsData {
   course: {
     id: string;
-    title: string;
+    name: string;
     description: string | null;
     activeVersionId: string | null;
   };
-  modules: ModuleWithLessons[];
-  progress: StudentProgress[];
+  version: {
+    id: string;
+    title: string;
+    summary: string | null;
+    status: string;
+  } | null;
+  topics: TopicWithResources[];
+  progress: StudentTopicProgress[];
 }
 
-export interface MarkLessonResult {
+export interface MarkTopicResult {
   success: boolean;
   error?: string;
 }
 
-export interface GetCourseResult {
+export interface GetCourseContentResult {
   success: boolean;
-  data?: CourseWithModulesData;
+  data?: CourseWithTopicsData;
   error?: string;
 }

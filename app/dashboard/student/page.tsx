@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/src/presentation/actions/profile.actions";
 import { getAllCourses } from "@/src/presentation/actions/course.actions";
-import { getCourseWithModulesAndLessons } from "@/src/presentation/actions/student.actions";
+import { getCourseContent } from "@/src/presentation/actions/student.actions";
 import { signout } from "@/src/presentation/actions/auth.actions";
 import { formatDateSpanish as formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -13,17 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  LogOut,
-  BookOpen,
-  Clock,
-  CheckCircle2,
-  Calendar,
-  PlayCircle,
-  FileText,
-  Trophy,
-  TrendingUp,
-} from "lucide-react";
+import { LogOut, BookOpen, CheckCircle2, Calendar, Trophy } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -40,73 +30,81 @@ export default async function StudentDashboardPage() {
     redirect("/dashboard");
   }
 
-  // Obtener todos los cursos
+  // Get all courses
   const coursesResult = await getAllCourses();
   const allCourses =
     "error" in coursesResult ? [] : coursesResult.courses || [];
 
-  // Filtrar cursos activos
+  // Filter active courses
   const visibleCourses = allCourses.filter((c) => c.isVisibleForStudents);
   const upcomingCourses = allCourses.filter(
     (c) =>
       !c.isVisibleForStudents &&
       c.hasActiveVersion &&
-      (c.activeVersion?.status === "pending_review" ||
-        c.activeVersion?.status === "draft")
+      c.activeVersion?.status === "draft"
   );
 
-  // Obtener datos completos del primer curso activo
-  let courseData: any = null;
-  let totalLessons = 0;
-  let completedLessons = 0;
-
-  const currentCourse = visibleCourses[0] ?? null;
-
-  if (currentCourse) {
-    const result = await getCourseWithModulesAndLessons(currentCourse.id);
-    if (!("error" in result)) {
-      courseData = result;
-
-      // Calcular totales de forma segura
-      if (courseData.modules && Array.isArray(courseData.modules)) {
-        courseData.modules.forEach((module: any) => {
-          if (module.lessons && Array.isArray(module.lessons)) {
-            totalLessons += module.lessons.length;
-            module.lessons.forEach((lesson: any) => {
-              if (courseData.progress && Array.isArray(courseData.progress)) {
-                const isCompleted = courseData.progress.some(
-                  (p: any) => p.lesson_id === lesson.id && p.completed
-                );
-                if (isCompleted) completedLessons++;
-              }
-            });
-          }
-        });
+  // Get progress data for all visible courses
+  const coursesProgress = await Promise.all(
+    visibleCourses.map(async (course) => {
+      const result = await getCourseContent(course.id);
+      if ("error" in result) {
+        return {
+          courseId: course.id,
+          totalTopics: 0,
+          completedTopics: 0,
+          totalResources: 0,
+          progress: 0,
+        };
       }
-    } else {
-      console.error("Error loading course data:", result.error);
-    }
-  }
 
+      const topics = result.topics || [];
+      const totalTopics = topics.length;
+      const completedTopics = topics.filter((t) => t.completed).length;
+      const totalResources = topics.reduce(
+        (sum, topic) => sum + (topic.resources?.length || 0),
+        0
+      );
+      const progress =
+        totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+
+      return {
+        courseId: course.id,
+        totalTopics,
+        completedTopics,
+        totalResources,
+        progress,
+      };
+    })
+  );
+
+  // Calculate global statistics
+  const totalTopics = coursesProgress.reduce(
+    (sum, cp) => sum + cp.totalTopics,
+    0
+  );
+  const completedTopics = coursesProgress.reduce(
+    (sum, cp) => sum + cp.completedTopics,
+    0
+  );
+  const totalResources = coursesProgress.reduce(
+    (sum, cp) => sum + cp.totalResources,
+    0
+  );
   const progressPercentage =
-    totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
-  const publishedModules =
-    courseData?.modules && Array.isArray(courseData.modules)
-      ? courseData.modules.length
-      : 0;
+    totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+  const availableTopics = totalTopics;
 
   function formatVersionStatus(status?: string): string {
     switch (status) {
-      case "published":
-        return "Publicada";
-      case "pending_review":
-        return "Pendiente de revisión";
+      case "active":
+        return "Activa";
       case "draft":
-        return "En borrador";
+        return "Borrador";
       case "archived":
         return "Archivada";
       default:
-        return "Sin versión activa";
+        return "Sin versión";
     }
   }
 
@@ -184,81 +182,6 @@ export default async function StudentDashboardPage() {
           </p>
         </div>
 
-        {/* Quick Stats */}
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:mb-8 sm:gap-4 lg:grid-cols-4">
-          <Card className="border-2 transition-shadow hover:shadow-lg">
-            <CardContent className="p-3 pt-4 sm:p-6 sm:pt-6">
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="mb-1 text-xs text-slate-600 sm:text-sm">
-                    Cursos visibles
-                  </p>
-                  <p className="text-xl font-bold text-slate-800 sm:text-2xl md:text-3xl">
-                    {visibleCourses.length}
-                  </p>
-                </div>
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100 sm:h-12 sm:w-12">
-                  <BookOpen className="h-5 w-5 text-blue-600 sm:h-6 sm:w-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 transition-shadow hover:shadow-lg">
-            <CardContent className="p-3 pt-4 sm:p-6 sm:pt-6">
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="mb-1 text-xs text-slate-600 sm:text-sm">
-                    Módulos
-                  </p>
-                  <p className="text-xl font-bold text-slate-800 sm:text-2xl md:text-3xl">
-                    {publishedModules}
-                  </p>
-                </div>
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-green-100 sm:h-12 sm:w-12">
-                  <FileText className="h-5 w-5 text-green-600 sm:h-6 sm:w-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 transition-shadow hover:shadow-lg">
-            <CardContent className="p-3 pt-4 sm:p-6 sm:pt-6">
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="mb-1 text-xs text-slate-600 sm:text-sm">
-                    Completadas
-                  </p>
-                  <p className="text-xl font-bold text-slate-800 sm:text-2xl md:text-3xl">
-                    {completedLessons}/{totalLessons}
-                  </p>
-                </div>
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-yellow-100 sm:h-12 sm:w-12">
-                  <Trophy className="h-5 w-5 text-yellow-600 sm:h-6 sm:w-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 transition-shadow hover:shadow-lg">
-            <CardContent className="p-3 pt-4 sm:p-6 sm:pt-6">
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="mb-1 text-xs text-slate-600 sm:text-sm">
-                    Progreso
-                  </p>
-                  <p className="truncate text-xl font-bold text-slate-800 sm:text-2xl md:text-3xl">
-                    {progressPercentage}%
-                  </p>
-                </div>
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-purple-100 sm:h-12 sm:w-12">
-                  <TrendingUp className="h-5 w-5 text-purple-600 sm:h-6 sm:w-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Main Content Grid */}
         <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
           {/* Course Cards */}
@@ -282,16 +205,15 @@ export default async function StudentDashboardPage() {
               ) : (
                 <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
                   {visibleCourses.map((course) => {
-                    // Calcular progreso para cada curso
-                    let courseProgress = 0;
-                    let courseTotalLessons = 0;
-                    let courseCompletedLessons = 0;
-
-                    if (course.id === currentCourse?.id && courseData) {
-                      courseTotalLessons = totalLessons;
-                      courseCompletedLessons = completedLessons;
-                      courseProgress = progressPercentage;
-                    }
+                    // Get course progress
+                    const courseProgressData = coursesProgress.find(
+                      (cp) => cp.courseId === course.id
+                    );
+                    const courseProgress = courseProgressData?.progress || 0;
+                    const courseTotalTopics =
+                      courseProgressData?.totalTopics || 0;
+                    const courseCompletedTopics =
+                      courseProgressData?.completedTopics || 0;
 
                     return (
                       <Link
@@ -336,8 +258,8 @@ export default async function StudentDashboardPage() {
                               <div className="flex items-center gap-1">
                                 <BookOpen className="h-3 w-3" />
                                 <span>
-                                  {courseCompletedLessons}/{courseTotalLessons}{" "}
-                                  lecciones
+                                  {courseCompletedTopics}/{courseTotalTopics}{" "}
+                                  tópicos
                                 </span>
                               </div>
                               {course.activeVersion && (
@@ -353,7 +275,9 @@ export default async function StudentDashboardPage() {
                               <Calendar className="h-3 w-3" />
                               <span>
                                 Actualizado el{" "}
-                                {formatDate(course.lastUpdatedAt)}
+                                {course.lastUpdatedAt
+                                  ? formatDate(course.lastUpdatedAt)
+                                  : "Fecha no disponible"}
                               </span>
                             </div>
                           </CardContent>
@@ -396,8 +320,8 @@ export default async function StudentDashboardPage() {
                     <div className="flex items-center gap-2 text-sm text-blue-800">
                       <Trophy className="h-4 w-4" />
                       <span>
-                        <strong>{completedLessons}</strong> de{" "}
-                        <strong>{totalLessons}</strong> lecciones completadas
+                        <strong>{completedTopics}</strong> de{" "}
+                        <strong>{totalTopics}</strong> tópicos completados
                       </span>
                     </div>
                   </div>
@@ -431,7 +355,9 @@ export default async function StudentDashboardPage() {
                         <Calendar className="h-3 w-3" />
                         <span>
                           Última actualización{" "}
-                          {formatDate(course.lastUpdatedAt)}
+                          {course.lastUpdatedAt
+                            ? formatDate(course.lastUpdatedAt)
+                            : "Fecha no disponible"}
                         </span>
                       </div>
                       <div className="mt-2 flex flex-wrap gap-2">

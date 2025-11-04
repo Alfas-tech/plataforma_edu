@@ -22,6 +22,10 @@ import {
   createCourse,
   updateCourse,
 } from "@/src/presentation/actions/course.actions";
+import type {
+  CreateCourseInput as CreateCoursePayload,
+  UpdateCourseInput as UpdateCoursePayload,
+} from "@/src/core/types/course.types";
 import { useRouter } from "next/navigation";
 
 interface CourseFormDialogProps {
@@ -87,19 +91,41 @@ export function CourseFormDialog({
     try {
       let result;
       if (mode === "create") {
-        result = await createCourse({
-          title: data.title,
-          summary: data.summary || null,
-          description: data.description || null,
-          initialVersionLabel: data.initialVersionLabel || undefined,
-          initialVersionSummary: data.initialVersionSummary || undefined,
-        });
+        const name = data.title.trim();
+        const description = data.description?.trim() ?? "";
+        const summary = data.summary?.trim() ?? "";
+        const initialVersionLabel = data.initialVersionLabel?.trim() ?? "";
+        const initialVersionSummary = data.initialVersionSummary?.trim() ?? "";
+
+        const payload: CreateCoursePayload = {
+          name,
+          description: description.length > 0 ? description : null,
+        };
+
+        if (initialVersionLabel.length > 0) {
+          payload.draft = {
+            title: initialVersionLabel,
+            description:
+              initialVersionSummary.length > 0
+                ? initialVersionSummary
+                : summary.length > 0
+                  ? summary
+                  : null,
+            content: null,
+          };
+        }
+
+        result = await createCourse(payload);
       } else if (course) {
-        result = await updateCourse(course.id, {
-          title: data.title,
-          summary: data.summary || null,
-          description: data.description || null,
-        });
+        const name = data.title.trim();
+        const description = data.description?.trim() ?? "";
+
+        const payload: UpdateCoursePayload = {
+          name,
+          description: description.length > 0 ? description : null,
+        };
+
+        result = await updateCourse(course.id, payload);
       }
 
       if (result && "error" in result) {

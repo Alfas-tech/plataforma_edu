@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -25,32 +25,32 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import {
-  markLessonComplete,
-  markLessonIncomplete,
+  markTopicComplete,
+  markTopicIncomplete,
 } from "@/src/presentation/actions/student.actions";
 import { useRouter } from "next/navigation";
 import { signout } from "@/src/presentation/actions/auth.actions";
+import { useToast } from "@/components/ui/toast-provider";
 
-interface Lesson {
+interface Resource {
   id: string;
-  moduleId: string;
+  topicId: string;
   title: string;
-  content: string | null;
+  description: string | null;
+  resourceType: string;
+  fileUrl: string | null;
+  externalUrl: string | null;
   orderIndex: number;
-  durationMinutes: number | null;
-  isPublished: boolean;
-  completed?: boolean;
 }
 
-interface Module {
+interface Topic {
   id: string;
-  courseId: string;
   courseVersionId: string;
   title: string;
   description: string | null;
   orderIndex: number;
-  isPublished: boolean;
-  lessons: Lesson[];
+  resources: Resource[];
+  completed?: boolean;
 }
 
 interface Course {
@@ -67,63 +67,88 @@ interface Profile {
 
 interface StudentCourseViewProps {
   course: Course;
-  modules: Module[];
+  topics: Topic[];
   studentId: string;
   profile: Profile;
 }
 
 export function StudentCourseView({
   course,
-  modules,
+  topics,
   studentId,
   profile,
 }: StudentCourseViewProps) {
   const router = useRouter();
-  const [expandedModules, setExpandedModules] = useState<Set<string>>(
-    new Set(modules.map((m) => m.id))
+  const { showToast } = useToast();
+  const [expandedTopics, setExpandedTopics] = useState<Set<string>>(
+    new Set(topics.map((t) => t.id))
   );
-  const [processingLessons, setProcessingLessons] = useState<Set<string>>(
+  const [processingTopics, setProcessingTopics] = useState<Set<string>>(
     new Set()
   );
+  const [localTopics, setLocalTopics] = useState<Topic[]>(topics);
 
-  const toggleModule = (moduleId: string) => {
-    const newExpanded = new Set(expandedModules);
-    if (newExpanded.has(moduleId)) {
-      newExpanded.delete(moduleId);
+  // Sync when topics change from server
+  useEffect(() => {
+    setLocalTopics(topics);
+  }, [topics]);
+
+  const toggleTopic = (topicId: string) => {
+    const newExpanded = new Set(expandedTopics);
+    if (newExpanded.has(topicId)) {
+      newExpanded.delete(topicId);
     } else {
-      newExpanded.add(moduleId);
+      newExpanded.add(topicId);
     }
-    setExpandedModules(newExpanded);
+    setExpandedTopics(newExpanded);
   };
 
-  const handleToggleComplete = async (lesson: Lesson) => {
-    if (processingLessons.has(lesson.id)) return;
+  const handleToggleComplete = async (topic: Topic) => {
+    if (processingTopics.has(topic.id)) return;
 
-    setProcessingLessons(new Set(processingLessons).add(lesson.id));
+    setProcessingTopics(new Set(processingTopics).add(topic.id));
+
+    // Update UI immediately
+    const updatedTopics = localTopics.map((t) =>
+      t.id === topic.id ? { ...t, completed: !t.completed } : t
+    );
+    setLocalTopics(updatedTopics);
 
     try {
-      if (lesson.completed) {
-        await markLessonIncomplete(lesson.id);
+      const result = topic.completed
+        ? await markTopicIncomplete(topic.id)
+        : await markTopicComplete(topic.id);
+
+      if ("error" in result) {
+        // Revertir cambio si hay error
+        setLocalTopics(topics);
+        showToast(result.error || "Error al actualizar progreso", "error");
       } else {
-        await markLessonComplete(lesson.id);
+        // Mostrar mensaje de éxito
+        showToast(
+          topic.completed
+            ? "Tópico marcado como no completado"
+            : "¡Tópico completado! 🎉",
+          "success"
+        );
+        // Refrescar desde servidor para estar sincronizado
+        router.refresh();
       }
-      router.refresh();
     } catch (error) {
-      console.error("Error al actualizar progreso:", error);
+      // Revertir cambio si hay error
+      setLocalTopics(topics);
+      showToast("Error al actualizar progreso", "error");
     } finally {
-      const newProcessing = new Set(processingLessons);
-      newProcessing.delete(lesson.id);
-      setProcessingLessons(newProcessing);
+      const newProcessing = new Set(processingTopics);
+      newProcessing.delete(topic.id);
+      setProcessingTopics(newProcessing);
     }
   };
 
-  const totalLessons = modules.reduce((acc, m) => acc + m.lessons.length, 0);
-  const completedLessons = modules.reduce(
-    (acc, m) => acc + m.lessons.filter((l) => l.completed).length,
-    0
-  );
+  const totalTopics = localTopics.length;
+  const completedTopics = localTopics.filter((t) => t.completed).length;
   const progress =
-    totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+    totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -228,16 +253,16 @@ export function StudentCourseView({
               </div>
               <div>
                 <p className="text-xs text-slate-600 sm:text-sm">
-                  Lecciones Completadas
+                  Tópicos Completados
                 </p>
                 <p className="text-xl font-semibold text-slate-900 sm:text-2xl">
-                  {completedLessons} / {totalLessons}
+                  {completedTopics} / {totalTopics}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-slate-600 sm:text-sm">Módulos</p>
+                <p className="text-xs text-slate-600 sm:text-sm">Tópicos</p>
                 <p className="text-xl font-semibold text-slate-900 sm:text-2xl">
-                  {modules.length}
+                  {localTopics.length}
                 </p>
               </div>
               <div>
@@ -262,12 +287,12 @@ export function StudentCourseView({
             <h2 className="text-xl font-bold text-slate-800 sm:text-2xl">
               Contenido del Curso
             </h2>
-            {modules.length === 0 ? (
+            {localTopics.length === 0 ? (
               <Card className="border-2">
                 <CardContent className="p-8 text-center">
                   <BookOpen className="mx-auto mb-4 h-12 w-12 text-slate-400" />
                   <p className="text-lg font-semibold text-slate-700">
-                    No hay módulos disponibles
+                    No hay tópicos disponibles
                   </p>
                   <p className="text-sm text-slate-500">
                     El contenido de este curso estará disponible próximamente.
@@ -275,22 +300,15 @@ export function StudentCourseView({
                 </CardContent>
               </Card>
             ) : (
-              modules.map((module) => {
-                const moduleLessons = module.lessons || [];
-                const moduleCompleted = moduleLessons.filter(
-                  (l) => l.completed
-                ).length;
-                const moduleProgress =
-                  moduleLessons.length > 0
-                    ? Math.round((moduleCompleted / moduleLessons.length) * 100)
-                    : 0;
-                const isExpanded = expandedModules.has(module.id);
+              localTopics.map((topic) => {
+                const topicResources = topic.resources || [];
+                const isExpanded = expandedTopics.has(topic.id);
 
                 return (
-                  <Card key={module.id} className="border-2">
+                  <Card key={topic.id} className="border-2">
                     <CardHeader
                       className="cursor-pointer p-4 transition-colors hover:bg-slate-50 sm:p-6"
-                      onClick={() => toggleModule(module.id)}
+                      onClick={() => toggleTopic(topic.id)}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
@@ -301,77 +319,85 @@ export function StudentCourseView({
                               <ChevronRight className="h-5 w-5 flex-shrink-0 text-slate-400" />
                             )}
                             <CardTitle className="text-base sm:text-lg">
-                              Módulo {module.orderIndex}: {module.title}
+                              {topic.orderIndex}. {topic.title}
                             </CardTitle>
                           </div>
-                          {module.description && (
+                          {topic.description && (
                             <p className="ml-7 mt-1 text-sm text-slate-600">
-                              {module.description}
+                              {topic.description}
                             </p>
                           )}
                         </div>
                         <div className="flex flex-shrink-0 items-center gap-2">
-                          <Badge
-                            variant="outline"
-                            className="border-indigo-200 bg-indigo-50 text-indigo-700"
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleComplete(topic);
+                            }}
+                            disabled={processingTopics.has(topic.id)}
+                            className="flex-shrink-0 transition-all hover:scale-110 disabled:opacity-50 disabled:hover:scale-100"
+                            title={
+                              topic.completed
+                                ? "Marcar como no completado"
+                                : "Marcar como completado"
+                            }
                           >
-                            {moduleProgress}%
-                          </Badge>
+                            {topic.completed ? (
+                              <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                            ) : (
+                              <Circle className="h-6 w-6 text-slate-300 hover:text-blue-400" />
+                            )}
+                          </button>
                         </div>
                       </div>
                     </CardHeader>
 
                     {isExpanded && (
                       <CardContent className="p-4 sm:p-6">
-                        {moduleLessons.length === 0 ? (
+                        {topicResources.length === 0 ? (
                           <p className="py-4 text-center text-sm text-slate-500">
-                            No hay lecciones disponibles en este módulo
+                            No hay recursos disponibles en este tópico
                           </p>
                         ) : (
                           <div className="space-y-2">
-                            {moduleLessons.map((lesson) => (
+                            {topicResources.map((resource) => (
                               <div
-                                key={lesson.id}
+                                key={resource.id}
                                 className="group flex items-center justify-between rounded-lg border border-slate-200 p-3 transition-all hover:border-blue-300 hover:bg-blue-50/50 hover:shadow-md sm:p-4"
                               >
                                 <div className="flex flex-1 items-center gap-3">
-                                  <button
-                                    onClick={() => handleToggleComplete(lesson)}
-                                    disabled={processingLessons.has(lesson.id)}
-                                    className="flex-shrink-0 transition-all hover:scale-110 disabled:opacity-50 disabled:hover:scale-100"
-                                    title={
-                                      lesson.completed
-                                        ? "Marcar como no completada"
-                                        : "Marcar como completada"
-                                    }
-                                  >
-                                    {lesson.completed ? (
-                                      <CheckCircle2 className="h-6 w-6 text-emerald-600 sm:h-7 sm:w-7" />
-                                    ) : (
-                                      <Circle className="h-6 w-6 text-slate-300 group-hover:text-blue-400 sm:h-7 sm:w-7" />
-                                    )}
-                                  </button>
+                                  <FileText className="h-5 w-5 flex-shrink-0 text-blue-600" />
                                   <div className="min-w-0 flex-1">
-                                    <p
-                                      className={`text-sm font-medium transition-colors sm:text-base ${
-                                        lesson.completed
-                                          ? "text-slate-500 line-through"
-                                          : "text-slate-900 group-hover:text-blue-700"
-                                      }`}
-                                    >
-                                      {lesson.title}
+                                    <p className="text-sm font-medium text-slate-900 group-hover:text-blue-700 sm:text-base">
+                                      {resource.title}
                                     </p>
-                                    <div className="mt-1 flex flex-wrap items-center gap-2 sm:gap-3">
-                                      {lesson.durationMinutes && (
-                                        <p className="flex items-center gap-1 text-xs text-slate-500">
-                                          <Clock className="h-3 w-3" />
-                                          {lesson.durationMinutes} min
-                                        </p>
-                                      )}
-                                      {lesson.completed && (
-                                        <Badge className="bg-emerald-600 text-xs">
-                                          ✓ Completada
-                                        </Badge>
+                                    {resource.description && (
+                                      <p className="mt-1 text-xs text-slate-500">
+                                        {resource.description}
+                                      </p>
+                                    )}
+                                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs"
+                                      >
+                                        {resource.resourceType}
+                                      </Badge>
+                                      {(resource.fileUrl ||
+                                        resource.externalUrl) && (
+                                        <a
+                                          href={
+                                            resource.fileUrl ||
+                                            resource.externalUrl ||
+                                            "#"
+                                          }
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-xs text-blue-600 hover:underline"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          Abrir recurso →
+                                        </a>
                                       )}
                                     </div>
                                   </div>
@@ -415,40 +441,31 @@ export function StudentCourseView({
                     <div className="flex items-center gap-2 text-sm text-blue-800">
                       <Trophy className="h-4 w-4 flex-shrink-0" />
                       <span>
-                        <strong>{completedLessons}</strong> de{" "}
-                        <strong>{totalLessons}</strong> lecciones completadas
+                        <strong>{completedTopics}</strong> de{" "}
+                        <strong>{totalTopics}</strong> tópicos completados
                       </span>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    {modules.map((module) => {
-                      const moduleLessons = module.lessons || [];
-                      const moduleCompleted = moduleLessons.filter(
-                        (l) => l.completed
-                      ).length;
-                      const moduleProgress =
-                        moduleLessons.length > 0
-                          ? Math.round(
-                              (moduleCompleted / moduleLessons.length) * 100
-                            )
-                          : 0;
+                    {localTopics.map((topic) => {
+                      const topicResources = topic.resources || [];
 
                       return (
                         <div
-                          key={module.id}
+                          key={topic.id}
                           className="rounded-lg border bg-white p-3"
                         >
-                          <p className="mb-1 text-sm font-medium text-slate-800">
-                            Módulo {module.orderIndex}
-                          </p>
-                          <div className="flex items-center justify-between gap-2 text-xs text-slate-600">
-                            <span>
-                              {moduleCompleted}/{moduleLessons.length} lecciones
-                            </span>
-                            <Badge variant="outline" className="text-xs">
-                              {moduleProgress}%
-                            </Badge>
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-medium text-slate-800">
+                              {topic.orderIndex}. {topic.title}
+                            </p>
+                            {topic.completed && (
+                              <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-600" />
+                            )}
+                          </div>
+                          <div className="mt-1 text-xs text-slate-600">
+                            {topicResources.length} recursos disponibles
                           </div>
                         </div>
                       );

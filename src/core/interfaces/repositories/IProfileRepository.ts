@@ -14,4 +14,6 @@ export interface IProfileRepository {
   updateRole(userId: string, role: UserRole): Promise<ProfileEntity>;
   getAllTeachers(): Promise<ProfileEntity[]>;
   getAllStudents(): Promise<ProfileEntity[]>;
+  getAllEditors(): Promise<ProfileEntity[]>;
+  getAllAdmins(): Promise<ProfileEntity[]>;
 }

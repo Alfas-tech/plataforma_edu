@@ -33,6 +33,7 @@ export async function getCurrentProfile() {
       displayName: result.profile.getDisplayName(),
       isStudent: result.profile.isStudent(),
       isTeacher: result.profile.isTeacher(),
+      isEditor: result.profile.isEditor(),
       isAdmin: result.profile.isAdmin(),
     },
   };
@@ -69,9 +70,33 @@ export async function getAllUsers() {
       createdAt: teacher.createdAt.toISOString(),
     })) || [];
 
+  const editors =
+    result.editors?.map((editor) => ({
+      id: editor.id,
+      email: editor.email,
+      fullName: editor.fullName,
+      avatarUrl: editor.avatarUrl,
+      role: editor.role,
+      displayName: editor.getDisplayName(),
+      createdAt: editor.createdAt.toISOString(),
+    })) || [];
+
+  const admins =
+    result.admins?.map((admin) => ({
+      id: admin.id,
+      email: admin.email,
+      fullName: admin.fullName,
+      avatarUrl: admin.avatarUrl,
+      role: admin.role,
+      displayName: admin.getDisplayName(),
+      createdAt: admin.createdAt.toISOString(),
+    })) || [];
+
   return {
     students,
     teachers,
+    editors,
+    admins,
   };
 }
 
@@ -111,4 +136,48 @@ export async function demoteToStudent(userId: string) {
   revalidatePath("/dashboard/admin/users");
 
   return { success: true };
+}
+
+export async function changeUserRole(
+  userId: string,
+  newRole: "admin" | "teacher" | "editor" | "student"
+) {
+  try {
+    // Get current user
+    const currentUser = await authRepository.getCurrentUser();
+
+    if (!currentUser) {
+      return { error: "No autenticado" };
+    }
+
+    // Validate user is not changing their own role
+    if (currentUser.id === userId) {
+      return { error: "No puedes cambiar tu propio rol" };
+    }
+
+    // Verify current user is admin
+    const currentProfile = await profileRepository.getProfileByUserId(
+      currentUser.id
+    );
+
+    if (!currentProfile || currentProfile.role !== "admin") {
+      return { error: "Solo los administradores pueden cambiar roles" };
+    }
+
+    // Update user role
+    await profileRepository.updateRole(userId, newRole);
+
+    revalidateTag("admin-users");
+    revalidatePath("/dashboard/admin");
+    revalidatePath("/dashboard/admin/users");
+
+    return { success: true };
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "Error al cambiar el rol del usuario",
+    };
+  }
 }

@@ -1,6 +1,9 @@
 import { CourseEntity } from "@/src/core/entities/Course.entity";
 import { ICourseBranchingRepository } from "@/src/core/interfaces/repositories/ICourseBranchingRepository";
-import { MergeCourseBranchInput } from "@/src/core/types/course.types";
+// import { MergeCourseBranchInput } from "@/src/core/types/course.types"; // DEPRECATED - branching removed
+
+// Temporary type definition for backwards compatibility
+type MergeCourseBranchInput = any;
 
 export interface MergeCourseBranchResult {
   success: boolean;

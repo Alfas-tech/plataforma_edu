@@ -1,6 +1,15 @@
 import { CourseEntity } from "@/src/core/entities/Course.entity";
 import { ICourseBranchingRepository } from "@/src/core/interfaces/repositories/ICourseBranchingRepository";
-import { CreateCourseBranchInput } from "@/src/core/types/course.types";
+// import { CreateCourseBranchInput } from "@/src/core/types/course.types"; // DEPRECATED - branching removed
+
+// Temporary type definition for backwards compatibility
+type CreateCourseBranchInput = {
+  courseId: string;
+  branchName: string;
+  description?: string | null;
+  baseVersionId: string;
+  newVersionLabel: string;
+};
 
 export interface CreateCourseBranchResult {
   success: boolean;

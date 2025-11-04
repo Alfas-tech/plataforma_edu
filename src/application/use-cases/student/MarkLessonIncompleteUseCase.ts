@@ -1,39 +1,13 @@
-import { IStudentRepository } from "@/src/core/interfaces/repositories/IStudentRepository";
-import { MarkLessonResult } from "@/src/core/types/student.types";
+import { MarkTopicResult } from "@/src/core/types/student.types";
+import { MarkTopicIncompleteUseCase } from "./MarkTopicIncompleteUseCase";
 
 /**
- * Use Case: Mark a lesson as incomplete
- * Business logic for updating student progress
+ * @deprecated Usa MarkTopicIncompleteUseCase
  */
 export class MarkLessonIncompleteUseCase {
-  constructor(private readonly studentRepository: IStudentRepository) {}
+  constructor(private readonly delegate: MarkTopicIncompleteUseCase) {}
 
-  async execute(
-    lessonId: string,
-    studentId: string
-  ): Promise<MarkLessonResult> {
-    try {
-      const result = await this.studentRepository.markLessonIncomplete(
-        lessonId,
-        studentId
-      );
-
-      if (!result.success) {
-        return {
-          success: false,
-          error: result.error || "Error al marcar lección como no completada",
-        };
-      }
-
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Error al marcar lección como no completada",
-      };
-    }
+  execute(topicId: string, studentId: string): Promise<MarkTopicResult> {
+    return this.delegate.execute(topicId, studentId);
   }
 }

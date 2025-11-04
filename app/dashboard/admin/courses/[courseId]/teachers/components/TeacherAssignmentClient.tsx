@@ -26,6 +26,7 @@ import {
   removeTeacherFromCourseVersion,
 } from "@/src/presentation/actions/course.actions";
 import { useRouter } from "next/navigation";
+import type { CourseStatus } from "@/src/core/types/course.types";
 
 interface TeacherData {
   id: string;
@@ -37,16 +38,19 @@ interface TeacherData {
 
 interface VersionAssignment {
   id: string;
-  label: string;
-  summary: string | null;
-  status: string;
+  versionNumber: number;
+  title: string;
+  description: string | null;
+  status: CourseStatus;
+  isDraft: boolean;
   isActive: boolean;
-  isPublished: boolean;
-  isTip: boolean;
+  isArchived: boolean;
+  startDate: string | null;
+  endDate: string | null;
+  publishedAt?: string | null;
+  publishedBy?: string | null;
   createdAt: string;
   updatedAt: string;
-  branchId: string | null;
-  branchName: string | null;
   teachers: TeacherData[];
 }
 
@@ -167,10 +171,8 @@ export function TeacherAssignmentClient({
   const versionStatusLabel = selectedVersion
     ? (() => {
         switch (selectedVersion.status) {
-          case "published":
-            return "Publicada";
-          case "pending_review":
-            return "Pendiente de revisión";
+          case "active":
+            return "Activa";
           case "draft":
             return "En borrador";
           case "archived":
@@ -198,7 +200,7 @@ export function TeacherAssignmentClient({
               {selectedVersion && (
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                   <Badge variant="outline" className="border-slate-300">
-                    Edición del curso: {selectedVersion.branchName ?? "General"}
+                    Versión {selectedVersion.versionNumber}
                   </Badge>
                   <Badge
                     variant="outline"
@@ -209,12 +211,12 @@ export function TeacherAssignmentClient({
                   <Badge
                     variant="outline"
                     className={
-                      selectedVersion.isPublished
+                      selectedVersion.publishedAt
                         ? "border-green-300 text-green-700"
                         : "border-amber-300 text-amber-700"
                     }
                   >
-                    {selectedVersion.isPublished ? "Publicada" : "Sin publicar"}
+                    {selectedVersion.publishedAt ? "Publicada" : "Sin publicar"}
                   </Badge>
                   {selectedVersion.isActive && (
                     <Badge className="bg-emerald-600 text-white">
@@ -235,17 +237,15 @@ export function TeacherAssignmentClient({
               <SelectContent>
                 {versions.map((version) => (
                   <SelectItem key={version.id} value={version.id}>
-                    {(version.branchName ?? "Edición principal") +
-                      " • " +
-                      version.label}
+                    Versión {version.versionNumber} • {version.title}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          {selectedVersion?.summary && (
+          {selectedVersion?.description && (
             <p className="mt-4 text-sm text-slate-600">
-              {selectedVersion.summary}
+              {selectedVersion.description}
             </p>
           )}
         </CardContent>
@@ -402,8 +402,8 @@ export function TeacherAssignmentClient({
             </DialogTitle>
             <DialogDescription>
               {action === "assign"
-                ? `¿Estás seguro de que deseas asignar este docente a la versión ${selectedVersion?.label}? Podrá editar el contenido asociado.`
-                : `¿Estás seguro de que deseas remover este docente de la versión ${selectedVersion?.label}? Perderá acceso para editar su contenido.`}
+                ? `¿Estás seguro de que deseas asignar este docente a la versión ${selectedVersion?.title}? Podrá editar el contenido asociado.`
+                : `¿Estás seguro de que deseas remover este docente de la versión ${selectedVersion?.title}? Perderá acceso para editar su contenido.`}
             </DialogDescription>
           </DialogHeader>
 

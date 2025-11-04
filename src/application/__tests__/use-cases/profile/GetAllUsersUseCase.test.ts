@@ -11,6 +11,8 @@ describe("GetAllUsersUseCase", () => {
       getProfileByUserId: jest.fn(),
       getAllStudents: jest.fn(),
       getAllTeachers: jest.fn(),
+      getAllEditors: jest.fn(),
+      getAllAdmins: jest.fn(),
       updateUserRole: jest.fn(),
       createProfile: jest.fn(),
       deleteProfile: jest.fn(),
@@ -60,25 +62,57 @@ describe("GetAllUsersUseCase", () => {
         ),
       ];
 
+      const mockEditors = [
+        new ProfileEntity(
+          "p4",
+          "u4",
+          "Editor",
+          "One",
+          "editor",
+          new Date(),
+          new Date()
+        ),
+      ];
+
+      const mockAdmins = [
+        new ProfileEntity(
+          "p5",
+          "u5",
+          "Admin",
+          "One",
+          "admin",
+          new Date(),
+          new Date()
+        ),
+      ];
+
       mockProfileRepository.getAllStudents.mockResolvedValue(mockStudents);
       mockProfileRepository.getAllTeachers.mockResolvedValue(mockTeachers);
+      mockProfileRepository.getAllEditors.mockResolvedValue(mockEditors);
+      mockProfileRepository.getAllAdmins.mockResolvedValue(mockAdmins);
 
       const result = await getAllUsersUseCase.execute();
 
       expect(result.success).toBe(true);
       expect(result.students).toHaveLength(2);
       expect(result.teachers).toHaveLength(1);
+      expect(result.editors).toHaveLength(1);
+      expect(result.admins).toHaveLength(1);
     });
 
     it("should return empty arrays when no users exist", async () => {
       mockProfileRepository.getAllStudents.mockResolvedValue([]);
       mockProfileRepository.getAllTeachers.mockResolvedValue([]);
+      mockProfileRepository.getAllEditors.mockResolvedValue([]);
+      mockProfileRepository.getAllAdmins.mockResolvedValue([]);
 
       const result = await getAllUsersUseCase.execute();
 
       expect(result.success).toBe(true);
       expect(result.students).toEqual([]);
       expect(result.teachers).toEqual([]);
+      expect(result.editors).toEqual([]);
+      expect(result.admins).toEqual([]);
     });
 
     it("should handle repository errors gracefully", async () => {

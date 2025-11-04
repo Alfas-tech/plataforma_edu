@@ -1,142 +1,89 @@
-import {
-  CourseBranchData,
-  CourseData,
-  CourseMergeRequestData,
-  CourseVersionData,
-} from "../types/course.types";
+import { CourseData } from "../types/course.types";
 import { CourseVersionEntity } from "./CourseVersion.entity";
-import { CourseBranchEntity } from "./CourseBranch.entity";
-import { CourseMergeRequestEntity } from "./CourseMergeRequest.entity";
+import type { CourseVersionData } from "../types/course.types";
 
 interface CourseEntityExtras {
-  defaultBranch?: CourseBranchData | null;
-  branches?: CourseBranchData[];
-  branchBaseVersions?: Record<string, CourseVersionData | null>;
-  branchTipVersions?: Record<string, CourseVersionData | null>;
-  branchTipTeacherIds?: Record<string, string[]>;
-  branchTeacherIds?: Record<string, string[]>;
-  mergeRequests?: CourseMergeRequestData[];
+  versions?: CourseVersionData[];
 }
 
 export class CourseEntity {
   constructor(
     public readonly id: string,
-    public readonly title: string,
-    public readonly summary: string | null,
+    public readonly name: string,
     public readonly description: string | null,
-    public readonly slug: string,
-    public readonly visibilityOverride: boolean,
-    public readonly activeVersion: CourseVersionEntity | null,
-    public readonly createdBy: string | null,
+    public readonly createdBy: string,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
-    public readonly defaultBranchId: string | null,
-    public readonly defaultBranch: CourseBranchEntity | null = null,
-    public readonly branches: CourseBranchEntity[] = [],
-    public readonly pendingMergeRequests: CourseMergeRequestEntity[] = []
+    public readonly activeVersionId: string | null,
+    public readonly versions: readonly CourseVersionEntity[] = []
   ) {}
-
-  getPrimaryVersion(): CourseVersionEntity | null {
-    if (this.activeVersion) {
-      return this.activeVersion;
-    }
-
-    if (this.defaultBranch?.tipVersion) {
-      return this.defaultBranch.tipVersion;
-    }
-
-    return null;
-  }
 
   static fromDatabase(
     data: CourseData,
-    activeVersion?: CourseVersionData | null,
     extras?: CourseEntityExtras
   ): CourseEntity {
-    const activeVersionEntity = activeVersion
-      ? CourseVersionEntity.fromDatabase(activeVersion)
-      : null;
-
-    const defaultBranchEntity = extras?.defaultBranch
-      ? CourseBranchEntity.fromDatabase(extras.defaultBranch, {
-          baseVersion:
-            extras.branchBaseVersions?.[extras.defaultBranch.id] ?? null,
-          tipVersion:
-            extras.branchTipVersions?.[extras.defaultBranch.id] ?? null,
-          tipVersionTeacherIds:
-            extras.branchTipTeacherIds?.[extras.defaultBranch.id] ?? [],
-          assignedTeacherIds:
-            extras.branchTeacherIds?.[extras.defaultBranch.id] ?? [],
-        })
-      : null;
-
-    const branchEntities = extras?.branches
-      ? extras.branches.map((branch) =>
-          CourseBranchEntity.fromDatabase(branch, {
-            baseVersion: extras?.branchBaseVersions?.[branch.id] ?? null,
-            tipVersion: extras?.branchTipVersions?.[branch.id] ?? null,
-            tipVersionTeacherIds:
-              extras?.branchTipTeacherIds?.[branch.id] ?? [],
-            assignedTeacherIds: extras?.branchTeacherIds?.[branch.id] ?? [],
-          })
-        )
-      : [];
-
-    const mergeRequestEntities = extras?.mergeRequests
-      ? extras.mergeRequests.map((mr) =>
-          CourseMergeRequestEntity.fromDatabase(mr)
-        )
-      : [];
-
-    const primaryVersionCandidate =
-      activeVersionEntity ?? defaultBranchEntity?.tipVersion ?? null;
-
-    const visibilityOverrideActive = Boolean(data.visibility_override);
-    const shouldShowOverride =
-      visibilityOverrideActive &&
-      !(primaryVersionCandidate?.isPublishedAndVisible() ?? false);
+    const versionEntities = (extras?.versions ?? [])
+      .map((version) => CourseVersionEntity.fromDatabase(version))
+      .sort((a, b) => a.versionNumber - b.versionNumber);
 
     return new CourseEntity(
       data.id,
-      data.title,
-      data.summary,
-      data.description,
-      data.slug,
-      shouldShowOverride,
-      activeVersionEntity,
+      data.name,
+      data.description ?? null,
       data.created_by,
       new Date(data.created_at),
       new Date(data.updated_at),
-      data.default_branch_id,
-      defaultBranchEntity,
-      branchEntities,
-      mergeRequestEntities
+      data.active_version_id,
+      versionEntities
     );
   }
 
-  getActiveVersionLabel(): string | null {
-    return this.getPrimaryVersion()?.versionLabel ?? null;
+  get activeVersion(): CourseVersionEntity | null {
+    return (
+      this.versions.find((version) => version.isActive()) ??
+      (this.activeVersionId
+        ? (this.versions.find(
+            (version) => version.id === this.activeVersionId
+          ) ?? null)
+        : null)
+    );
   }
 
-  getActiveVersionSummary(): string | null {
-    return this.getPrimaryVersion()?.summary ?? null;
+  get draftVersion(): CourseVersionEntity | null {
+    return this.versions.find((version) => version.isDraft()) ?? null;
   }
 
-  getActiveVersionStatus() {
-    return this.getPrimaryVersion()?.status ?? null;
+  get title(): string {
+    return this.name;
   }
 
-  isVisibleForStudents(): boolean {
-    const version = this.getPrimaryVersion();
+  get summary(): string | null {
+    return this.description;
+  }
 
-    if (version?.isPublishedAndVisible()) {
-      return true;
-    }
+  get slug(): string | null {
+    return null;
+  }
 
-    return this.visibilityOverride;
+  get visibilityOverride(): boolean {
+    return false;
+  }
+
+  get archivedVersions(): CourseVersionEntity[] {
+    return this.versions
+      .filter((version) => version.isArchived())
+      .sort((a, b) => b.versionNumber - a.versionNumber);
+  }
+
+  hasDraft(): boolean {
+    return Boolean(this.draftVersion);
   }
 
   hasActiveVersion(): boolean {
-    return this.getPrimaryVersion() !== null;
+    return Boolean(this.activeVersion);
+  }
+
+  getVersionById(versionId: string): CourseVersionEntity | null {
+    return this.versions.find((version) => version.id === versionId) ?? null;
   }
 }

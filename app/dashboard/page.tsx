@@ -17,6 +17,8 @@ export default async function DashboardPage() {
     redirect("/dashboard/admin");
   } else if (profile.isTeacher) {
     redirect("/dashboard/teacher");
+  } else if (profile.isEditor) {
+    redirect("/dashboard/editor");
   } else {
     redirect("/dashboard/student");
   }

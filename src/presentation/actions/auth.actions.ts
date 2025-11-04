@@ -12,7 +12,7 @@ import { SignInWithGoogleUseCase } from "@/src/application/use-cases/auth/SignIn
 import { ResetPasswordUseCase } from "@/src/application/use-cases/auth/ResetPasswordUseCase";
 import { UpdatePasswordUseCase } from "@/src/application/use-cases/auth/UpdatePasswordUseCase";
 
-// Instancia del repositorio (singleton)
+// Repository instance (singleton)
 const authRepository = new SupabaseAuthRepository();
 const profileRepository = new SupabaseProfileRepository();
 

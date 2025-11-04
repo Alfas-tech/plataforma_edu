@@ -1,84 +1,73 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { GetModulesByCourseUseCase } from "@/src/application/use-cases/module/GetModulesByCourseUseCase";
 import {
-  CreateModuleUseCase,
-  CreateModuleInput,
-} from "@/src/application/use-cases/module/CreateModuleUseCase";
-import { UpdateModuleUseCase } from "@/src/application/use-cases/module/UpdateModuleUseCase";
-import { DeleteModuleUseCase } from "@/src/application/use-cases/module/DeleteModuleUseCase";
-import { GetLessonsByModuleUseCase } from "@/src/application/use-cases/lesson/GetLessonsByModuleUseCase";
+  CreateTopicParams,
+  CreateTopicUseCase,
+  DeleteTopicUseCase,
+  GetTopicsByCourseUseCase,
+  UpdateTopicUseCase,
+} from "@/src/application/use-cases/topic";
 import {
-  CreateLessonUseCase,
-  CreateLessonInput,
-} from "@/src/application/use-cases/lesson/CreateLessonUseCase";
-import { UpdateLessonUseCase } from "@/src/application/use-cases/lesson/UpdateLessonUseCase";
-import { DeleteLessonUseCase } from "@/src/application/use-cases/lesson/DeleteLessonUseCase";
-import { SupabaseModuleRepository } from "@/src/infrastructure/repositories/SupabaseModuleRepository";
-import { SupabaseLessonRepository } from "@/src/infrastructure/repositories/SupabaseLessonRepository";
+  CreateResourceParams,
+  CreateResourceUseCase,
+  DeleteResourceUseCase,
+  GetResourcesByTopicUseCase,
+  UpdateResourceUseCase,
+} from "@/src/application/use-cases/resource";
 import { SupabaseCourseRepository } from "@/src/infrastructure/repositories/SupabaseCourseRepository";
 import { SupabaseAuthRepository } from "@/src/infrastructure/repositories/SupabaseAuthRepository";
 import { SupabaseProfileRepository } from "@/src/infrastructure/repositories/SupabaseProfileRepository";
 
-const moduleRepository = new SupabaseModuleRepository();
-const lessonRepository = new SupabaseLessonRepository();
 const courseRepository = new SupabaseCourseRepository();
 const authRepository = new SupabaseAuthRepository();
 const profileRepository = new SupabaseProfileRepository();
 
 // ============================================
-// MODULE ACTIONS
+// TOPIC ACTIONS
 // ============================================
 
-export async function getModulesByCourse(
+export async function getTopicsByCourse(
   courseId: string,
   options?: { courseVersionId?: string }
 ) {
-  const getModulesUseCase = new GetModulesByCourseUseCase(
-    moduleRepository,
+  const useCase = new GetTopicsByCourseUseCase(
     courseRepository,
     authRepository,
     profileRepository
   );
 
-  const result = await getModulesUseCase.execute(
+  const result = await useCase.execute(courseId, options);
+
+  if (!result.success || !result.topics) {
+    return { error: result.error || "Error al obtener tópicos" };
+  }
+
+  const topics = result.topics.map((topic) => ({
+    id: topic.id,
     courseId,
-    options?.courseVersionId
-  );
-
-  if (!result.success || !result.modules) {
-    return { error: result.error || "Error al obtener módulos" };
-  }
-
-  const modules = result.modules.map((module) => ({
-    id: module.id,
-    courseId: module.courseId,
-    courseVersionId: module.courseVersionId,
-    title: module.title,
-    description: module.description,
-    orderIndex: module.orderIndex,
-    content: module.content,
-    isPublished: module.isPublished,
-    createdAt: module.createdAt.toISOString(),
-    updatedAt: module.updatedAt.toISOString(),
+    courseVersionId: topic.courseVersionId,
+    title: topic.title,
+    description: topic.description,
+    orderIndex: topic.orderIndex,
+    createdAt: topic.createdAt.toISOString(),
+    updatedAt: topic.updatedAt.toISOString(),
   }));
 
-  return { modules };
+  return { topics, courseVersionId: result.courseVersionId };
 }
 
-export async function createModule(input: CreateModuleInput) {
-  const createModuleUseCase = new CreateModuleUseCase(
-    moduleRepository,
+export async function createTopic(input: CreateTopicParams) {
+  const useCase = new CreateTopicUseCase(
     courseRepository,
     authRepository,
     profileRepository
   );
 
-  const result = await createModuleUseCase.execute(input);
+  const result = await useCase.execute(input);
 
   if (!result.success) {
-    return { error: result.error || "Error al crear módulo" };
+    return { error: result.error || "Error al crear tópico" };
   }
 
   revalidatePath("/dashboard/admin");
@@ -88,18 +77,20 @@ export async function createModule(input: CreateModuleInput) {
   return { success: true };
 }
 
-export async function updateModule(moduleId: string, data: any) {
-  const updateModuleUseCase = new UpdateModuleUseCase(
-    moduleRepository,
+export async function updateTopic(
+  topicId: string,
+  data: Parameters<UpdateTopicUseCase["execute"]>[1]
+) {
+  const useCase = new UpdateTopicUseCase(
     courseRepository,
     authRepository,
     profileRepository
   );
 
-  const result = await updateModuleUseCase.execute(moduleId, data);
+  const result = await useCase.execute(topicId, data);
 
   if (!result.success) {
-    return { error: result.error || "Error al actualizar módulo" };
+    return { error: result.error || "Error al actualizar tópico" };
   }
 
   revalidatePath("/dashboard/admin");
@@ -109,18 +100,37 @@ export async function updateModule(moduleId: string, data: any) {
   return { success: true };
 }
 
-export async function deleteModule(moduleId: string) {
-  const deleteModuleUseCase = new DeleteModuleUseCase(
-    moduleRepository,
+export async function reorderTopics(
+  courseVersionId: string,
+  updates: Array<{ topicId: string; orderIndex: number }>
+) {
+  try {
+    await courseRepository.reorderTopics(courseVersionId, updates);
+
+    revalidatePath("/dashboard/admin");
+    revalidatePath("/dashboard/teacher");
+    revalidatePath("/dashboard/student");
+
+    return { success: true };
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error ? error.message : "Error al reordenar tópicos",
+    };
+  }
+}
+
+export async function deleteTopic(topicId: string) {
+  const useCase = new DeleteTopicUseCase(
     courseRepository,
     authRepository,
     profileRepository
   );
 
-  const result = await deleteModuleUseCase.execute(moduleId);
+  const result = await useCase.execute(topicId);
 
   if (!result.success) {
-    return { error: result.error || "Error al eliminar módulo" };
+    return { error: result.error || "Error al eliminar tópico" };
   }
 
   revalidatePath("/dashboard/admin");
@@ -131,53 +141,64 @@ export async function deleteModule(moduleId: string) {
 }
 
 // ============================================
-// LESSON ACTIONS
+// RESOURCE ACTIONS
 // ============================================
 
-export async function getLessonsByModule(moduleId: string) {
-  const getLessonsUseCase = new GetLessonsByModuleUseCase(
-    lessonRepository,
-    moduleRepository,
+export async function getResourcesByTopic(topicId: string) {
+  const useCase = new GetResourcesByTopicUseCase(
     courseRepository,
     authRepository,
     profileRepository
   );
 
-  const result = await getLessonsUseCase.execute(moduleId);
+  const result = await useCase.execute(topicId);
 
-  if (!result.success || !result.lessons) {
-    return { error: result.error || "Error al obtener lecciones" };
+  if (!result.success || !result.resources) {
+    return { error: result.error || "Error al obtener recursos" };
   }
 
-  const lessons = result.lessons.map((lesson) => ({
-    id: lesson.id,
-    moduleId: lesson.moduleId,
-    title: lesson.title,
-    content: lesson.content,
-    orderIndex: lesson.orderIndex,
-    durationMinutes: lesson.durationMinutes,
-    isPublished: lesson.isPublished,
-    createdAt: lesson.createdAt.toISOString(),
-    updatedAt: lesson.updatedAt.toISOString(),
-    durationFormatted: lesson.getDurationFormatted(),
+  const resources = result.resources.map((resource) => ({
+    id: resource.id,
+    topicId: resource.topicId,
+    title: resource.title,
+    description: resource.description,
+    resourceType: resource.resourceType,
+    fileUrl: resource.fileUrl,
+    fileName: resource.fileName,
+    fileSize: resource.fileSize,
+    mimeType: resource.mimeType,
+    externalUrl: resource.externalUrl,
+    orderIndex: resource.orderIndex,
+    createdAt: resource.createdAt.toISOString(),
+    updatedAt: resource.updatedAt.toISOString(),
   }));
 
-  return { lessons };
+  const topic = result.topic
+    ? {
+        id: result.topic.id,
+        courseVersionId: result.topic.courseVersionId,
+        title: result.topic.title,
+        description: result.topic.description,
+        orderIndex: result.topic.orderIndex,
+        createdAt: result.topic.createdAt.toISOString(),
+        updatedAt: result.topic.updatedAt.toISOString(),
+      }
+    : undefined;
+
+  return { resources, topic };
 }
 
-export async function createLesson(input: CreateLessonInput) {
-  const createLessonUseCase = new CreateLessonUseCase(
-    lessonRepository,
-    moduleRepository,
+export async function createResource(input: CreateResourceParams) {
+  const useCase = new CreateResourceUseCase(
     courseRepository,
     authRepository,
     profileRepository
   );
 
-  const result = await createLessonUseCase.execute(input);
+  const result = await useCase.execute(input);
 
   if (!result.success) {
-    return { error: result.error || "Error al crear lección" };
+    return { error: result.error || "Error al crear recurso" };
   }
 
   revalidatePath("/dashboard/admin");
@@ -187,19 +208,20 @@ export async function createLesson(input: CreateLessonInput) {
   return { success: true };
 }
 
-export async function updateLesson(lessonId: string, data: any) {
-  const updateLessonUseCase = new UpdateLessonUseCase(
-    lessonRepository,
-    moduleRepository,
+export async function updateResource(
+  resourceId: string,
+  data: Parameters<UpdateResourceUseCase["execute"]>[1]
+) {
+  const useCase = new UpdateResourceUseCase(
     courseRepository,
     authRepository,
     profileRepository
   );
 
-  const result = await updateLessonUseCase.execute(lessonId, data);
+  const result = await useCase.execute(resourceId, data);
 
   if (!result.success) {
-    return { error: result.error || "Error al actualizar lección" };
+    return { error: result.error || "Error al actualizar recurso" };
   }
 
   revalidatePath("/dashboard/admin");
@@ -209,19 +231,17 @@ export async function updateLesson(lessonId: string, data: any) {
   return { success: true };
 }
 
-export async function deleteLesson(lessonId: string) {
-  const deleteLessonUseCase = new DeleteLessonUseCase(
-    lessonRepository,
-    moduleRepository,
+export async function deleteResource(resourceId: string) {
+  const useCase = new DeleteResourceUseCase(
     courseRepository,
     authRepository,
     profileRepository
   );
 
-  const result = await deleteLessonUseCase.execute(lessonId);
+  const result = await useCase.execute(resourceId);
 
   if (!result.success) {
-    return { error: result.error || "Error al eliminar lección" };
+    return { error: result.error || "Error al eliminar recurso" };
   }
 
   revalidatePath("/dashboard/admin");
@@ -230,3 +250,15 @@ export async function deleteLesson(lessonId: string) {
 
   return { success: true };
 }
+
+// LEGACY EXPORTS ------------------------------------------------------------
+
+export const getModulesByCourse = getTopicsByCourse;
+export const createModule = createTopic;
+export const updateModule = updateTopic;
+export const deleteModule = deleteTopic;
+
+export const getLessonsByModule = getResourcesByTopic;
+export const createLesson = createResource;
+export const updateLesson = updateResource;
+export const deleteLesson = deleteResource;
