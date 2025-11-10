@@ -1,15 +1,16 @@
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { ArrowLeft, BookOpen, Layers, Link as LinkIcon, LogOut } from "lucide-react";
+import { BookOpen, ChevronLeft, LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { getCurrentProfile } from "@/src/presentation/actions/profile.actions";
 import { signout } from "@/src/presentation/actions/auth.actions";
 import { getCourseWithTeachers } from "@/src/presentation/actions/course.actions";
-import { getResourcesByTopic } from "@/src/presentation/actions/content.actions";
+import {
+  getResourcesByTopic,
+  getTopicsByCourse,
+} from "@/src/presentation/actions/content.actions";
 import { ResourceManagementClient } from "./components/ResourceManagementClient";
 import { RESOURCE_MANAGEMENT_ENABLED } from "../../../../featureFlags";
 
@@ -112,175 +113,188 @@ export default async function TopicResourcesPage({
   // Determinar permisos de edición
   // Los admins pueden editar versiones publicadas, pero editores/teachers solo borradores
   const canEditPublishedVersion = profile.isAdmin;
-  
-  // Solo se puede editar si:
-  // 1. Existe effectiveVersionId Y
-  // 2. NO es versión archivada (las archivadas son solo lectura) Y
-  // 3. (Es una versión NO publicada) O (Es admin editando versión publicada)
-  const canMutateContent = Boolean(effectiveVersionId) && 
-    !isViewingArchivedVersion &&
-    (!isViewingPublishedVersion || canEditPublishedVersion);
 
-  const totalResources = resources.length;
-  const externalResources = resources.filter(
-    (resource) => Boolean(resource.externalUrl)
-  ).length;
+  // Obtener tópicos para navegación
+  let previousTopic: {
+    id: string;
+    title: string;
+    orderIndex: number;
+    courseVersionId: string | null;
+  } | null = null;
+
+  let nextTopic: {
+    id: string;
+    title: string;
+    orderIndex: number;
+    courseVersionId: string | null;
+  } | null = null;
+
+  const topicsResult = await getTopicsByCourse(courseId, {
+    courseVersionId: effectiveVersionId ?? undefined,
+  });
+
+  if (!("error" in topicsResult) && topicsResult.topics.length > 0) {
+    const sortedTopics = [...topicsResult.topics].sort(
+      (a, b) => a.orderIndex - b.orderIndex
+    );
+    const currentIndex = sortedTopics.findIndex((t) => t.id === topic.id);
+
+    if (currentIndex > 0) {
+      const prev = sortedTopics[currentIndex - 1];
+      previousTopic = {
+        id: prev.id,
+        title: prev.title,
+        orderIndex: prev.orderIndex,
+        courseVersionId: prev.courseVersionId,
+      };
+    }
+
+    if (currentIndex > -1 && currentIndex < sortedTopics.length - 1) {
+      const next = sortedTopics[currentIndex + 1];
+      nextTopic = {
+        id: next.id,
+        title: next.title,
+        orderIndex: next.orderIndex,
+        courseVersionId: next.courseVersionId,
+      };
+    }
+  }
+
+  const navigationQuery = {
+    branchId: requestedBranchId ?? null,
+    versionId: requestedVersionId ?? effectiveVersionId ?? null,
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white shadow-sm">
-        <div className="container mx-auto px-3 py-3 sm:px-4 sm:py-4 lg:px-6">
-          <div className="flex items-center justify-between gap-2 sm:gap-4">
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2 transition-opacity hover:opacity-80 sm:gap-3"
-            >
-              <div className="relative h-8 w-8 flex-shrink-0 sm:h-10 sm:w-10">
+    <div className="flex min-h-screen flex-col bg-slate-100">
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:h-20 sm:px-6 lg:px-8">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 transition-opacity hover:opacity-80"
+          >
+            <div className="relative h-8 w-8 flex-shrink-0 sm:h-10 sm:w-10">
+              <Image
+                src="/logo.png"
+                alt="Aprende Code Logo"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+            <div className="hidden flex-col sm:flex">
+              <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                Gestión de recursos
+              </span>
+              <span className="text-base font-semibold text-slate-900">
+                Aprende Code
+              </span>
+            </div>
+            <span className="text-sm font-semibold text-slate-900 sm:hidden">
+              Aprende Code
+            </span>
+          </Link>
+
+          <div className="flex items-center gap-3">
+            <div className="hidden text-xs font-medium text-purple-600 sm:block">
+              {profile.isAdmin
+                ? "🛡️ Administrador"
+                : profile.isEditor
+                  ? "✏️ Editor"
+                  : "👨‍🏫 Docente"}
+            </div>
+            {profile.avatarUrl ? (
+              <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-full sm:h-10 sm:w-10">
                 <Image
-                  src="/logo.png"
-                  alt="Aprende Code Logo"
+                  src={profile.avatarUrl}
+                  alt={profile.displayName}
                   fill
-                  className="object-contain"
-                  priority
+                  className="object-cover"
+                  unoptimized
                 />
               </div>
-              <h1 className="truncate text-lg font-bold text-slate-800 sm:text-xl md:text-2xl">
-                Aprende Code
-              </h1>
-            </Link>
-
-            <div className="flex items-center gap-2 sm:gap-3">
-              <span className="hidden text-xs font-medium text-purple-600 sm:inline sm:text-sm">
-                {profile.isAdmin
-                  ? "🛡️ Administrador"
-                  : profile.isEditor
-                    ? "✏️ Editor"
-                    : "👨‍🏫 Docente"}
-              </span>
-              {profile.avatarUrl ? (
-                <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-full sm:h-10 sm:w-10">
-                  <Image
-                    src={profile.avatarUrl}
-                    alt={profile.displayName}
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
-                </div>
-              ) : (
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-600 text-xs font-semibold text-white sm:h-10 sm:w-10 sm:text-sm">
-                  {profile.displayName.charAt(0).toUpperCase()}
-                </div>
-              )}
-              <span className="hidden max-w-[120px] truncate text-xs font-medium text-slate-700 sm:text-sm md:inline lg:max-w-none">
-                {profile.displayName}
-              </span>
-              <form action={signout}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  type="submit"
-                  className="bg-transparent text-xs sm:text-sm"
-                >
-                  <LogOut className="h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">Salir</span>
-                </Button>
-              </form>
+            ) : (
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-600 text-xs font-semibold text-white sm:h-10 sm:w-10 sm:text-sm">
+                {profile.displayName.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="hidden max-w-[160px] truncate text-sm font-medium text-slate-700 md:block">
+              {profile.displayName}
             </div>
+            <form action={signout}>
+              <Button
+                variant="outline"
+                size="sm"
+                type="submit"
+                className="bg-transparent text-xs sm:text-sm"
+              >
+                <LogOut className="mr-2 hidden h-4 w-4 sm:block" />
+                Salir
+              </Button>
+            </form>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8">
-        <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
-          <Link
-            href={{
-              pathname: `/dashboard/admin/courses/${courseId}/content`,
-              query: {
-                branchId: requestedBranchId ?? undefined,
-                versionId: requestedVersionId ?? undefined,
-              },
-            }}
-          >
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Volver a tópicos
+      <main className="flex flex-1 overflow-hidden">
+        <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+          <div className="flex items-center justify-between gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="gap-2 text-slate-600 hover:bg-slate-200/70"
+            >
+              <Link
+                href={{
+                  pathname: `/dashboard/admin/courses/${courseId}/content`,
+                  query: {
+                    branchId: requestedBranchId ?? undefined,
+                    versionId: requestedVersionId ?? undefined,
+                  },
+                }}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Volver a tópicos
+              </Link>
             </Button>
-          </Link>
-          <div className="text-right">
-            <p className="text-xs uppercase tracking-wide text-purple-600">
-              Versión activa
-            </p>
-            {effectiveVersionId && (
-              <p className="text-xs text-slate-500">
-                ID: {effectiveVersionId}
-              </p>
-            )}
+            <div className="hidden items-center gap-3 text-xs text-slate-500 sm:flex">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 font-medium shadow-sm">
+                <BookOpen className="h-3.5 w-3.5 text-purple-500" />
+                {course.title}
+              </span>
+              {effectiveVersionId && (
+                <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 font-medium shadow-sm">
+                  Versión {effectiveVersionId.slice(0, 8)}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-1 flex-col overflow-hidden">
+            <ResourceManagementClient
+              courseVersionId={effectiveVersionId}
+              branchName="principal"
+              isDefaultBranch={true}
+              isViewingDraftVersion={isViewingDraftVersion}
+              isViewingPublishedVersion={isViewingPublishedVersion}
+              isViewingArchivedVersion={isViewingArchivedVersion}
+              canEditPublishedVersion={canEditPublishedVersion}
+              courseId={courseId}
+              courseTitle={course.title}
+              topic={{
+                id: topic.id,
+                title: topic.title,
+                description: topic.description,
+                orderIndex: topic.orderIndex,
+              }}
+              resources={resources}
+              previousTopic={previousTopic}
+              nextTopic={nextTopic}
+              navigationQuery={navigationQuery}
+            />
           </div>
         </div>
-
-        <div className="mb-6 space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary" className="gap-1 bg-purple-100 text-purple-700">
-              <Layers className="h-3.5 w-3.5" />
-              Tópico #{topic.orderIndex}
-            </Badge>
-            <h1 className="text-balance text-2xl font-bold text-slate-800 sm:text-3xl md:text-4xl">
-              {topic.title}
-            </h1>
-          </div>
-          {topic.description && (
-            <p className="max-w-3xl text-pretty text-sm text-slate-600 sm:text-base">
-              {topic.description}
-            </p>
-          )}
-          <p className="text-sm text-slate-500">
-            Curso: <span className="font-semibold text-slate-700">{course.title}</span>
-          </p>
-        </div>
-
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:mb-8 sm:grid-cols-2">
-          <Card className="border-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <BookOpen className="h-5 w-5 text-purple-600" />
-                Total de recursos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-purple-600">{totalResources}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <LinkIcon className="h-5 w-5 text-blue-600" />
-                Recursos externos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-blue-600">{externalResources}</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <ResourceManagementClient
-          courseVersionId={effectiveVersionId}
-          branchName="principal"
-          isDefaultBranch={true}
-          isViewingDraftVersion={isViewingDraftVersion}
-          isViewingPublishedVersion={isViewingPublishedVersion}
-          isViewingArchivedVersion={isViewingArchivedVersion}
-          canEditPublishedVersion={canEditPublishedVersion}
-          courseId={courseId}
-          topic={{
-            id: topic.id,
-            title: topic.title,
-            description: topic.description,
-            orderIndex: topic.orderIndex,
-          }}
-          resources={resources}
-        />
       </main>
     </div>
   );
