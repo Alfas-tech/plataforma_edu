@@ -1,13 +1,38 @@
 "use server";
 
-import { revalidatePath as _revalidatePath, revalidateTag as _revalidateTag } from "next/cache";
+import {
+  revalidatePath as _revalidatePath,
+  revalidateTag as _revalidateTag,
+} from "next/cache";
 
 // Types for topic comments and responses
-interface IProfileTiny { id: string; full_name?: string; role?: string }
-interface ITopicCommentRow { id: string; topic_id: string; content: string; created_at: string; updated_at: string; author_id?: string; profiles?: IProfileTiny }
-interface ICommentResponseRow { id: string; comment_id: string; content: string; created_at: string; author_id?: string; profiles?: IProfileTiny }
+interface IProfileTiny {
+  id: string;
+  full_name?: string;
+  role?: string;
+}
+interface ITopicCommentRow {
+  id: string;
+  topic_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  author_id?: string;
+  profiles?: IProfileTiny;
+}
+interface ICommentResponseRow {
+  id: string;
+  comment_id: string;
+  content: string;
+  created_at: string;
+  author_id?: string;
+  profiles?: IProfileTiny;
+}
 
-interface IGetTopicCommentData { comment: ITopicCommentRow | null; responses: ICommentResponseRow[] }
+interface IGetTopicCommentData {
+  comment: ITopicCommentRow | null;
+  responses: ICommentResponseRow[];
+}
 
 // Generic result types
 type TResultWithData<T> = { data: T } | { error: string };
@@ -27,14 +52,18 @@ function safeRevalidatePath(path: string) {
   }
 }
 
-async function callMaybeChainable<T = any>(maybeChainable: any, chainMethod?: string, ...chainArgs: any[]) {
+async function callMaybeChainable<T = any>(
+  maybeChainable: any,
+  chainMethod?: string,
+  ...chainArgs: any[]
+) {
   // If the function returned a Promise-like, await it
   if (!maybeChainable) return null;
-  if (typeof maybeChainable.then === 'function') {
+  if (typeof maybeChainable.then === "function") {
     return await maybeChainable;
   }
   // If it's chainable (has the method), call it
-  if (chainMethod && typeof maybeChainable[chainMethod] === 'function') {
+  if (chainMethod && typeof maybeChainable[chainMethod] === "function") {
     return await maybeChainable[chainMethod](...chainArgs);
   }
   // Otherwise, return as-is
@@ -42,11 +71,15 @@ async function callMaybeChainable<T = any>(maybeChainable: any, chainMethod?: st
 }
 
 // Get the single comment for a topic and its responses
-export async function getTopicComment(topicId: string): Promise<TResultWithData<IGetTopicCommentData>> {
+export async function getTopicComment(
+  topicId: string
+): Promise<TResultWithData<IGetTopicCommentData>> {
   try {
     // Import createClient dynamically so tests can mock the module even if they
     // imported this actions file before calling jest.mock
-    const { createClient } = await import('@/src/infrastructure/supabase/server');
+    const { createClient } = await import(
+      "@/src/infrastructure/supabase/server"
+    );
     const supabase = createClient();
 
     const { data: comment, error } = await supabase
@@ -81,10 +114,13 @@ export async function getTopicComment(topicId: string): Promise<TResultWithData<
 }
 
 // Upsert (create or update) the single topic comment. Only editors allowed.
-export async function upsertTopicComment(form: { topic_id: string; content: string; }): Promise<{ success: true } | { error: string }> {
+export async function upsertTopicComment(form: {
+  topic_id: string;
+  content: string;
+}): Promise<{ success: true } | { error: string }> {
   try {
     // Import getCurrentProfile dynamically so tests can mock it reliably
-    const { getCurrentProfile } = await import('./profile.actions');
+    const { getCurrentProfile } = await import("./profile.actions");
 
     // Verify current user is editor and get author id
     const profileResult = await getCurrentProfile();
@@ -93,11 +129,15 @@ export async function upsertTopicComment(form: { topic_id: string; content: stri
     }
 
     if (profileResult.profile.role !== "editor") {
-      return { error: "Solo usuarios con rol editor pueden crear/editar el comentario" };
+      return {
+        error: "Solo usuarios con rol editor pueden crear/editar el comentario",
+      };
     }
 
     const author_id = profileResult.profile.id;
-    const { createClient } = await import('@/src/infrastructure/supabase/server');
+    const { createClient } = await import(
+      "@/src/infrastructure/supabase/server"
+    );
     const supabase = createClient();
 
     // Try to update existing comment for topic
@@ -113,13 +153,20 @@ export async function upsertTopicComment(form: { topic_id: string; content: stri
         .update({ content: form.content, author_id });
 
       // Support both chainable mocks (update(...).eq(...)) and direct promise mocks
-      const finalUpdate = await callMaybeChainable(updateResult, 'eq', 'id', existing.id);
+      const finalUpdate = await callMaybeChainable(
+        updateResult,
+        "eq",
+        "id",
+        existing.id
+      );
       const error = finalUpdate?.error ?? null;
       if (error) return { error: error.message || error };
     } else {
       const insertResult = await supabase
         .from("topic_comments")
-        .insert([{ topic_id: form.topic_id, content: form.content, author_id }]);
+        .insert([
+          { topic_id: form.topic_id, content: form.content, author_id },
+        ]);
       if (insertResult.error) return { error: insertResult.error.message };
     }
 
@@ -132,20 +179,28 @@ export async function upsertTopicComment(form: { topic_id: string; content: stri
 }
 
 // Create a response for the given comment. Author may be null if anonymous.
-export async function createCommentResponse(form: { comment_id: string; content: string; }): Promise<{ success: true } | { error: string }> {
+export async function createCommentResponse(form: {
+  comment_id: string;
+  content: string;
+}): Promise<{ success: true } | { error: string }> {
   try {
     // Import getCurrentProfile dynamically so tests can mock it reliably
-    const { getCurrentProfile } = await import('./profile.actions');
+    const { getCurrentProfile } = await import("./profile.actions");
     // Attach author from current profile if available
     const profileResult = await getCurrentProfile();
-    const author_id = "error" in profileResult ? null : profileResult.profile.id;
+    const author_id =
+      "error" in profileResult ? null : profileResult.profile.id;
 
-    const { createClient } = await import('@/src/infrastructure/supabase/server');
+    const { createClient } = await import(
+      "@/src/infrastructure/supabase/server"
+    );
     const supabase = createClient();
 
-    const { error } = await supabase.from("comment_responses").insert([
-      { comment_id: form.comment_id, content: form.content, author_id },
-    ]);
+    const { error } = await supabase
+      .from("comment_responses")
+      .insert([
+        { comment_id: form.comment_id, content: form.content, author_id },
+      ]);
     if (error) return { error: error.message };
 
     safeRevalidateTag(`topic-comment-${form.comment_id}`);
