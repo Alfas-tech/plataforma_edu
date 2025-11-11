@@ -219,7 +219,10 @@ export function FileUpload({
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  <p className="truncate text-sm font-medium text-slate-900">
+                  <p
+                    className="break-words text-sm font-medium text-slate-900"
+                    title={selectedFile.name}
+                  >
                     {selectedFile.name}
                   </p>
                   <p className="text-xs text-slate-500">

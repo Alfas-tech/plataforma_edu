@@ -5,7 +5,7 @@ import NextImage from "next/image";
 import { ExternalLink, Download, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getResourceSignedUrl } from "@/src/presentation/actions/storage.actions";
-import { formatFileSize, getFileIcon, isImageFile, isPDFFile } from "@/lib/storage.utils";
+import { formatFileSize, getFileIcon, isImageFile, isPDFFile, prettifyFileName } from "@/lib/storage.utils";
 
 interface ResourceViewerProps {
   resource: {
@@ -191,7 +191,7 @@ export function ResourceViewer({
             {/* Metadatos del archivo */}
             <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
               {resource.fileName && (
-                <span className="truncate">{resource.fileName}</span>
+                <span className="truncate">{prettifyFileName(resource.fileName) ?? resource.fileName}</span>
               )}
               {resource.fileSize && (
                 <span>• {formatFileSize(resource.fileSize)}</span>

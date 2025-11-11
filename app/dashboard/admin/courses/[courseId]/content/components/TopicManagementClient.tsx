@@ -354,7 +354,7 @@ export function TopicManagementClient({
                       </div>
                     </div>
                     <div className="flex flex-shrink-0 gap-2">
-                      {RESOURCE_MANAGEMENT_ENABLED && canMutateContent && (
+                      {RESOURCE_MANAGEMENT_ENABLED && (
                         <Link
                           href={{
                             pathname: `${resourceManagementBasePath}/${courseId}/topics/${topic.id}/resources`,
@@ -365,9 +365,19 @@ export function TopicManagementClient({
                             },
                           }}
                         >
-                          <Button size="sm" variant="outline" className="bg-white">
-                            <PlusCircle className="h-4 w-4 sm:mr-2" />
-                            <span className="hidden sm:inline">Gestionar</span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className={canMutateContent ? "bg-white" : "bg-white/80"}
+                          >
+                            {canMutateContent ? (
+                              <PlusCircle className="h-4 w-4 sm:mr-2" />
+                            ) : (
+                              <BookOpen className="h-4 w-4 sm:mr-2" />
+                            )}
+                            <span className="hidden sm:inline">
+                              {canMutateContent ? "Gestionar" : "Ver recursos"}
+                            </span>
                           </Button>
                         </Link>
                       )}

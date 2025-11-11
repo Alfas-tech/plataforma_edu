@@ -7,6 +7,7 @@ import {
   generateStoragePath,
   validateFile,
   MAX_FILE_SIZES,
+  prettifyFileName,
 } from "@/lib/storage.utils";
 import { createClient } from "@/src/infrastructure/supabase/server";
 
@@ -129,7 +130,7 @@ export async function uploadResourceFile(formData: FormData) {
       data: {
         path: data.path,
         url: urlData.publicUrl,
-        fileName: file.name,
+  fileName: prettifyFileName(file.name) ?? file.name,
         fileSize: file.size,
         mimeType: file.type,
       },

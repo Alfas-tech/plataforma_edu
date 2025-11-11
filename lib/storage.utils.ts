@@ -1,9 +1,9 @@
 /**
- * Utilidades para manejo de archivos y Storage
+ * Utilities for file handling and Supabase storage integration.
  */
 
 export const STORAGE_BUCKETS = {
-  COURSE_RESOURCES: "gen", // Nombre del bucket configurado en Supabase
+  COURSE_RESOURCES: "gen", // Supabase bucket configured for course resources
   COURSE_IMAGES: "course-images",
   USER_AVATARS: "user-avatars",
 } as const;
@@ -13,30 +13,29 @@ export const MAX_FILE_SIZES = {
   IMAGE: 5 * 1024 * 1024, // 5 MB
   AVATAR: 2 * 1024 * 1024, // 2 MB
 } as const;
-
-// SIMPLIFICADO: Solo tipos específicos permitidos
+// Restricted list of supported mime-types
 export const ALLOWED_MIME_TYPES = {
   PDF: ["application/pdf"],
   DOCUMENTS: [
     "application/msword", // .doc
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
   ],
-  VIDEOS: ["video/mp4"], // Solo MP4
-  AUDIO: ["audio/mpeg", "audio/mp3"], // Solo MP3
-  IMAGES: ["image/jpeg", "image/png"], // Solo JPG y PNG
+  VIDEOS: ["video/mp4"], // Only MP4
+  AUDIO: ["audio/mpeg", "audio/mp3"], // Only MP3
+  IMAGES: ["image/jpeg", "image/png"], // Only JPG and PNG
 } as const;
 
-// SIMPLIFICADO: Solo tipos específicos permitidos
+// Map allowed mime-types per resource type
 export const RESOURCE_TYPE_MIME_MAP: Record<string, readonly string[]> = {
   pdf: ALLOWED_MIME_TYPES.PDF,
   document: ALLOWED_MIME_TYPES.DOCUMENTS,
   video: ALLOWED_MIME_TYPES.VIDEOS,
   audio: ALLOWED_MIME_TYPES.AUDIO,
   image: ALLOWED_MIME_TYPES.IMAGES,
-  link: [], // No requiere archivo
+  link: [], // No file required
 };
 
-// Lista plana de TODOS los tipos MIME permitidos (para validación rápida)
+// Flattened list of every supported mime-type (useful for validation)
 export const ALL_ALLOWED_MIME_TYPES = [
   ...ALLOWED_MIME_TYPES.PDF,
   ...ALLOWED_MIME_TYPES.DOCUMENTS,
@@ -46,21 +45,21 @@ export const ALL_ALLOWED_MIME_TYPES = [
 ] as const;
 
 /**
- * Valida si un archivo es del tipo correcto
+ * Check if a file matches one of the allowed mime-types.
  */
 export function validateFileType(file: File, allowedTypes: readonly string[]): boolean {
   return allowedTypes.includes(file.type);
 }
 
 /**
- * Valida si un archivo no excede el tamaño máximo
+ * Check if a file is within the configured size limit.
  */
 export function validateFileSize(file: File, maxSize: number): boolean {
   return file.size <= maxSize;
 }
 
 /**
- * Formatea bytes a tamaño legible (KB, MB, GB)
+ * Format raw bytes into a human readable string (KB, MB, GB).
  */
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 Bytes";
@@ -73,24 +72,52 @@ export function formatFileSize(bytes: number): string {
 }
 
 /**
- * Obtiene la extensión de un archivo
+ * Extract the extension from a filename.
  */
 export function getFileExtension(filename: string): string {
   return filename.slice(((filename.lastIndexOf(".") - 1) >>> 0) + 2);
 }
 
 /**
- * Sanitiza el nombre de un archivo para usarlo en rutas
+ * Produce a storage-safe filename using ASCII characters only.
  */
 export function sanitizeFileName(filename: string): string {
-  // Remover caracteres especiales y espacios
-  const name = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
-  // Limitar longitud
-  return name.length > 100 ? name.substring(0, 100) : name;
+  const normalized = filename.normalize("NFD");
+  const noMarks = normalized.replace(/[\u0300-\u036f]/g, "");
+  const collapsedWhitespace = noMarks.replace(/\s+/g, "_");
+  const safeCharacters = collapsedWhitespace.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const compactUnderscores = safeCharacters.replace(/_+/g, "_");
+  const trimmed = compactUnderscores.replace(/^_+|_+$/g, "");
+  return trimmed.length > 100 ? trimmed.substring(0, 100) : trimmed;
+}
+
+export function prettifyFileName(name?: string | null): string | null {
+  if (!name) {
+    return null;
+  }
+
+  const trimmed = `${name}`.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  let decoded = trimmed;
+
+  try {
+    decoded = decodeURIComponent(trimmed);
+  } catch (error) {
+    // ignore decode errors and fallback to original value
+  }
+
+  if (typeof decoded.normalize === "function") {
+    decoded = decoded.normalize("NFC");
+  }
+
+  return decoded;
 }
 
 /**
- * Genera un nombre de archivo único con timestamp
+ * Generate a unique filename using a timestamp suffix.
  */
 export function generateUniqueFileName(originalName: string): string {
   const timestamp = Date.now();
@@ -103,7 +130,7 @@ export function generateUniqueFileName(originalName: string): string {
 }
 
 /**
- * Genera la ruta completa para un archivo en el storage
+ * Generate the full storage path for a course resource file.
  */
 export function generateStoragePath(
   courseId: string,
@@ -114,7 +141,7 @@ export function generateStoragePath(
 }
 
 /**
- * Valida un archivo completo (tipo y tamaño)
+ * Validate a file according to size and resource-type constraints.
  */
 export interface FileValidationResult {
   valid: boolean;
@@ -131,7 +158,7 @@ export function validateFile(
 ): FileValidationResult {
   const { allowedTypes, maxSize, resourceType } = options;
 
-  // Si NO hay resourceType específico, validar contra TODOS los tipos permitidos
+  // If no resourceType is provided, validate against every allowed mime-type
   if (!resourceType && !allowedTypes) {
     if (!validateFileType(file, ALL_ALLOWED_MIME_TYPES)) {
       return {
@@ -141,11 +168,11 @@ export function validateFile(
     }
   }
 
-  // Validar tipo de archivo según resourceType primero
+  // Prefer the specific rules that match the selected resource type
   if (resourceType && RESOURCE_TYPE_MIME_MAP[resourceType]) {
     const allowedForType = RESOURCE_TYPE_MIME_MAP[resourceType];
     if (!validateFileType(file, allowedForType)) {
-      // Crear mensaje más descriptivo
+      // Provide a more descriptive hint for the user
       let typeDescription = "";
       switch (resourceType) {
         case "pdf":
@@ -174,7 +201,7 @@ export function validateFile(
     }
   }
 
-  // Validar tipo de archivo genérico
+  // Apply generic allowedTypes fallback when provided
   if (allowedTypes && !validateFileType(file, allowedTypes)) {
     return {
       valid: false,
@@ -182,7 +209,7 @@ export function validateFile(
     };
   }
 
-  // Validar tamaño
+  // Validate the maximum size constraint
   if (maxSize && !validateFileSize(file, maxSize)) {
     return {
       valid: false,
@@ -203,7 +230,7 @@ export function getResourceTypeFromMime(mimeType: string): string {
   // PDF
   if (normalized === "application/pdf") return "pdf";
   
-  // Documentos Word
+  // Word documents
   if (
     normalized === "application/msword" ||
     normalized === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -211,16 +238,16 @@ export function getResourceTypeFromMime(mimeType: string): string {
     return "document";
   }
   
-  // Videos (solo MP4)
+  // Videos (MP4 only)
   if (normalized === "video/mp4") return "video";
   
-  // Audio (solo MP3)
+  // Audio (MP3 only)
   if (normalized === "audio/mpeg" || normalized === "audio/mp3") return "audio";
   
-  // Imágenes (solo JPG/PNG)
+  // Images (JPG/PNG)
   if (normalized === "image/jpeg" || normalized === "image/png") return "image";
   
-  // Por defecto PDF (mostrará error si no es válido)
+  // Default to PDF so the caller can display a validation error
   return "pdf";
 }
 

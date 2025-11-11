@@ -15,7 +15,6 @@ import {
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
-  Download,
   FileAudio2,
   FileCode2,
   FileText,
@@ -37,6 +36,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { prettifyFileName } from "@/lib/storage.utils";
 import { ResourceFormDialog } from "./ResourceFormDialog";
 import { DeleteResourceDialog } from "./DeleteResourceDialog";
 import { reorderResources } from "@/src/presentation/actions/content.actions";
@@ -632,7 +632,12 @@ function ResourceInfoDialog({ resource, onClose }: ResourceInfoDialogProps) {
               {resource.fileName && (
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500">Archivo</span>
-                  <span className="font-medium text-slate-700">{resource.fileName}</span>
+                  <span
+                    className="max-w-[14rem] break-words text-right font-medium text-slate-700"
+                    title={prettifyFileName(resource.fileName) ?? resource.fileName}
+                  >
+                    {prettifyFileName(resource.fileName) ?? resource.fileName}
+                  </span>
                 </div>
               )}
               {resource.fileSize && (
@@ -656,6 +661,19 @@ function ResourceInfoDialog({ resource, onClose }: ResourceInfoDialogProps) {
                   })}
                 </span>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Creado</span>
+                <span className="font-medium text-slate-700">
+                  {new Date(resource.createdAt).toLocaleString("es-ES", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Orden</span>
+                <span className="font-medium text-slate-700">{resource.orderIndex}</span>
+              </div>
               {resource.externalUrl && (
                 <a
                   href={resource.externalUrl}
@@ -667,14 +685,15 @@ function ResourceInfoDialog({ resource, onClose }: ResourceInfoDialogProps) {
                   <ArrowUpRight className="h-4 w-4" /> Abrir enlace externo
                 </a>
               )}
-              {resource.fileUrl && (
-                <a
-                  href={resource.fileUrl}
-                  download={resource.fileName ?? undefined}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-100"
-                >
-                  <Download className="h-4 w-4" /> Descargar archivo
-                </a>
+              {resource.description && (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                  <span className="block text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                    Descripción
+                  </span>
+                  <span className="mt-1 block whitespace-pre-line">
+                    {resource.description}
+                  </span>
+                </div>
               )}
             </div>
           </>

@@ -10,10 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { 
-  Download, 
   ExternalLink, 
   Maximize2, 
-  X,
   FileText,
   Film,
   FileAudio,
@@ -21,6 +19,7 @@ import {
   File
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { prettifyFileName } from "@/lib/storage.utils";
 
 interface ResourceViewerProps {
   isOpen: boolean;
@@ -170,10 +169,10 @@ export function ResourceViewer({ isOpen, onClose, resource }: ResourceViewerProp
             <p className="text-center text-sm text-slate-600">
               Previsualización no disponible para este tipo de documento
             </p>
-            <a href={resource.fileUrl} download={resource.fileName || undefined}>
+            <a href={resource.fileUrl} target="_blank" rel="noopener noreferrer">
               <Button variant="outline">
-                <Download className="mr-2 h-4 w-4" />
-                Descargar archivo
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Abrir en nueva pestaña
               </Button>
             </a>
           </div>
@@ -190,10 +189,10 @@ export function ResourceViewer({ isOpen, onClose, resource }: ResourceViewerProp
           <p className="text-xs text-slate-500">
             Tipo: {mimeType || "Desconocido"}
           </p>
-          <a href={resource.fileUrl} download={resource.fileName || undefined}>
+          <a href={resource.fileUrl} target="_blank" rel="noopener noreferrer">
             <Button variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Descargar archivo
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Abrir en nueva pestaña
             </Button>
           </a>
         </div>
@@ -211,8 +210,6 @@ export function ResourceViewer({ isOpen, onClose, resource }: ResourceViewerProp
     );
   };
 
-  const canDownload = resource.fileUrl && !resource.externalUrl;
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
@@ -227,21 +224,11 @@ export function ResourceViewer({ isOpen, onClose, resource }: ResourceViewerProp
               <DialogTitle className="text-xl">{resource.title}</DialogTitle>
               {resource.fileName && (
                 <p className="mt-1 text-sm text-slate-500">
-                  {resource.fileName}
+                  {prettifyFileName(resource.fileName) ?? resource.fileName}
                 </p>
               )}
             </div>
             <div className="flex gap-2">
-              {canDownload && (
-                <a
-                  href={resource.fileUrl!}
-                  download={resource.fileName || undefined}
-                >
-                  <Button variant="outline" size="sm">
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </a>
-              )}
               {resource.fileUrl && (
                 <a
                   href={resource.fileUrl}
