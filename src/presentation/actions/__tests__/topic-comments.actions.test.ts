@@ -99,7 +99,9 @@ describe('topic-comments.actions', () => {
     const topicSingle: any = jest.fn();
     (topicSingle as any).mockResolvedValue({ data: { id: 'existing-id' }, error: null });
     const topicUpdate: any = jest.fn();
-    (topicUpdate as any).mockResolvedValue({ error: null });
+    // Make update chainable: update(...).eq('id', existing.id) -> resolves to { error: null }
+    const eqMock = jest.fn().mockResolvedValue({ error: null });
+    topicUpdate.mockReturnValue({ eq: eqMock });
 
     mockFrom.mockImplementation((table: any) => {
       if (table === 'topic_comments') {
