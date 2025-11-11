@@ -16,10 +16,8 @@ import {
 import { TopicFormDialog } from "./TopicFormDialog";
 import { DeleteTopicDialog } from "./DeleteTopicDialog";
 import { RESOURCE_MANAGEMENT_ENABLED } from "../../../featureFlags";
-import {
-  updateTopic,
-  reorderTopics,
-} from "@/src/presentation/actions/content.actions";
+import { TopicCommentsClient } from "@/components/dashboard/TopicComments.client";
+import { reorderTopics } from "@/src/presentation/actions/content.actions";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/toast-provider";
 
@@ -437,6 +435,11 @@ export function TopicManagementClient({
                         <span className="hidden sm:inline">Eliminar</span>
                       </Button>
                     </div>
+                  </div>
+
+                  {/* Mostrar comentarios del tópico */}
+                  <div className="p-4">
+                    <TopicCommentsClient topicId={topic.id} />
                   </div>
                 </CardHeader>
               </Card>
