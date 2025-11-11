@@ -3,10 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import type {
   DragEvent as ReactDragEvent,
+  MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
   WheelEvent as ReactWheelEvent,
 } from "react";
 import { useRouter } from "next/navigation";
+import NextImage from "next/image";
 import { useToast } from "@/components/ui/toast-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,6 +65,7 @@ interface TopicNavigationLink {
 interface TopicNavigationQuery {
   branchId?: string | null;
   versionId?: string | null;
+  from?: string | null;
 }
 
 interface TopicSummary {
@@ -200,6 +203,7 @@ function InlinePreview({ resource }: { resource: ResourceData }) {
       | ReactPointerEvent<HTMLElement>
       | ReactWheelEvent<HTMLElement>
       | ReactDragEvent<HTMLElement>
+      | ReactMouseEvent<HTMLElement>
   ) => {
     event.stopPropagation();
   };
@@ -254,16 +258,19 @@ function InlinePreview({ resource }: { resource: ResourceData }) {
     if (mimeType.startsWith("image/") || resource.resourceType === "image") {
       return (
         <div
-          className={wrapperClass}
+          className={cn(wrapperClass, "relative overflow-hidden")}
           onPointerDown={suppressParent}
           onPointerUp={suppressParent}
           onClick={suppressParent}
           onWheel={suppressParent}
         >
-          <img
+          <NextImage
             src={resource.fileUrl}
             alt={resource.title}
-            className="max-h-full max-w-full object-contain"
+            fill
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            className="object-contain"
+            priority={false}
           />
         </div>
       );
@@ -750,6 +757,7 @@ export function ResourceManagementClient({
   }, [slotResources, sortedResources]);
 
   const branchLabel = isDefaultBranch ? "edición principal" : `edición ${branchName}`;
+  const showCourseTitle = false;
 
   const buildTopicHref = (topicId: string) => {
     const query: Record<string, string> = {};
@@ -758,6 +766,9 @@ export function ResourceManagementClient({
     }
     if (navigationQuery.versionId) {
       query.versionId = navigationQuery.versionId;
+    }
+    if (navigationQuery.from) {
+      query.from = navigationQuery.from;
     }
 
     return {
@@ -1025,7 +1036,9 @@ export function ResourceManagementClient({
             >
               {stateBadge.label}
             </span>
-            <span className="text-xs text-slate-400">{courseTitle}</span>
+            {showCourseTitle ? (
+              <span className="text-xs text-slate-400">{courseTitle}</span>
+            ) : null}
             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">
               {sortedResources.length} recursos
             </span>
@@ -1140,7 +1153,7 @@ export function ResourceManagementClient({
       <DeleteResourceDialog
         isOpen={Boolean(deletingResource)}
         onClose={() => setDeletingResource(null)}
-        resource={deletingResource ?? undefined}
+        resource={deletingResource}
       />
 
       <ResourceInfoDialog

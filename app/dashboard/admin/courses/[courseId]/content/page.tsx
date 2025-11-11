@@ -93,31 +93,46 @@ export default async function CourseContentPage({
     return null;
   })();
 
-  // Determinar si estamos viendo una versión borrador
-  const isViewingDraftVersion = Boolean(
-    effectiveVersionId && 
-    course.draftVersion?.id === effectiveVersionId
-  );
-
-  // Determinar si estamos viendo una versión publicada (activa)
-  const isViewingPublishedVersion = Boolean(
-    effectiveVersionId && 
-    course.activeVersion?.id === effectiveVersionId
-  );
-
-  // Determinar si estamos viendo una versión archivada
-  const isViewingArchivedVersion = Boolean(
-    effectiveVersionId && 
-    course.archivedVersions?.some(v => v.id === effectiveVersionId)
-  );
-
-  // Los administradores pueden editar versiones activas, los docentes y editores solo borradores
-  const canEditPublishedVersion = Boolean(profile.isAdmin && isViewingPublishedVersion);
+  const topicsQueryVersionId = effectiveVersionId ?? course.activeVersion?.id ?? course.draftVersion?.id ?? undefined;
 
   const topicsResult = await getTopicsWithResourcesByCourse(courseId, {
-    courseVersionId: effectiveVersionId ?? undefined,
+    courseVersionId: topicsQueryVersionId,
   });
   const topics = "error" in topicsResult ? [] : topicsResult.topics ?? [];
+
+  const resolvedVersionId = effectiveVersionId
+    ?? topics[0]?.courseVersionId
+    ?? course.activeVersion?.id
+    ?? course.draftVersion?.id
+    ?? null;
+
+  const isViewingDraftVersion = Boolean(
+    resolvedVersionId && course.draftVersion?.id === resolvedVersionId
+  );
+
+  const isViewingPublishedVersion = Boolean(
+    resolvedVersionId && course.activeVersion?.id === resolvedVersionId
+  );
+
+  const isViewingArchivedVersion = Boolean(
+    resolvedVersionId && course.archivedVersions?.some((version) => version.id === resolvedVersionId)
+  );
+
+  const canEditPublishedVersion = Boolean(
+    (profile.isAdmin || profile.isEditor) && isViewingPublishedVersion
+  );
+
+  const resourceManagementBasePath = profile.isAdmin
+    ? "/dashboard/admin/courses"
+    : profile.isEditor
+      ? "/dashboard/editor/courses"
+      : "/dashboard/admin/courses";
+
+  const resourceManagementQuery = profile.isEditor && !profile.isAdmin
+    ? {
+        from: "editor",
+      }
+    : undefined;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
@@ -209,13 +224,18 @@ export default async function CourseContentPage({
             <p className="text-pretty text-sm text-slate-600 sm:text-base md:text-lg">
               {course.title}
             </p>
+            {resolvedVersionId && (
+              <p className="text-xs text-slate-500 sm:text-sm">
+                Versión activa en edición: {resolvedVersionId.slice(0, 8)}
+              </p>
+            )}
           </div>
         </div>
 
         <TopicManagementClient
           courseId={courseId}
           branchId={effectiveBranch?.id ?? null}
-          courseVersionId={effectiveVersionId ?? null}
+          courseVersionId={resolvedVersionId}
           branchName={effectiveBranch?.name ?? "principal"}
           isDefaultBranch={effectiveBranch?.isDefault ?? true}
           isViewingDraftVersion={isViewingDraftVersion}
@@ -223,6 +243,8 @@ export default async function CourseContentPage({
           isViewingArchivedVersion={isViewingArchivedVersion}
           canEditPublishedVersion={canEditPublishedVersion}
           isAdmin={profile.isAdmin}
+          resourceManagementBasePath={resourceManagementBasePath}
+          resourceManagementQuery={resourceManagementQuery}
           topics={topics}
         />
       </main>

@@ -187,7 +187,7 @@ export default async function EditorDashboardPage() {
                   )}
                 </div>
                 <Link
-                  href={`/dashboard/admin/courses/${course.id}/content`}
+                  href={`/dashboard/editor/courses/${course.id}/content?from=editor`}
                   className="mt-auto"
                 >
                   <Button className="w-full" variant="outline">

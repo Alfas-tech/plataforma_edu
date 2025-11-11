@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import NextImage from "next/image";
 import {
   Dialog,
   DialogContent,
@@ -144,11 +145,14 @@ export function ResourceViewer({ isOpen, onClose, resource }: ResourceViewerProp
       // Imagen
       if (mimeType.startsWith("image/") || resource.resourceType === "image") {
         return (
-          <div className="flex items-center justify-center p-4">
-            <img
+          <div className="relative flex h-[70vh] w-full items-center justify-center overflow-hidden p-4">
+            <NextImage
               src={resource.fileUrl}
               alt={resource.title}
-              className="max-h-[70vh] w-auto rounded-lg"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 75vw, 60vw"
+              className="object-contain"
+              priority={false}
             />
           </div>
         );

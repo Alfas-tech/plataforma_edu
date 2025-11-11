@@ -1,14 +1,17 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { BookOpen, ChevronLeft } from "lucide-react";
 
 import { AdminHeader } from "@/components/dashboard/AdminHeader";
 import { Button } from "@/components/ui/button";
 import { getCurrentProfile } from "@/src/presentation/actions/profile.actions";
 import { getCourseWithTeachers } from "@/src/presentation/actions/course.actions";
-import { getResourcesByTopic, getTopicsByCourse } from "@/src/presentation/actions/content.actions";
-import { ResourceManagementClient } from "./components/ResourceManagementClient";
-import { RESOURCE_MANAGEMENT_ENABLED } from "../../../../featureFlags";
+import {
+  getResourcesByTopic,
+  getTopicsByCourse,
+} from "@/src/presentation/actions/content.actions";
+import { ResourceManagementClient } from "@/app/dashboard/admin/courses/[courseId]/topics/[topicId]/resources/components/ResourceManagementClient";
+import { RESOURCE_MANAGEMENT_ENABLED } from "@/app/dashboard/admin/courses/featureFlags";
 
 interface PageProps {
   params: {
@@ -18,19 +21,21 @@ interface PageProps {
   searchParams?: {
     branchId?: string;
     versionId?: string;
+    from?: string;
   };
 }
 
-export default async function TopicResourcesPage({
+export default async function EditorTopicResourcesPage({
   params,
   searchParams,
 }: PageProps) {
   const { courseId, topicId } = params;
   const requestedBranchId = searchParams?.branchId ?? null;
   const requestedVersionId = searchParams?.versionId ?? null;
+  const comingFrom = searchParams?.from ?? null;
 
   if (!RESOURCE_MANAGEMENT_ENABLED) {
-    redirect(`/dashboard/admin/courses/${courseId}/content`);
+    redirect(`/dashboard/editor`);
   }
 
   const profileResult = await getCurrentProfile();
@@ -40,7 +45,7 @@ export default async function TopicResourcesPage({
 
   const { profile } = profileResult;
 
-  if (!profile.isAdmin && !profile.isTeacher && !profile.isEditor) {
+  if (!profile.isAdmin && !profile.isEditor) {
     redirect("/dashboard");
   }
 
@@ -62,7 +67,7 @@ export default async function TopicResourcesPage({
   const resolvedDisplayName =
     profile.displayName ?? profile.fullName ?? profile.email ?? "Usuario";
   const resolvedInitials = resolvedDisplayName.trim().charAt(0).toUpperCase() || "U";
-  const roleLabel = profile.isAdmin ? "🛡️ Administrador" : profile.isEditor ? "✏️ Editor" : "👨‍🏫 Docente";
+  const roleLabel = profile.isAdmin ? "🛡️ Administrador" : "✏️ Editor";
 
   const resourcesResult = await getResourcesByTopic(topicId);
   if ("error" in resourcesResult || !resourcesResult.topic) {
@@ -80,7 +85,6 @@ export default async function TopicResourcesPage({
   const topic = resourcesResult.topic;
   const resources = resourcesResult.resources ?? [];
 
-  // Determinar la versión efectiva que estamos viendo
   const effectiveVersionId = (() => {
     if (topic.courseVersionId) {
       return topic.courseVersionId;
@@ -93,14 +97,12 @@ export default async function TopicResourcesPage({
     return course.activeVersion?.id ?? null;
   })();
 
-  // Determinar el tipo de versión que estamos viendo
   const isViewingDraftVersion = Boolean(
-    effectiveVersionId && 
-    course.draftVersion?.id === effectiveVersionId
+    effectiveVersionId && course.draftVersion?.id === effectiveVersionId
   );
 
   const isViewingPublishedVersion = Boolean(
-    effectiveVersionId && 
+    effectiveVersionId &&
     course.activeVersion?.id === effectiveVersionId &&
     !isViewingDraftVersion
   );
@@ -111,11 +113,8 @@ export default async function TopicResourcesPage({
     !isViewingPublishedVersion
   );
 
-  // Determinar permisos de edición
-  // Los admins pueden editar versiones publicadas, pero editores/teachers solo borradores
   const canEditPublishedVersion = profile.isAdmin || profile.isEditor;
 
-  // Obtener tópicos para navegación
   let previousTopic: {
     id: string;
     title: string;
@@ -164,7 +163,12 @@ export default async function TopicResourcesPage({
   const navigationQuery = {
     branchId: requestedBranchId ?? null,
     versionId: requestedVersionId ?? effectiveVersionId ?? null,
+    from: comingFrom,
   };
+
+  const contentReturnPath = comingFrom === "editor"
+    ? `/dashboard/editor/courses/${courseId}/content`
+    : `/dashboard/admin/courses/${courseId}/content`;
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-100">
@@ -187,10 +191,11 @@ export default async function TopicResourcesPage({
             >
               <Link
                 href={{
-                  pathname: `/dashboard/admin/courses/${courseId}/content`,
+                  pathname: contentReturnPath,
                   query: {
                     branchId: requestedBranchId ?? undefined,
                     versionId: requestedVersionId ?? undefined,
+                    from: comingFrom ?? undefined,
                   },
                 }}
               >

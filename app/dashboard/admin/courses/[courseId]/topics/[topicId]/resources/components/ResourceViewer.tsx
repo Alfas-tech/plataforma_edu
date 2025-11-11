@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import NextImage from "next/image";
 import { ExternalLink, Download, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getResourceSignedUrl } from "@/src/presentation/actions/storage.actions";
@@ -160,11 +161,13 @@ export function ResourceViewer({
       {/* Preview (solo para imágenes y PDFs) */}
       {canPreview && resource.mimeType && isImageFile(resource.mimeType) && (
         <div className="relative h-48 bg-slate-100">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <NextImage
             src={signedUrl}
             alt={resource.title}
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="object-cover"
+            priority={false}
           />
         </div>
       )}

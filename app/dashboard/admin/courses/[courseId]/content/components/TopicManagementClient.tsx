@@ -5,28 +5,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Edit, PlusCircle, Trash2, GripVertical, ChevronDown, ChevronRight, FileText, AlertCircle } from "lucide-react";
+import { BookOpen, Edit, PlusCircle, Trash2, GripVertical, AlertCircle } from "lucide-react";
 import { TopicFormDialog } from "./TopicFormDialog";
 import { DeleteTopicDialog } from "./DeleteTopicDialog";
 import { RESOURCE_MANAGEMENT_ENABLED } from "../../../featureFlags";
 import { updateTopic, reorderTopics } from "@/src/presentation/actions/content.actions";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/toast-provider";
-
-interface ResourceData {
-  id: string;
-  topicId: string;
-  title: string;
-  description: string | null;
-  resourceType: string;
-  fileUrl: string | null;
-  fileName: string | null;
-  mimeType: string | null;
-  externalUrl: string | null;
-  orderIndex: number;
-  createdAt: string;
-  updatedAt: string;
-}
 
 interface TopicData {
   id: string;
@@ -35,7 +20,12 @@ interface TopicData {
   orderIndex: number;
   createdAt: string;
   updatedAt: string;
-  resources?: ResourceData[];
+  resources?: Array<{
+    id: string;
+    title: string;
+    description: string | null;
+    resourceType: string;
+  }>;
 }
 
 interface TopicManagementClientProps {
@@ -49,6 +39,8 @@ interface TopicManagementClientProps {
   isViewingArchivedVersion: boolean;
   canEditPublishedVersion: boolean;
   isAdmin: boolean;
+  resourceManagementBasePath: string;
+  resourceManagementQuery?: Record<string, string | undefined>;
   topics: TopicData[];
 }
 
@@ -63,6 +55,8 @@ export function TopicManagementClient({
   isViewingArchivedVersion,
   canEditPublishedVersion,
   isAdmin,
+  resourceManagementBasePath,
+  resourceManagementQuery = {},
   topics,
 }: TopicManagementClientProps) {
   const router = useRouter();
@@ -71,8 +65,6 @@ export function TopicManagementClient({
   const [editingTopic, setEditingTopic] = useState<TopicData | null>(null);
   const [deletingTopic, setDeletingTopic] = useState<TopicData | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
-  
   // Estado local para el orden de tópicos (permite reordenamiento visual inmediato)
   const [localTopics, setLocalTopics] = useState<TopicData[]>([]);
 
@@ -81,17 +73,6 @@ export function TopicManagementClient({
     const sorted = [...topics].sort((a, b) => a.orderIndex - b.orderIndex);
     setLocalTopics(sorted);
   }, [topics]);
-
-  // Función para toggle de expansión
-  const toggleTopicExpansion = (topicId: string) => {
-    const newExpanded = new Set(expandedTopics);
-    if (newExpanded.has(topicId)) {
-      newExpanded.delete(topicId);
-    } else {
-      newExpanded.add(topicId);
-    }
-    setExpandedTopics(newExpanded);
-  };
 
   // Solo se puede editar si:
   // 1. Existe courseVersionId Y
@@ -238,10 +219,9 @@ export function TopicManagementClient({
                     {!courseVersionId ? (
                       <>
                         <p className="text-sm text-amber-800 mb-3">
-                          Este curso no tiene una versión de borrador activa. Como editor o docente, 
-                          necesitas trabajar con una versión borrador para poder agregar o modificar contenido.
+                          Este curso no tiene una versión de borrador activa. Trabaja con un administrador para habilitar una versión borrador y así poder agregar o modificar contenido sin afectar la versión publicada.
                         </p>
-                        {!isAdmin && (
+                        {isAdmin && (
                           <Link href={`/dashboard/admin/courses/${courseId}/draft/new`}>
                             <Button size="sm" variant="outline" className="bg-white border-amber-400 hover:bg-amber-100">
                               <PlusCircle className="mr-2 h-4 w-4" />
@@ -326,8 +306,7 @@ export function TopicManagementClient({
       ) : (
         <div className="space-y-4">
           {localTopics.map((topic, index) => {
-            const isExpanded = expandedTopics.has(topic.id);
-            const topicResources = topic.resources || [];
+            const resourceCount = topic.resources?.length ?? 0;
             
             return (
               <Card
@@ -355,16 +334,7 @@ export function TopicManagementClient({
                         </div>
                       )}
                       
-                      <button
-                        onClick={() => toggleTopicExpansion(topic.id)}
-                        className="flex items-start gap-2 flex-1 text-left hover:opacity-70 transition-opacity"
-                      >
-                        {isExpanded ? (
-                          <ChevronDown className="h-5 w-5 flex-shrink-0 text-slate-400 mt-1" />
-                        ) : (
-                          <ChevronRight className="h-5 w-5 flex-shrink-0 text-slate-400 mt-1" />
-                        )}
-                        
+                      <div className="flex flex-1 items-start gap-2">
                         <div className="flex-1">
                           <div className="mb-2 flex flex-wrap items-center gap-2">
                             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-sm font-bold text-purple-600">
@@ -372,7 +342,7 @@ export function TopicManagementClient({
                             </span>
                             <CardTitle className="text-xl">{topic.title}</CardTitle>
                             <Badge variant="outline" className="border-slate-300 bg-blue-50 text-blue-700">
-                              {topicResources.length} recurso{topicResources.length !== 1 ? "s" : ""}
+                              {resourceCount} recurso{resourceCount !== 1 ? "s" : ""}
                             </Badge>
                           </div>
                           {topic.description && (
@@ -381,10 +351,26 @@ export function TopicManagementClient({
                             </p>
                           )}
                         </div>
-                      </button>
+                      </div>
                     </div>
-                    
                     <div className="flex flex-shrink-0 gap-2">
+                      {RESOURCE_MANAGEMENT_ENABLED && canMutateContent && (
+                        <Link
+                          href={{
+                            pathname: `${resourceManagementBasePath}/${courseId}/topics/${topic.id}/resources`,
+                            query: {
+                              branchId: branchId ?? undefined,
+                              versionId: courseVersionId ?? undefined,
+                              ...resourceManagementQuery,
+                            },
+                          }}
+                        >
+                          <Button size="sm" variant="outline" className="bg-white">
+                            <PlusCircle className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Gestionar</span>
+                          </Button>
+                        </Link>
+                      )}
                       <Button
                         size="sm"
                         variant="outline"
@@ -407,116 +393,6 @@ export function TopicManagementClient({
                     </div>
                   </div>
                 </CardHeader>
-
-                {/* Contenido expandible: Recursos */}
-                {isExpanded && (
-                  <CardContent className="border-t border-slate-200 bg-slate-50/50 p-6">
-                    <div className="mb-4 flex items-center justify-between">
-                      <h4 className="text-sm font-semibold text-slate-700">
-                        Recursos del tópico
-                      </h4>
-                      {canMutateContent && (
-                        <Link
-                          href={{
-                            pathname: `/dashboard/admin/courses/${courseId}/topics/${topic.id}/resources`,
-                            query: {
-                              branchId: branchId ?? undefined,
-                              versionId: courseVersionId ?? undefined,
-                            },
-                          }}
-                        >
-                          <Button size="sm" variant="outline" className="bg-white">
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Gestionar recursos
-                          </Button>
-                        </Link>
-                      )}
-                    </div>
-
-                    {topicResources.length === 0 ? (
-                      <div className="py-8 text-center rounded-lg border border-dashed border-slate-300 bg-white">
-                        <FileText className="mx-auto mb-3 h-10 w-10 text-slate-400" />
-                        <p className="text-sm text-slate-600">
-                          No hay recursos en este tópico
-                        </p>
-                        {canMutateContent && (
-                          <Link
-                            href={{
-                              pathname: `/dashboard/admin/courses/${courseId}/topics/${topic.id}/resources`,
-                              query: {
-                                branchId: branchId ?? undefined,
-                                versionId: courseVersionId ?? undefined,
-                              },
-                            }}
-                          >
-                            <Button size="sm" variant="ghost" className="mt-3">
-                              <PlusCircle className="mr-2 h-4 w-4" />
-                              Agregar primer recurso
-                            </Button>
-                          </Link>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {topicResources.map((resource, resourceIndex) => {
-                          const hasFile = Boolean(resource.fileUrl);
-                          const hasExternal = Boolean(resource.externalUrl);
-                          const resourceUrl = hasFile ? resource.fileUrl : resource.externalUrl;
-                          const isClickable = Boolean(resourceUrl);
-                          
-                          return (
-                            <div
-                              key={resource.id}
-                              className={`flex items-center justify-between rounded-lg border border-slate-200 bg-white p-4 transition-all ${
-                                isClickable ? "hover:border-blue-300 hover:shadow-md cursor-pointer" : "hover:border-purple-300 hover:shadow-sm"
-                              }`}
-                              onClick={() => {
-                                if (resourceUrl) {
-                                  window.open(resourceUrl, "_blank", "noopener,noreferrer");
-                                }
-                              }}
-                            >
-                              <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <span className="flex h-6 w-6 items-center justify-center rounded bg-slate-100 text-xs font-semibold text-slate-600 flex-shrink-0">
-                                  {resourceIndex + 1}
-                                </span>
-                                <FileText className={`h-5 w-5 flex-shrink-0 ${isClickable ? "text-blue-600" : "text-slate-400"}`} />
-                                <div className="flex-1 min-w-0">
-                                  <p className={`text-sm font-medium truncate ${isClickable ? "text-blue-700" : "text-slate-900"}`}>
-                                    {resource.title}
-                                    {isClickable && (
-                                      <span className="ml-2 text-xs text-blue-500">→ Clic para abrir</span>
-                                    )}
-                                  </p>
-                                  {resource.description && (
-                                    <p className="text-xs text-slate-500 truncate">
-                                      {resource.description}
-                                    </p>
-                                  )}
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <Badge variant="outline" className="text-xs">
-                                      {resource.resourceType}
-                                    </Badge>
-                                    {hasFile && resource.fileName && (
-                                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                                        📎 {resource.fileName}
-                                      </Badge>
-                                    )}
-                                    {hasExternal && (
-                                      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                                        🔗 Enlace externo
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </CardContent>
-                )}
               </Card>
             );
           })}
