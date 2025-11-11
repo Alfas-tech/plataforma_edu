@@ -82,9 +82,9 @@ jest.mock("@/src/infrastructure/repositories/SupabaseCourseRepository", () => {
   };
 });
 
-const {
-  __mockCourseRepository: courseRepositoryMocks,
-} = jest.requireMock("@/src/infrastructure/repositories/SupabaseCourseRepository") as {
+const { __mockCourseRepository: courseRepositoryMocks } = jest.requireMock(
+  "@/src/infrastructure/repositories/SupabaseCourseRepository"
+) as {
   __mockCourseRepository: {
     reorderTopics: jest.Mock;
     reorderResources: jest.Mock;
@@ -98,9 +98,12 @@ jest.mock("@/src/infrastructure/repositories/SupabaseAuthRepository", () => ({
   SupabaseAuthRepository: jest.fn(() => ({})),
 }));
 
-jest.mock("@/src/infrastructure/repositories/SupabaseProfileRepository", () => ({
-  SupabaseProfileRepository: jest.fn(() => ({})),
-}));
+jest.mock(
+  "@/src/infrastructure/repositories/SupabaseProfileRepository",
+  () => ({
+    SupabaseProfileRepository: jest.fn(() => ({})),
+  })
+);
 
 import { revalidatePath } from "next/cache";
 
@@ -148,7 +151,7 @@ describe("content.actions", () => {
       const createdAt = new Date("2024-01-01T00:00:00Z");
       const updatedAt = new Date("2024-01-02T00:00:00Z");
 
-  mockGetTopicsExecute.mockResolvedValue({
+      mockGetTopicsExecute.mockResolvedValue({
         success: true,
         topics: [
           {
@@ -168,7 +171,7 @@ describe("content.actions", () => {
         courseVersionId: "version-1",
       });
 
-  expect(mockGetTopicsExecute).toHaveBeenCalledWith("course-1", {
+      expect(mockGetTopicsExecute).toHaveBeenCalledWith("course-1", {
         courseVersionId: "version-1",
       });
       expect(result).toEqual({
@@ -190,7 +193,7 @@ describe("content.actions", () => {
     });
 
     it("returns an error when use case fails", async () => {
-  mockGetTopicsExecute.mockResolvedValue({
+      mockGetTopicsExecute.mockResolvedValue({
         success: false,
         error: "Error al obtener tópicos",
       });
@@ -447,9 +450,7 @@ describe("content.actions", () => {
     it("delegates to repository and revalidates on success", async () => {
       mockReorderResources.mockResolvedValue(undefined);
 
-      const updates = [
-        { resourceId: "resource-1", orderIndex: 1 },
-      ];
+      const updates = [{ resourceId: "resource-1", orderIndex: 1 }];
 
       const result = await reorderResources("topic-1", updates);
 

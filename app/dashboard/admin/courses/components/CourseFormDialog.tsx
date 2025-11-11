@@ -95,8 +95,7 @@ export function CourseFormDialog({
         const description = data.description?.trim() ?? "";
         const summary = data.summary?.trim() ?? "";
         const initialVersionLabel = data.initialVersionLabel?.trim() ?? "";
-        const initialVersionSummary =
-          data.initialVersionSummary?.trim() ?? "";
+        const initialVersionSummary = data.initialVersionSummary?.trim() ?? "";
 
         const payload: CreateCoursePayload = {
           name,
@@ -110,9 +109,9 @@ export function CourseFormDialog({
               initialVersionSummary.length > 0
                 ? initialVersionSummary
                 : summary.length > 0
-                ? summary
-                : null,
-              content: null,
+                  ? summary
+                  : null,
+            content: null,
           };
         }
 

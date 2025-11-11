@@ -94,8 +94,12 @@ describe("CreateResourceUseCase", () => {
     const createdResource = makeResource();
 
     mockCourseRepository.getTopicById.mockResolvedValue(topic);
-    mockAuthRepository.getCurrentUser.mockResolvedValue({ id: "user-1" } as any);
-    mockProfileRepository.getProfileByUserId.mockResolvedValue(makeProfile("admin") as any);
+    mockAuthRepository.getCurrentUser.mockResolvedValue({
+      id: "user-1",
+    } as any);
+    mockProfileRepository.getProfileByUserId.mockResolvedValue(
+      makeProfile("admin") as any
+    );
     mockCourseRepository.addResource.mockResolvedValue(createdResource);
 
     const result = await useCase.execute({
@@ -138,8 +142,12 @@ describe("CreateResourceUseCase", () => {
     const topic = makeTopic();
 
     mockCourseRepository.getTopicById.mockResolvedValue(topic);
-    mockAuthRepository.getCurrentUser.mockResolvedValue({ id: "teacher-1" } as any);
-    mockProfileRepository.getProfileByUserId.mockResolvedValue(makeProfile("teacher") as any);
+    mockAuthRepository.getCurrentUser.mockResolvedValue({
+      id: "teacher-1",
+    } as any);
+    mockProfileRepository.getProfileByUserId.mockResolvedValue(
+      makeProfile("teacher") as any
+    );
     mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(false);
 
     const result = await useCase.execute({
@@ -151,9 +159,8 @@ describe("CreateResourceUseCase", () => {
     expect(result.success).toBe(false);
     expect(result.error).toBe("No estás asignado a esta versión del curso");
     expect(mockCourseRepository.addResource).not.toHaveBeenCalled();
-    expect(mockCourseRepository.isTeacherAssignedToVersion).toHaveBeenCalledWith(
-      topic.courseVersionId,
-      "teacher-1"
-    );
+    expect(
+      mockCourseRepository.isTeacherAssignedToVersion
+    ).toHaveBeenCalledWith(topic.courseVersionId, "teacher-1");
   });
 });

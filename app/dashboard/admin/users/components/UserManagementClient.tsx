@@ -12,7 +12,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import {
   Users,
@@ -28,9 +34,7 @@ import {
   Filter,
 } from "lucide-react";
 import Image from "next/image";
-import {
-  changeUserRole,
-} from "@/src/presentation/actions/profile.actions";
+import { changeUserRole } from "@/src/presentation/actions/profile.actions";
 import {
   deleteUser,
   sendPasswordResetEmail,
@@ -100,9 +104,11 @@ export function UserManagementClient({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  
+
   // New states for filtering and search
-  const [selectedFilter, setSelectedFilter] = useState<"all" | "student" | "teacher" | "editor" | "admin">("all");
+  const [selectedFilter, setSelectedFilter] = useState<
+    "all" | "student" | "teacher" | "editor" | "admin"
+  >("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Combine all users
@@ -116,14 +122,14 @@ export function UserManagementClient({
 
     // Filter by role
     if (selectedFilter !== "all") {
-      users = users.filter(user => user.role === selectedFilter);
+      users = users.filter((user) => user.role === selectedFilter);
     }
 
     // Search by name or email
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       users = users.filter(
-        user =>
+        (user) =>
           user.displayName.toLowerCase().includes(query) ||
           user.email.toLowerCase().includes(query)
       );
@@ -133,13 +139,22 @@ export function UserManagementClient({
   }, [allUsers, selectedFilter, searchQuery]);
 
   // Count users by role
-  const roleCounts = useMemo(() => ({
-    all: allUsers.length,
-    student: students.length,
-    teacher: teachers.length,
-    editor: editors.length,
-    admin: admins.length,
-  }), [allUsers.length, students.length, teachers.length, editors.length, admins.length]);
+  const roleCounts = useMemo(
+    () => ({
+      all: allUsers.length,
+      student: students.length,
+      teacher: teachers.length,
+      editor: editors.length,
+      admin: admins.length,
+    }),
+    [
+      allUsers.length,
+      students.length,
+      teachers.length,
+      editors.length,
+      admins.length,
+    ]
+  );
 
   const handleChangeRoleClick = (user: UserData) => {
     setSelectedUser(user);
@@ -179,7 +194,10 @@ export function UserManagementClient({
           setIsLoading(false);
           return;
         }
-        result = await changeUserRole(selectedUser.id, selectedRole as "admin" | "teacher" | "editor" | "student");
+        result = await changeUserRole(
+          selectedUser.id,
+          selectedRole as "admin" | "teacher" | "editor" | "student"
+        );
       } else if (action === "delete") {
         result = await deleteUser(selectedUser.id);
       } else if (action === "reset-password") {
@@ -275,12 +293,16 @@ export function UserManagementClient({
           <Filter className="mr-1.5 h-3.5 w-3.5" />
           Todos ({roleCounts.all})
         </Button>
-        
+
         <Button
           variant={selectedFilter === "student" ? "default" : "outline"}
           size="sm"
           onClick={() => setSelectedFilter("student")}
-          className={selectedFilter === "student" ? "bg-blue-600 hover:bg-blue-700" : "border-blue-200 text-blue-700 hover:bg-blue-50"}
+          className={
+            selectedFilter === "student"
+              ? "bg-blue-600 hover:bg-blue-700"
+              : "border-blue-200 text-blue-700 hover:bg-blue-50"
+          }
         >
           <Users className="mr-1.5 h-3.5 w-3.5" />
           Estudiantes ({roleCounts.student})
@@ -290,7 +312,11 @@ export function UserManagementClient({
           variant={selectedFilter === "teacher" ? "default" : "outline"}
           size="sm"
           onClick={() => setSelectedFilter("teacher")}
-          className={selectedFilter === "teacher" ? "bg-emerald-600 hover:bg-emerald-700" : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"}
+          className={
+            selectedFilter === "teacher"
+              ? "bg-emerald-600 hover:bg-emerald-700"
+              : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+          }
         >
           <GraduationCap className="mr-1.5 h-3.5 w-3.5" />
           Docentes ({roleCounts.teacher})
@@ -300,7 +326,11 @@ export function UserManagementClient({
           variant={selectedFilter === "editor" ? "default" : "outline"}
           size="sm"
           onClick={() => setSelectedFilter("editor")}
-          className={selectedFilter === "editor" ? "bg-purple-600 hover:bg-purple-700" : "border-purple-200 text-purple-700 hover:bg-purple-50"}
+          className={
+            selectedFilter === "editor"
+              ? "bg-purple-600 hover:bg-purple-700"
+              : "border-purple-200 text-purple-700 hover:bg-purple-50"
+          }
         >
           <Edit3 className="mr-1.5 h-3.5 w-3.5" />
           Editores ({roleCounts.editor})
@@ -310,7 +340,11 @@ export function UserManagementClient({
           variant={selectedFilter === "admin" ? "default" : "outline"}
           size="sm"
           onClick={() => setSelectedFilter("admin")}
-          className={selectedFilter === "admin" ? "bg-red-600 hover:bg-red-700" : "border-red-200 text-red-700 hover:bg-red-50"}
+          className={
+            selectedFilter === "admin"
+              ? "bg-red-600 hover:bg-red-700"
+              : "border-red-200 text-red-700 hover:bg-red-50"
+          }
         >
           <Shield className="mr-1.5 h-3.5 w-3.5" />
           Administradores ({roleCounts.admin})
@@ -322,10 +356,9 @@ export function UserManagementClient({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            {selectedFilter === "all" 
+            {selectedFilter === "all"
               ? `Todos los Usuarios (${filteredUsers.length})`
-              : `${ROLE_COLORS[selectedFilter].label}s (${filteredUsers.length})`
-            }
+              : `${ROLE_COLORS[selectedFilter].label}s (${filteredUsers.length})`}
             {searchQuery && (
               <span className="text-sm font-normal text-slate-500">
                 - Resultados de búsqueda
@@ -338,7 +371,9 @@ export function UserManagementClient({
             <div className="py-12 text-center">
               <Users className="mx-auto h-12 w-12 text-slate-300" />
               <p className="mt-4 text-sm font-medium text-slate-500">
-                {searchQuery ? "No se encontraron usuarios" : "No hay usuarios registrados"}
+                {searchQuery
+                  ? "No se encontraron usuarios"
+                  : "No hay usuarios registrados"}
               </p>
               {searchQuery && (
                 <p className="mt-1 text-xs text-slate-400">
@@ -366,7 +401,9 @@ export function UserManagementClient({
                         />
                       </div>
                     ) : (
-                      <div className={`flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br ${ROLE_COLORS[user.role as keyof typeof ROLE_COLORS].bg} text-base font-bold text-white ring-2 ring-slate-200`}>
+                      <div
+                        className={`flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br ${ROLE_COLORS[user.role as keyof typeof ROLE_COLORS].bg} text-base font-bold text-white ring-2 ring-slate-200`}
+                      >
                         {user.displayName.charAt(0).toUpperCase()}
                       </div>
                     )}
@@ -379,11 +416,22 @@ export function UserManagementClient({
                           variant="outline"
                           className={`${ROLE_COLORS[user.role as keyof typeof ROLE_COLORS].badge} text-xs font-medium`}
                         >
-                          {ROLE_COLORS[user.role as keyof typeof ROLE_COLORS].icon}
-                          <span className="ml-1">{ROLE_COLORS[user.role as keyof typeof ROLE_COLORS].label}</span>
+                          {
+                            ROLE_COLORS[user.role as keyof typeof ROLE_COLORS]
+                              .icon
+                          }
+                          <span className="ml-1">
+                            {
+                              ROLE_COLORS[user.role as keyof typeof ROLE_COLORS]
+                                .label
+                            }
+                          </span>
                         </Badge>
                         {user.id === currentUserId && (
-                          <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
+                          <Badge
+                            variant="outline"
+                            className="border-amber-200 bg-amber-50 text-amber-700"
+                          >
                             Tú
                           </Badge>
                         )}
@@ -412,7 +460,11 @@ export function UserManagementClient({
                       size="sm"
                       onClick={() => handleChangeRoleClick(user)}
                       disabled={user.id === currentUserId}
-                      title={user.id === currentUserId ? "No puedes cambiar tu propio rol" : "Cambiar el rol del usuario"}
+                      title={
+                        user.id === currentUserId
+                          ? "No puedes cambiar tu propio rol"
+                          : "Cambiar el rol del usuario"
+                      }
                       className="flex-1 sm:flex-none"
                     >
                       <Edit3 className="mr-1.5 h-3.5 w-3.5" />
@@ -432,7 +484,11 @@ export function UserManagementClient({
                       size="sm"
                       onClick={() => handleDeleteClick(user)}
                       disabled={user.id === currentUserId}
-                      title={user.id === currentUserId ? "No puedes eliminar tu propia cuenta" : "Eliminar usuario"}
+                      title={
+                        user.id === currentUserId
+                          ? "No puedes eliminar tu propia cuenta"
+                          : "Eliminar usuario"
+                      }
                       className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:flex-none"
                     >
                       <Trash2 className="mr-1.5 h-3.5 w-3.5" />

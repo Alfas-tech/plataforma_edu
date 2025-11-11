@@ -5,7 +5,11 @@ import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileR
 import { CourseEntity } from "@/src/core/entities/Course.entity";
 import { CourseVersionEntity } from "@/src/core/entities/CourseVersion.entity";
 import { CourseTopicEntity } from "@/src/core/entities/CourseTopic.entity";
-import { CourseData, CourseVersionData, TopicData } from "@/src/core/types/course.types";
+import {
+  CourseData,
+  CourseVersionData,
+  TopicData,
+} from "@/src/core/types/course.types";
 
 declare const describe: any;
 declare const beforeEach: any;
@@ -109,8 +113,12 @@ describe("CreateTopicUseCase", () => {
     const createdTopic = makeTopic();
 
     mockCourseRepository.getCourseById.mockResolvedValue(course);
-    mockAuthRepository.getCurrentUser.mockResolvedValue({ id: "user-99" } as any);
-    mockProfileRepository.getProfileByUserId.mockResolvedValue(makeProfile("admin") as any);
+    mockAuthRepository.getCurrentUser.mockResolvedValue({
+      id: "user-99",
+    } as any);
+    mockProfileRepository.getProfileByUserId.mockResolvedValue(
+      makeProfile("admin") as any
+    );
     mockCourseRepository.createTopic.mockResolvedValue(createdTopic);
 
     const result = await useCase.execute({
@@ -134,14 +142,17 @@ describe("CreateTopicUseCase", () => {
   });
 
   it("returns an error when the course does not have an active version", async () => {
-    const courseWithoutVersion = makeCourse(
-      { active_version_id: null },
-      [makeVersionData({ status: "draft" })]
-    );
+    const courseWithoutVersion = makeCourse({ active_version_id: null }, [
+      makeVersionData({ status: "draft" }),
+    ]);
 
     mockCourseRepository.getCourseById.mockResolvedValue(courseWithoutVersion);
-    mockAuthRepository.getCurrentUser.mockResolvedValue({ id: "user-1" } as any);
-    mockProfileRepository.getProfileByUserId.mockResolvedValue(makeProfile("admin") as any);
+    mockAuthRepository.getCurrentUser.mockResolvedValue({
+      id: "user-1",
+    } as any);
+    mockProfileRepository.getProfileByUserId.mockResolvedValue(
+      makeProfile("admin") as any
+    );
 
     const result = await useCase.execute({
       courseId: courseWithoutVersion.id,
@@ -157,8 +168,12 @@ describe("CreateTopicUseCase", () => {
     const course = makeCourse();
 
     mockCourseRepository.getCourseById.mockResolvedValue(course);
-    mockAuthRepository.getCurrentUser.mockResolvedValue({ id: "teacher-1" } as any);
-    mockProfileRepository.getProfileByUserId.mockResolvedValue(makeProfile("teacher") as any);
+    mockAuthRepository.getCurrentUser.mockResolvedValue({
+      id: "teacher-1",
+    } as any);
+    mockProfileRepository.getProfileByUserId.mockResolvedValue(
+      makeProfile("teacher") as any
+    );
     mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(false);
 
     const result = await useCase.execute({
@@ -169,9 +184,8 @@ describe("CreateTopicUseCase", () => {
     expect(result.success).toBe(false);
     expect(result.error).toBe("No estás asignado a esta versión del curso");
     expect(mockCourseRepository.createTopic).not.toHaveBeenCalled();
-    expect(mockCourseRepository.isTeacherAssignedToVersion).toHaveBeenCalledWith(
-      "version-1",
-      "teacher-1"
-    );
+    expect(
+      mockCourseRepository.isTeacherAssignedToVersion
+    ).toHaveBeenCalledWith("version-1", "teacher-1");
   });
 });

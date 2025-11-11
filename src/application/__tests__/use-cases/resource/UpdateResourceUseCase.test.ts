@@ -93,8 +93,12 @@ describe("UpdateResourceUseCase", () => {
 
     mockCourseRepository.getResourceById.mockResolvedValue(resource);
     mockCourseRepository.getTopicById.mockResolvedValue(topic);
-    mockAuthRepository.getCurrentUser.mockResolvedValue({ id: "user-1" } as any);
-    mockProfileRepository.getProfileByUserId.mockResolvedValue(makeProfile("editor") as any);
+    mockAuthRepository.getCurrentUser.mockResolvedValue({
+      id: "user-1",
+    } as any);
+    mockProfileRepository.getProfileByUserId.mockResolvedValue(
+      makeProfile("editor") as any
+    );
     mockCourseRepository.updateResource.mockResolvedValue(updated);
 
     const result = await useCase.execute("resource-1", { title: "Updated" });
@@ -110,7 +114,9 @@ describe("UpdateResourceUseCase", () => {
   it("returns an error when the resource does not exist", async () => {
     mockCourseRepository.getResourceById.mockResolvedValue(null);
 
-    const result = await useCase.execute("resource-unknown", { title: "Updated" });
+    const result = await useCase.execute("resource-unknown", {
+      title: "Updated",
+    });
 
     expect(result.success).toBe(false);
     expect(result.error).toBe("Recurso no encontrado");
@@ -123,8 +129,12 @@ describe("UpdateResourceUseCase", () => {
 
     mockCourseRepository.getResourceById.mockResolvedValue(resource);
     mockCourseRepository.getTopicById.mockResolvedValue(topic);
-    mockAuthRepository.getCurrentUser.mockResolvedValue({ id: "teacher-1" } as any);
-    mockProfileRepository.getProfileByUserId.mockResolvedValue(makeProfile("teacher") as any);
+    mockAuthRepository.getCurrentUser.mockResolvedValue({
+      id: "teacher-1",
+    } as any);
+    mockProfileRepository.getProfileByUserId.mockResolvedValue(
+      makeProfile("teacher") as any
+    );
     mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(false);
 
     const result = await useCase.execute("resource-1", { title: "Updated" });
@@ -132,9 +142,8 @@ describe("UpdateResourceUseCase", () => {
     expect(result.success).toBe(false);
     expect(result.error).toBe("No estás asignado a esta versión del curso");
     expect(mockCourseRepository.updateResource).not.toHaveBeenCalled();
-    expect(mockCourseRepository.isTeacherAssignedToVersion).toHaveBeenCalledWith(
-      topic.courseVersionId,
-      "teacher-1"
-    );
+    expect(
+      mockCourseRepository.isTeacherAssignedToVersion
+    ).toHaveBeenCalledWith(topic.courseVersionId, "teacher-1");
   });
 });

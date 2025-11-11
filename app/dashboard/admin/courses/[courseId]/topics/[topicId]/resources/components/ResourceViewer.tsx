@@ -5,7 +5,13 @@ import NextImage from "next/image";
 import { ExternalLink, Download, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getResourceSignedUrl } from "@/src/presentation/actions/storage.actions";
-import { formatFileSize, getFileIcon, isImageFile, isPDFFile, prettifyFileName } from "@/lib/storage.utils";
+import {
+  formatFileSize,
+  getFileIcon,
+  isImageFile,
+  isPDFFile,
+  prettifyFileName,
+} from "@/lib/storage.utils";
 
 interface ResourceViewerProps {
   resource: {
@@ -83,28 +89,28 @@ export function ResourceViewer({
   // Recurso externo (link)
   if (resource.externalUrl) {
     return (
-      <div className="rounded-lg border bg-white p-4 hover:shadow-md transition-shadow">
+      <div className="rounded-lg border bg-white p-4 transition-shadow hover:shadow-md">
         <div className="flex items-start gap-3">
-          <div className="text-2xl flex-shrink-0">
+          <div className="flex-shrink-0 text-2xl">
             {getFileIcon(resource.resourceType)}
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-slate-900 truncate">
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate font-medium text-slate-900">
               {resource.title}
             </h3>
             {resource.description && (
-              <p className="text-sm text-slate-600 mt-1 line-clamp-2">
+              <p className="mt-1 line-clamp-2 text-sm text-slate-600">
                 {resource.description}
               </p>
             )}
-            <div className="flex items-center gap-2 mt-2">
+            <div className="mt-2 flex items-center gap-2">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleView}
                 className="text-xs"
               >
-                <ExternalLink className="h-3 w-3 mr-1" />
+                <ExternalLink className="mr-1 h-3 w-3" />
                 Abrir enlace
               </Button>
             </div>
@@ -119,7 +125,7 @@ export function ResourceViewer({
     return (
       <div className="rounded-lg border bg-white p-4">
         <div className="flex items-center gap-3">
-          <div className="animate-spin h-5 w-5 border-2 border-purple-600 border-t-transparent rounded-full" />
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" />
           <span className="text-sm text-slate-600">Cargando recurso...</span>
         </div>
       </div>
@@ -133,7 +139,7 @@ export function ResourceViewer({
           <span className="text-2xl">❌</span>
           <div>
             <h3 className="font-medium text-red-900">{resource.title}</h3>
-            <p className="text-sm text-red-700 mt-1">{urlError}</p>
+            <p className="mt-1 text-sm text-red-700">{urlError}</p>
             <Button
               size="sm"
               variant="outline"
@@ -152,12 +158,13 @@ export function ResourceViewer({
     return null;
   }
 
-  const canPreview = showPreview && resource.mimeType && (
-    isImageFile(resource.mimeType) || isPDFFile(resource.mimeType)
-  );
+  const canPreview =
+    showPreview &&
+    resource.mimeType &&
+    (isImageFile(resource.mimeType) || isPDFFile(resource.mimeType));
 
   return (
-    <div className="rounded-lg border bg-white overflow-hidden hover:shadow-md transition-shadow">
+    <div className="overflow-hidden rounded-lg border bg-white transition-shadow hover:shadow-md">
       {/* Preview (solo para imágenes y PDFs) */}
       {canPreview && resource.mimeType && isImageFile(resource.mimeType) && (
         <div className="relative h-48 bg-slate-100">
@@ -175,23 +182,25 @@ export function ResourceViewer({
       {/* Contenido */}
       <div className="p-4">
         <div className="flex items-start gap-3">
-          <div className="text-2xl flex-shrink-0">
+          <div className="flex-shrink-0 text-2xl">
             {getFileIcon(resource.resourceType)}
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-slate-900 truncate">
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate font-medium text-slate-900">
               {resource.title}
             </h3>
             {resource.description && (
-              <p className="text-sm text-slate-600 mt-1 line-clamp-2">
+              <p className="mt-1 line-clamp-2 text-sm text-slate-600">
                 {resource.description}
               </p>
             )}
-            
+
             {/* Metadatos del archivo */}
-            <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
+            <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
               {resource.fileName && (
-                <span className="truncate">{prettifyFileName(resource.fileName) ?? resource.fileName}</span>
+                <span className="truncate">
+                  {prettifyFileName(resource.fileName) ?? resource.fileName}
+                </span>
               )}
               {resource.fileSize && (
                 <span>• {formatFileSize(resource.fileSize)}</span>
@@ -199,14 +208,14 @@ export function ResourceViewer({
             </div>
 
             {/* Botones de acción */}
-            <div className="flex items-center gap-2 mt-3">
+            <div className="mt-3 flex items-center gap-2">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleView}
                 className="text-xs"
               >
-                <Eye className="h-3 w-3 mr-1" />
+                <Eye className="mr-1 h-3 w-3" />
                 Ver
               </Button>
               <Button
@@ -215,7 +224,7 @@ export function ResourceViewer({
                 onClick={handleDownload}
                 className="text-xs"
               >
-                <Download className="h-3 w-3 mr-1" />
+                <Download className="mr-1 h-3 w-3" />
                 Descargar
               </Button>
             </div>

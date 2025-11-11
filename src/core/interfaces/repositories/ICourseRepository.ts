@@ -45,12 +45,8 @@ export interface ICourseRepository {
     versionId: string,
     input: UpdateCourseDraftInput
   ): Promise<CourseVersionEntity>;
-  publishCourseVersion(
-    input: PublishCourseVersionInput
-  ): Promise<CourseEntity>;
-  archiveCourseVersion(
-    input: ArchiveCourseVersionInput
-  ): Promise<CourseEntity>;
+  publishCourseVersion(input: PublishCourseVersionInput): Promise<CourseEntity>;
+  archiveCourseVersion(input: ArchiveCourseVersionInput): Promise<CourseEntity>;
 
   assignTeacherToVersion(
     courseId: string,

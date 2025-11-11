@@ -13,13 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  LogOut,
-  BookOpen,
-  CheckCircle2,
-  Calendar,
-  Trophy,
-} from "lucide-react";
+import { LogOut, BookOpen, CheckCircle2, Calendar, Trophy } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -264,8 +258,8 @@ export default async function StudentDashboardPage() {
                               <div className="flex items-center gap-1">
                                 <BookOpen className="h-3 w-3" />
                                 <span>
-                                    {courseCompletedTopics}/{courseTotalTopics}{" "}
-                                    tópicos
+                                  {courseCompletedTopics}/{courseTotalTopics}{" "}
+                                  tópicos
                                 </span>
                               </div>
                               {course.activeVersion && (
@@ -326,8 +320,8 @@ export default async function StudentDashboardPage() {
                     <div className="flex items-center gap-2 text-sm text-blue-800">
                       <Trophy className="h-4 w-4" />
                       <span>
-                          <strong>{completedTopics}</strong> de{" "}
-                          <strong>{totalTopics}</strong> tópicos completados
+                        <strong>{completedTopics}</strong> de{" "}
+                        <strong>{totalTopics}</strong> tópicos completados
                       </span>
                     </div>
                   </div>

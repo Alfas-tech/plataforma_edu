@@ -56,7 +56,10 @@ export const ALL_ALLOWED_MIME_TYPES = [
 /**
  * Check if a file matches one of the allowed mime-types.
  */
-export function validateFileType(file: File, allowedTypes: readonly string[]): boolean {
+export function validateFileType(
+  file: File,
+  allowedTypes: readonly string[]
+): boolean {
   return allowedTypes.includes(file.type);
 }
 
@@ -77,7 +80,7 @@ export function formatFileSize(bytes: number): string {
   const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 }
 
 /**
@@ -208,7 +211,7 @@ export function validateFile(
 
       return {
         valid: false,
-        error: `El tipo de archivo "${file.type || 'desconocido'}" no está permitido para recursos de tipo "${resourceType}". Solo se permiten: ${typeDescription}`,
+        error: `El tipo de archivo "${file.type || "desconocido"}" no está permitido para recursos de tipo "${resourceType}". Solo se permiten: ${typeDescription}`,
       };
     }
   }
@@ -224,7 +227,8 @@ export function validateFile(
   // Validate the maximum size constraint
   if (maxSize && !validateFileSize(file, maxSize)) {
     if (
-      (resourceType === "video" || (file.type && file.type.startsWith("video/"))) &&
+      (resourceType === "video" ||
+        (file.type && file.type.startsWith("video/"))) &&
       file.size > VIDEO_CONSTRAINTS.MAX_SIZE_BYTES
     ) {
       return {
@@ -250,30 +254,31 @@ export function validateFile(
  */
 export function getResourceTypeFromMime(mimeType: string): string {
   const normalized = mimeType.toLowerCase().trim();
-  
+
   // PDF
   if (normalized === "application/pdf") return "pdf";
-  
+
   // Word documents
   if (
     normalized === "application/msword" ||
-    normalized === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    normalized ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
   ) {
     return "document";
   }
-  
+
   // Videos (MP4 only)
   if (normalized === "video/mp4") return "video";
-  
+
   // Audio (MP3 only)
   if (normalized === "audio/mpeg" || normalized === "audio/mp3") return "audio";
-  
+
   // Images (JPG/PNG)
   if (normalized === "image/jpeg" || normalized === "image/png") return "image";
 
   // Plain text files
   if (normalized === "text/plain") return "text";
-  
+
   // Default to PDF so the caller can display a validation error
   return "pdf";
 }

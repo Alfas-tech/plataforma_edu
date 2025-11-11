@@ -367,7 +367,7 @@ export function StudentCourseView({
                             {topicResources.map((resource) => (
                               <div
                                 key={resource.id}
-                                className="group flex items-center justify-between rounded-lg border border-slate-200 p-3 transition-all hover:border-blue-300 hover:bg-blue-50/50 hover:shadow-md sm:p-4 cursor-pointer"
+                                className="group flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 p-3 transition-all hover:border-blue-300 hover:bg-blue-50/50 hover:shadow-md sm:p-4"
                                 onClick={() => setViewingResource(resource)}
                               >
                                 <div className="flex flex-1 items-center gap-3">

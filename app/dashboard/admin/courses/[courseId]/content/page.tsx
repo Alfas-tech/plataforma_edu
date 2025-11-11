@@ -60,18 +60,31 @@ export default async function CourseContentPage({
   const { course } = courseResult;
 
   // Type guard to filter valid branches
-  type ValidBranch = { id: string; name: string; isDefault: boolean; tipVersionId: string | null };
-  const isValidBranch = (b: unknown): b is ValidBranch => {
-    return b !== null && typeof b === 'object' && 'id' in b && 'name' in b;
+  type ValidBranch = {
+    id: string;
+    name: string;
+    isDefault: boolean;
+    tipVersionId: string | null;
   };
-  
-  const branchCandidates = [course.defaultBranch, ...(course.branches ?? [])].filter(isValidBranch);
+  const isValidBranch = (b: unknown): b is ValidBranch => {
+    return b !== null && typeof b === "object" && "id" in b && "name" in b;
+  };
+
+  const branchCandidates = [
+    course.defaultBranch,
+    ...(course.branches ?? []),
+  ].filter(isValidBranch);
 
   const selectedBranch = requestedBranchId
-    ? branchCandidates.find((branch) => branch.id === requestedBranchId) ?? null
-    : (isValidBranch(course.defaultBranch) ? course.defaultBranch : null);
+    ? (branchCandidates.find((branch) => branch.id === requestedBranchId) ??
+      null)
+    : isValidBranch(course.defaultBranch)
+      ? course.defaultBranch
+      : null;
 
-  const effectiveBranch = selectedBranch ?? (isValidBranch(course.defaultBranch) ? course.defaultBranch : null);
+  const effectiveBranch =
+    selectedBranch ??
+    (isValidBranch(course.defaultBranch) ? course.defaultBranch : null);
 
   const effectiveVersionId = (() => {
     if (requestedVersionId) {
@@ -93,18 +106,23 @@ export default async function CourseContentPage({
     return null;
   })();
 
-  const topicsQueryVersionId = effectiveVersionId ?? course.activeVersion?.id ?? course.draftVersion?.id ?? undefined;
+  const topicsQueryVersionId =
+    effectiveVersionId ??
+    course.activeVersion?.id ??
+    course.draftVersion?.id ??
+    undefined;
 
   const topicsResult = await getTopicsWithResourcesByCourse(courseId, {
     courseVersionId: topicsQueryVersionId,
   });
-  const topics = "error" in topicsResult ? [] : topicsResult.topics ?? [];
+  const topics = "error" in topicsResult ? [] : (topicsResult.topics ?? []);
 
-  const resolvedVersionId = effectiveVersionId
-    ?? topics[0]?.courseVersionId
-    ?? course.activeVersion?.id
-    ?? course.draftVersion?.id
-    ?? null;
+  const resolvedVersionId =
+    effectiveVersionId ??
+    topics[0]?.courseVersionId ??
+    course.activeVersion?.id ??
+    course.draftVersion?.id ??
+    null;
 
   const isViewingDraftVersion = Boolean(
     resolvedVersionId && course.draftVersion?.id === resolvedVersionId
@@ -115,7 +133,10 @@ export default async function CourseContentPage({
   );
 
   const isViewingArchivedVersion = Boolean(
-    resolvedVersionId && course.archivedVersions?.some((version) => version.id === resolvedVersionId)
+    resolvedVersionId &&
+      course.archivedVersions?.some(
+        (version) => version.id === resolvedVersionId
+      )
   );
 
   const canEditPublishedVersion = Boolean(
@@ -128,11 +149,12 @@ export default async function CourseContentPage({
       ? "/dashboard/editor/courses"
       : "/dashboard/admin/courses";
 
-  const resourceManagementQuery = profile.isEditor && !profile.isAdmin
-    ? {
-        from: "editor",
-      }
-    : undefined;
+  const resourceManagementQuery =
+    profile.isEditor && !profile.isAdmin
+      ? {
+          from: "editor",
+        }
+      : undefined;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">

@@ -16,7 +16,7 @@ import { createClient } from "@/src/infrastructure/supabase/server";
  */
 export async function uploadResourceFile(formData: FormData) {
   console.log("🔧 [uploadResourceFile] Iniciando en servidor...");
-  
+
   try {
     const file = formData.get("file") as File;
     const courseId = formData.get("courseId") as string;
@@ -54,7 +54,10 @@ export async function uploadResourceFile(formData: FormData) {
     });
 
     if (!validation.valid) {
-      console.error("❌ [uploadResourceFile] Validación fallida:", validation.error);
+      console.error(
+        "❌ [uploadResourceFile] Validación fallida:",
+        validation.error
+      );
       return { success: false, error: validation.error };
     }
 
@@ -74,7 +77,10 @@ export async function uploadResourceFile(formData: FormData) {
     const supabase = createClient();
 
     // Verificar autenticación
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     console.log("🔧 [uploadResourceFile] Usuario autenticado:", {
       userId: user?.id,
       email: user?.email,
@@ -82,15 +88,23 @@ export async function uploadResourceFile(formData: FormData) {
     });
 
     if (authError || !user) {
-      console.error("❌ [uploadResourceFile] Error de autenticación:", authError);
+      console.error(
+        "❌ [uploadResourceFile] Error de autenticación:",
+        authError
+      );
       return { success: false, error: "Usuario no autenticado" };
     }
 
     // Convertir File a ArrayBuffer
-    console.log("🔧 [uploadResourceFile] Convirtiendo archivo a ArrayBuffer...");
+    console.log(
+      "🔧 [uploadResourceFile] Convirtiendo archivo a ArrayBuffer..."
+    );
     const arrayBuffer = await file.arrayBuffer();
     const fileBuffer = new Uint8Array(arrayBuffer);
-    console.log("✅ [uploadResourceFile] ArrayBuffer creado, tamaño:", fileBuffer.length);
+    console.log(
+      "✅ [uploadResourceFile] ArrayBuffer creado, tamaño:",
+      fileBuffer.length
+    );
 
     // Subir archivo a Supabase Storage
     console.log("🔧 [uploadResourceFile] Subiendo a Supabase Storage...");
@@ -118,7 +132,10 @@ export async function uploadResourceFile(formData: FormData) {
       .from(STORAGE_BUCKETS.COURSE_RESOURCES)
       .getPublicUrl(data.path);
 
-    console.log("✅ [uploadResourceFile] URL pública generada:", urlData.publicUrl);
+    console.log(
+      "✅ [uploadResourceFile] URL pública generada:",
+      urlData.publicUrl
+    );
 
     // Revalidar la página de recursos
     revalidatePath(
@@ -130,7 +147,7 @@ export async function uploadResourceFile(formData: FormData) {
       data: {
         path: data.path,
         url: urlData.publicUrl,
-  fileName: prettifyFileName(file.name) ?? file.name,
+        fileName: prettifyFileName(file.name) ?? file.name,
         fileSize: file.size,
         mimeType: file.type,
       },

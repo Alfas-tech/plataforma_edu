@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -94,7 +99,7 @@ export function AddResourceWithFileDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Agregar nuevo recurso</DialogTitle>
         </DialogHeader>
@@ -182,7 +187,7 @@ export function AddResourceWithFileDialog({
           </div>
 
           {/* Botones de acción */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          <div className="flex justify-end gap-3 border-t pt-4">
             <Button
               type="button"
               variant="outline"
@@ -191,13 +196,7 @@ export function AddResourceWithFileDialog({
             >
               Cancelar
             </Button>
-            <Button
-              type="submit"
-              disabled={
-                isUploading ||
-                !selectedFile
-              }
-            >
+            <Button type="submit" disabled={isUploading || !selectedFile}>
               {isUploading ? (
                 <>
                   <span className="mr-2">⏳</span>

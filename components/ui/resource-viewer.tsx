@@ -16,7 +16,7 @@ import {
   Film,
   FileAudio,
   Image as ImageIcon,
-  File
+  File,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { prettifyFileName } from "@/lib/storage.utils";
@@ -34,7 +34,11 @@ interface ResourceViewerProps {
   };
 }
 
-export function ResourceViewer({ isOpen, onClose, resource }: ResourceViewerProps) {
+export function ResourceViewer({
+  isOpen,
+  onClose,
+  resource,
+}: ResourceViewerProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [textContent, setTextContent] = useState<string | null>(null);
   const [isLoadingText, setIsLoadingText] = useState(false);
@@ -62,12 +66,16 @@ export function ResourceViewer({ isOpen, onClose, resource }: ResourceViewerProp
     const isTxtName = normalizedName.endsWith(".txt");
     const isTxtUrl = normalizedUrl.includes(".txt");
     const isConfiguredText = resource.resourceType === "text";
-    const isDocumentTxt = resource.resourceType === "document" && (isTxtName || isTxtUrl);
+    const isDocumentTxt =
+      resource.resourceType === "document" && (isTxtName || isTxtUrl);
     const isWordMime =
       normalizedMime === "application/msword" ||
-      normalizedMime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-    const isWordName = normalizedName.endsWith(".doc") || normalizedName.endsWith(".docx");
-    const isWordPath = normalizedUrlPath.endsWith(".doc") || normalizedUrlPath.endsWith(".docx");
+      normalizedMime ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    const isWordName =
+      normalizedName.endsWith(".doc") || normalizedName.endsWith(".docx");
+    const isWordPath =
+      normalizedUrlPath.endsWith(".doc") || normalizedUrlPath.endsWith(".docx");
 
     return {
       isTextMime,
@@ -79,7 +87,13 @@ export function ResourceViewer({ isOpen, onClose, resource }: ResourceViewerProp
       isWordName,
       isWordPath,
     };
-  }, [normalizedUrlPath, resource.fileName, resource.fileUrl, resource.mimeType, resource.resourceType]);
+  }, [
+    normalizedUrlPath,
+    resource.fileName,
+    resource.fileUrl,
+    resource.mimeType,
+    resource.resourceType,
+  ]);
 
   const isTextResource = useMemo(() => {
     const isWordLike =
@@ -103,7 +117,11 @@ export function ResourceViewer({ isOpen, onClose, resource }: ResourceViewerProp
 
     // Fallback: treat unknown/empty MIME for document/other as text to probe.
     const mime = resource.mimeType?.toLowerCase() ?? "";
-    if (!mime && (resource.resourceType === "document" || resource.resourceType === "other")) {
+    if (
+      !mime &&
+      (resource.resourceType === "document" ||
+        resource.resourceType === "other")
+    ) {
       return true;
     }
 
@@ -154,7 +172,8 @@ export function ResourceViewer({ isOpen, onClose, resource }: ResourceViewerProp
         if (!response.ok) {
           throw new Error("fetch-failed");
         }
-        const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+        const contentType =
+          response.headers.get("content-type")?.toLowerCase() ?? "";
         const canReadAsText =
           !contentType ||
           contentType.startsWith("text/") ||
@@ -171,7 +190,10 @@ export function ResourceViewer({ isOpen, onClose, resource }: ResourceViewerProp
           setTextContent(normalized);
         }
       } catch (error) {
-        if (!aborted && !(error instanceof DOMException && error.name === "AbortError")) {
+        if (
+          !aborted &&
+          !(error instanceof DOMException && error.name === "AbortError")
+        ) {
           setTextError("No se pudo cargar el contenido del archivo.");
         }
       } finally {
@@ -255,7 +277,11 @@ export function ResourceViewer({ isOpen, onClose, resource }: ResourceViewerProp
               </object>
             </div>
             <div className="flex justify-center gap-2">
-              <a href={resource.fileUrl} target="_blank" rel="noopener noreferrer">
+              <a
+                href={resource.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <Button variant="outline" size="sm">
                   <ExternalLink className="mr-2 h-4 w-4" />
                   Abrir en nueva pestaña

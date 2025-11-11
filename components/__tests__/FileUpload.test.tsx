@@ -25,14 +25,13 @@ describe("FileUpload media validation", () => {
     getMediaDuration.mockResolvedValue(360);
 
     const { container } = render(
-      <FileUpload
-        onFileSelect={onFileSelect}
-        resourceType="video"
-      />
+      <FileUpload onFileSelect={onFileSelect} resourceType="video" />
     );
 
     const file = createFile("lesson.mp4", "video/mp4");
-    const input = container.querySelector("input[type='file']") as HTMLInputElement;
+    const input = container.querySelector(
+      "input[type='file']"
+    ) as HTMLInputElement;
     Object.defineProperty(input, "files", {
       value: [file],
       configurable: true,
@@ -43,9 +42,7 @@ describe("FileUpload media validation", () => {
     await waitFor(() => {
       expect(getMediaDuration).toHaveBeenCalledTimes(1);
       expect(onFileSelect).not.toHaveBeenCalled();
-      expect(
-        screen.getByText(/El video dura/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/El video dura/)).toBeInTheDocument();
     });
   });
 
@@ -53,14 +50,13 @@ describe("FileUpload media validation", () => {
     getMediaDuration.mockResolvedValue(400);
 
     const { container } = render(
-      <FileUpload
-        onFileSelect={onFileSelect}
-        resourceType="audio"
-      />
+      <FileUpload onFileSelect={onFileSelect} resourceType="audio" />
     );
 
     const file = createFile("podcast.mp3", "audio/mpeg");
-    const input = container.querySelector("input[type='file']") as HTMLInputElement;
+    const input = container.querySelector(
+      "input[type='file']"
+    ) as HTMLInputElement;
     Object.defineProperty(input, "files", {
       value: [file],
       configurable: true,
@@ -71,9 +67,7 @@ describe("FileUpload media validation", () => {
     await waitFor(() => {
       expect(getMediaDuration).toHaveBeenCalledTimes(1);
       expect(onFileSelect).not.toHaveBeenCalled();
-      expect(
-        screen.getByText(/El audio dura/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/El audio dura/)).toBeInTheDocument();
     });
   });
 
@@ -81,14 +75,13 @@ describe("FileUpload media validation", () => {
     getMediaDuration.mockResolvedValue(120);
 
     const { container } = render(
-      <FileUpload
-        onFileSelect={onFileSelect}
-        resourceType="audio"
-      />
+      <FileUpload onFileSelect={onFileSelect} resourceType="audio" />
     );
 
     const file = createFile("short.mp3", "audio/mpeg");
-    const input = container.querySelector("input[type='file']") as HTMLInputElement;
+    const input = container.querySelector(
+      "input[type='file']"
+    ) as HTMLInputElement;
     Object.defineProperty(input, "files", {
       value: [file],
       configurable: true,

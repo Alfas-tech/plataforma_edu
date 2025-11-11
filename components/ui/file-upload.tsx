@@ -43,7 +43,9 @@ export function FileUpload({
   const [dragActive, setDragActive] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isCheckingMedia, setIsCheckingMedia] = useState(false);
-  const [checkingMediaType, setCheckingMediaType] = useState<"video" | "audio" | null>(null);
+  const [checkingMediaType, setCheckingMediaType] = useState<
+    "video" | "audio" | null
+  >(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const validationRunRef = useRef(0);
 
@@ -72,8 +74,8 @@ export function FileUpload({
   const handleFile = useCallback(
     async (file: File) => {
       setValidationError(null);
-  setIsCheckingMedia(false);
-  setCheckingMediaType(null);
+      setIsCheckingMedia(false);
+      setCheckingMediaType(null);
       const currentValidationId = validationRunRef.current + 1;
       validationRunRef.current = currentValidationId;
 
@@ -91,7 +93,8 @@ export function FileUpload({
       }
 
       const shouldCheckDuration =
-        file.type && (file.type.startsWith("video/") || file.type.startsWith("audio/"));
+        file.type &&
+        (file.type.startsWith("video/") || file.type.startsWith("audio/"));
 
       if (shouldCheckDuration) {
         const mediaType = file.type.startsWith("video/") ? "video" : "audio";
@@ -150,7 +153,7 @@ export function FileUpload({
       e.stopPropagation();
       setDragActive(false);
 
-  if (disabled || isCheckingMedia) return;
+      if (disabled || isCheckingMedia) return;
 
       const files = e.dataTransfer.files;
       if (files && files.length > 0) {
@@ -163,7 +166,7 @@ export function FileUpload({
   const handleChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       e.preventDefault();
-  if (disabled || isCheckingMedia) return;
+      if (disabled || isCheckingMedia) return;
 
       const files = e.target.files;
       if (files && files.length > 0) {
@@ -242,7 +245,9 @@ export function FileUpload({
           </Button>
 
           <div className="text-center text-xs text-slate-500">
-            <span className="block">Tamaño máximo: {formatFileSize(maxSize)}</span>
+            <span className="block">
+              Tamaño máximo: {formatFileSize(maxSize)}
+            </span>
             {resourceType && (
               <span className="mt-1 block">
                 Tipo seleccionado: {resourceType.toUpperCase()}
@@ -292,9 +297,9 @@ export function FileUpload({
               )}
             </div>
 
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <p
                     className="break-words text-sm font-medium text-slate-900"
                     title={selectedFile.name}
@@ -304,11 +309,11 @@ export function FileUpload({
                   <p className="text-xs text-slate-500">
                     {formatFileSize(selectedFile.size)}
                   </p>
-                    {isCheckingMedia && checkingMediaType && (
+                  {isCheckingMedia && checkingMediaType && (
                     <p className="mt-1 text-xs text-purple-600">
-                        {checkingMediaType === "audio"
-                          ? "Validando duración del audio…"
-                          : "Validando duración del video…"}
+                      {checkingMediaType === "audio"
+                        ? "Validando duración del audio…"
+                        : "Validando duración del video…"}
                     </p>
                   )}
                 </div>
@@ -319,7 +324,7 @@ export function FileUpload({
                     variant="ghost"
                     size="sm"
                     onClick={handleRemove}
-                    className="flex-shrink-0 h-8 w-8 p-0"
+                    className="h-8 w-8 flex-shrink-0 p-0"
                   >
                     <X className="h-4 w-4" />
                   </Button>

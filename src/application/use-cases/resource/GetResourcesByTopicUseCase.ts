@@ -72,9 +72,7 @@ export class GetResourcesByTopicUseCase {
       return {
         success: false,
         error:
-          error instanceof Error
-            ? error.message
-            : "Error al obtener recursos",
+          error instanceof Error ? error.message : "Error al obtener recursos",
       };
     }
   }

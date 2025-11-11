@@ -64,7 +64,8 @@ describe("GetTopicsByCourseUseCase", () => {
 
   const makeVersion = (
     overrides: Partial<CourseVersionData> = {}
-  ): CourseVersionEntity => CourseVersionEntity.fromDatabase(makeVersionData(overrides));
+  ): CourseVersionEntity =>
+    CourseVersionEntity.fromDatabase(makeVersionData(overrides));
 
   const makeTopic = (overrides: Partial<TopicData> = {}): CourseTopicEntity =>
     CourseTopicEntity.fromDatabase({
@@ -117,8 +118,12 @@ describe("GetTopicsByCourseUseCase", () => {
     const topics = [makeTopic(), makeTopic({ id: "topic-2", order_index: 2 })];
 
     mockCourseRepository.getCourseById.mockResolvedValue(course);
-    mockAuthRepository.getCurrentUser.mockResolvedValue({ id: "user-1" } as any);
-    mockProfileRepository.getProfileByUserId.mockResolvedValue(makeProfile("admin") as any);
+    mockAuthRepository.getCurrentUser.mockResolvedValue({
+      id: "user-1",
+    } as any);
+    mockProfileRepository.getProfileByUserId.mockResolvedValue(
+      makeProfile("admin") as any
+    );
     mockCourseRepository.listTopics.mockResolvedValue(topics);
 
     const result = await useCase.execute(course.id);
@@ -131,14 +136,23 @@ describe("GetTopicsByCourseUseCase", () => {
 
   it("returns an error when the provided version does not belong to the course", async () => {
     const course = makeCourse();
-  const foreignVersion = makeVersion({ id: "version-99", course_id: "another-course" });
+    const foreignVersion = makeVersion({
+      id: "version-99",
+      course_id: "another-course",
+    });
 
     mockCourseRepository.getCourseById.mockResolvedValue(course);
-    mockAuthRepository.getCurrentUser.mockResolvedValue({ id: "user-1" } as any);
-    mockProfileRepository.getProfileByUserId.mockResolvedValue(makeProfile("admin") as any);
+    mockAuthRepository.getCurrentUser.mockResolvedValue({
+      id: "user-1",
+    } as any);
+    mockProfileRepository.getProfileByUserId.mockResolvedValue(
+      makeProfile("admin") as any
+    );
     mockCourseRepository.getCourseVersionById.mockResolvedValue(foreignVersion);
 
-    const result = await useCase.execute(course.id, { courseVersionId: "version-99" });
+    const result = await useCase.execute(course.id, {
+      courseVersionId: "version-99",
+    });
 
     expect(result.success).toBe(false);
     expect(result.error).toBe("La versión seleccionada no pertenece al curso");
@@ -146,14 +160,17 @@ describe("GetTopicsByCourseUseCase", () => {
   });
 
   it("returns an error when the course has no active version", async () => {
-    const course = makeCourse(
-      { active_version_id: null },
-      [makeVersionData({ status: "draft" })]
-    );
+    const course = makeCourse({ active_version_id: null }, [
+      makeVersionData({ status: "draft" }),
+    ]);
 
     mockCourseRepository.getCourseById.mockResolvedValue(course);
-    mockAuthRepository.getCurrentUser.mockResolvedValue({ id: "user-1" } as any);
-    mockProfileRepository.getProfileByUserId.mockResolvedValue(makeProfile("admin") as any);
+    mockAuthRepository.getCurrentUser.mockResolvedValue({
+      id: "user-1",
+    } as any);
+    mockProfileRepository.getProfileByUserId.mockResolvedValue(
+      makeProfile("admin") as any
+    );
 
     const result = await useCase.execute(course.id);
 
@@ -168,18 +185,23 @@ describe("GetTopicsByCourseUseCase", () => {
 
     mockCourseRepository.getCourseById.mockResolvedValue(course);
     mockCourseRepository.getCourseVersionById.mockResolvedValue(version);
-    mockAuthRepository.getCurrentUser.mockResolvedValue({ id: "teacher-1" } as any);
-    mockProfileRepository.getProfileByUserId.mockResolvedValue(makeProfile("teacher") as any);
+    mockAuthRepository.getCurrentUser.mockResolvedValue({
+      id: "teacher-1",
+    } as any);
+    mockProfileRepository.getProfileByUserId.mockResolvedValue(
+      makeProfile("teacher") as any
+    );
     mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(false);
 
-    const result = await useCase.execute(course.id, { courseVersionId: version.id });
+    const result = await useCase.execute(course.id, {
+      courseVersionId: version.id,
+    });
 
     expect(result.success).toBe(false);
     expect(result.error).toBe("No estás asignado a esta versión del curso");
     expect(mockCourseRepository.listTopics).not.toHaveBeenCalled();
-    expect(mockCourseRepository.isTeacherAssignedToVersion).toHaveBeenCalledWith(
-      version.id,
-      "teacher-1"
-    );
+    expect(
+      mockCourseRepository.isTeacherAssignedToVersion
+    ).toHaveBeenCalledWith(version.id, "teacher-1");
   });
 });

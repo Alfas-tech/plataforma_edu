@@ -46,7 +46,15 @@ interface ResourceData {
   topicId: string;
   title: string;
   description: string | null;
-  resourceType: "pdf" | "document" | "text" | "image" | "audio" | "video" | "link" | "other";
+  resourceType:
+    | "pdf"
+    | "document"
+    | "text"
+    | "image"
+    | "audio"
+    | "video"
+    | "link"
+    | "other";
   fileUrl: string | null;
   fileName: string | null;
   fileSize: number | null;
@@ -123,7 +131,10 @@ const CANVAS_LAYOUT: SlotMeta[] = [
   },
 ];
 
-const RESOURCE_TYPE_META: Record<ResourceData["resourceType"], { label: string; icon: typeof FileText }> = {
+const RESOURCE_TYPE_META: Record<
+  ResourceData["resourceType"],
+  { label: string; icon: typeof FileText }
+> = {
   pdf: { label: "PDF", icon: FileText },
   document: { label: "Documento", icon: FileText },
   text: { label: "Texto", icon: FileText },
@@ -140,14 +151,20 @@ function formatFileSize(bytes: number | null): string | null {
   }
 
   const units = ["B", "KB", "MB", "GB", "TB"] as const;
-  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const exponent = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(1024)),
+    units.length - 1
+  );
   const size = bytes / Math.pow(1024, exponent);
 
   return `${size % 1 === 0 ? size : size.toFixed(1)} ${units[exponent]}`;
 }
 
 function partitionResources(resources: ResourceData[]) {
-  const slots: Array<ResourceData | null> = Array.from({ length: MAX_CANVAS_SLOTS }, () => null);
+  const slots: Array<ResourceData | null> = Array.from(
+    { length: MAX_CANVAS_SLOTS },
+    () => null
+  );
   const overflow: ResourceData[] = [];
 
   const sorted = [...resources].sort((a, b) => a.orderIndex - b.orderIndex);
@@ -161,7 +178,9 @@ function partitionResources(resources: ResourceData[]) {
         return;
       }
 
-      const fallbackSlot = slots.findIndex((slotResource) => slotResource === null);
+      const fallbackSlot = slots.findIndex(
+        (slotResource) => slotResource === null
+      );
       if (fallbackSlot !== -1) {
         slots[fallbackSlot] = resource;
         return;
@@ -199,7 +218,13 @@ function rebuildResourcesFromLayout(
   return nextResources;
 }
 
-function InlinePreview({ resource, isDragActive = false }: { resource: ResourceData; isDragActive?: boolean }) {
+function InlinePreview({
+  resource,
+  isDragActive = false,
+}: {
+  resource: ResourceData;
+  isDragActive?: boolean;
+}) {
   const [textPreview, setTextPreview] = useState<string | null>(null);
   const [isLoadingText, setIsLoadingText] = useState(false);
   const [textError, setTextError] = useState<string | null>(null);
@@ -221,7 +246,8 @@ function InlinePreview({ resource, isDragActive = false }: { resource: ResourceD
 
     return (
       mime === "application/msword" ||
-      mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      mime ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
       name.endsWith(".doc") ||
       name.endsWith(".docx") ||
       urlPath.endsWith(".doc") ||
@@ -246,12 +272,21 @@ function InlinePreview({ resource, isDragActive = false }: { resource: ResourceD
     const isTxtName = fileName.endsWith(".txt");
     const isTxtUrl = fileUrl.includes(".txt");
     const isResourceText = resource.resourceType === "text";
-    const isDocumentTxt = resource.resourceType === "document" && (isTxtName || isTxtUrl);
-    const shouldProbe = !mime && (resource.resourceType === "document" || resource.resourceType === "other");
+    const isDocumentTxt =
+      resource.resourceType === "document" && (isTxtName || isTxtUrl);
+    const shouldProbe =
+      !mime &&
+      (resource.resourceType === "document" ||
+        resource.resourceType === "other");
 
     const supportsTextPreview =
       Boolean(resource.fileUrl) &&
-      (isResourceText || isTextMime || isTxtName || isTxtUrl || isDocumentTxt || shouldProbe);
+      (isResourceText ||
+        isTextMime ||
+        isTxtName ||
+        isTxtUrl ||
+        isDocumentTxt ||
+        shouldProbe);
 
     if (!supportsTextPreview || isWordDocument) {
       setTextPreview(null);
@@ -274,7 +309,8 @@ function InlinePreview({ resource, isDragActive = false }: { resource: ResourceD
         if (!response.ok) {
           throw new Error("fetch-error");
         }
-        const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+        const contentType =
+          response.headers.get("content-type")?.toLowerCase() ?? "";
         if (!contentType.startsWith("text/") && !contentType.includes("json")) {
           throw new Error("unsupported-content-type");
         }
@@ -285,7 +321,10 @@ function InlinePreview({ resource, isDragActive = false }: { resource: ResourceD
           setTextPreview(normalized.trimStart() || null);
         }
       } catch (error) {
-        if (!isCancelled && !(error instanceof DOMException && error.name === "AbortError")) {
+        if (
+          !isCancelled &&
+          !(error instanceof DOMException && error.name === "AbortError")
+        ) {
           setTextError("No se pudo cargar el contenido");
         }
       } finally {
@@ -301,7 +340,13 @@ function InlinePreview({ resource, isDragActive = false }: { resource: ResourceD
       isCancelled = true;
       controller.abort();
     };
-  }, [isWordDocument, resource.fileUrl, resource.fileName, resource.mimeType, resource.resourceType]);
+  }, [
+    isWordDocument,
+    resource.fileUrl,
+    resource.fileName,
+    resource.mimeType,
+    resource.resourceType,
+  ]);
 
   const suppressParent = (
     event:
@@ -313,7 +358,8 @@ function InlinePreview({ resource, isDragActive = false }: { resource: ResourceD
     event.stopPropagation();
   };
 
-  const wrapperClass = "pointer-events-auto flex h-full min-h-full w-full flex-1 bg-slate-900/70";
+  const wrapperClass =
+    "pointer-events-auto flex h-full min-h-full w-full flex-1 bg-slate-900/70";
 
   const mimeType = resource.mimeType ?? "";
 
@@ -340,7 +386,11 @@ function InlinePreview({ resource, isDragActive = false }: { resource: ResourceD
           onClick={suppressParent}
           onWheel={suppressParent}
         >
-          <video controls className="h-full w-full object-contain" src={resource.fileUrl} />
+          <video
+            controls
+            className="h-full w-full object-contain"
+            src={resource.fileUrl}
+          />
         </div>
       );
     }
@@ -355,7 +405,9 @@ function InlinePreview({ resource, isDragActive = false }: { resource: ResourceD
           onWheel={suppressParent}
         >
           <FileAudio2 className="h-12 w-12 text-purple-200" />
-          <span className="text-xs font-medium uppercase tracking-[0.24em] text-slate-200/80">Audio</span>
+          <span className="text-xs font-medium uppercase tracking-[0.24em] text-slate-200/80">
+            Audio
+          </span>
           <audio
             controls
             className="w-full max-w-xs"
@@ -375,7 +427,10 @@ function InlinePreview({ resource, isDragActive = false }: { resource: ResourceD
     if (mimeType.startsWith("image/") || resource.resourceType === "image") {
       return (
         <div
-          className={cn(wrapperClass, "relative items-center justify-center overflow-hidden p-4")}
+          className={cn(
+            wrapperClass,
+            "relative items-center justify-center overflow-hidden p-4"
+          )}
           onPointerDown={suppressParent}
           onPointerUp={suppressParent}
           onClick={suppressParent}
@@ -427,7 +482,9 @@ function InlinePreview({ resource, isDragActive = false }: { resource: ResourceD
             title={resource.title}
             className={cn(
               "absolute inset-0 h-full w-full border-0",
-              isDragActive ? "pointer-events-none select-none" : "pointer-events-auto"
+              isDragActive
+                ? "pointer-events-none select-none"
+                : "pointer-events-auto"
             )}
             allowFullScreen
           />
@@ -440,13 +497,12 @@ function InlinePreview({ resource, isDragActive = false }: { resource: ResourceD
     const url = resource.fileUrl?.toLowerCase() ?? "";
     const isTextResource =
       Boolean(resource.fileUrl) &&
-      (
-        resource.resourceType === "text" ||
+      (resource.resourceType === "text" ||
         mime.startsWith("text/") ||
         fileName.endsWith(".txt") ||
         url.includes(".txt") ||
-        (resource.resourceType === "document" && (fileName.endsWith(".txt") || url.includes(".txt")))
-      );
+        (resource.resourceType === "document" &&
+          (fileName.endsWith(".txt") || url.includes(".txt"))));
 
     if (isTextResource) {
       if (textPreview) {
@@ -480,7 +536,9 @@ function InlinePreview({ resource, isDragActive = false }: { resource: ResourceD
             onWheel={suppressParent}
           >
             <FileText className="h-10 w-10 animate-pulse" />
-            <span className="text-xs uppercase tracking-[0.24em] text-slate-200/80">Cargando</span>
+            <span className="text-xs uppercase tracking-[0.24em] text-slate-200/80">
+              Cargando
+            </span>
           </div>
         );
       }
@@ -495,7 +553,9 @@ function InlinePreview({ resource, isDragActive = false }: { resource: ResourceD
             onWheel={suppressParent}
           >
             <FileCode2 className="h-10 w-10" />
-            <span className="text-xs font-medium uppercase tracking-[0.24em] text-slate-200/80">{textError}</span>
+            <span className="text-xs font-medium uppercase tracking-[0.24em] text-slate-200/80">
+              {textError}
+            </span>
           </div>
         );
       }
@@ -510,7 +570,9 @@ function InlinePreview({ resource, isDragActive = false }: { resource: ResourceD
         onWheel={suppressParent}
       >
         <FileCode2 className="h-10 w-10" />
-        <span className="text-xs font-medium uppercase tracking-[0.24em] text-slate-200/80">Archivo</span>
+        <span className="text-xs font-medium uppercase tracking-[0.24em] text-slate-200/80">
+          Archivo
+        </span>
       </div>
     );
   }
@@ -525,7 +587,9 @@ function InlinePreview({ resource, isDragActive = false }: { resource: ResourceD
         onWheel={suppressParent}
       >
         <Link2 className="h-10 w-10" />
-        <span className="text-xs font-medium uppercase tracking-[0.24em] text-slate-200/80">Enlace externo</span>
+        <span className="text-xs font-medium uppercase tracking-[0.24em] text-slate-200/80">
+          Enlace externo
+        </span>
       </div>
     );
   }
@@ -539,7 +603,9 @@ function InlinePreview({ resource, isDragActive = false }: { resource: ResourceD
       onWheel={suppressParent}
     >
       <PackageOpen className="h-10 w-10" />
-      <span className="text-xs font-medium uppercase tracking-[0.24em] text-slate-200/80">Sin vista previa</span>
+      <span className="text-xs font-medium uppercase tracking-[0.24em] text-slate-200/80">
+        Sin vista previa
+      </span>
     </div>
   );
 }
@@ -557,7 +623,10 @@ interface CanvasSlotProps {
   onEdit: (resource: ResourceData) => void;
   onDelete: (resource: ResourceData) => void;
   onDragStart: (event: ReactDragEvent<HTMLElement>, resourceId: string) => void;
-  onDragOver: (event: ReactDragEvent<HTMLDivElement>, slotIndex: number) => void;
+  onDragOver: (
+    event: ReactDragEvent<HTMLDivElement>,
+    slotIndex: number
+  ) => void;
   onDrop: (event: ReactDragEvent<HTMLDivElement>, slotIndex: number) => void;
   onDragEnd: () => void;
 }
@@ -588,11 +657,11 @@ function CanvasSlot({
           ? cn(
               "border-slate-200",
               isSelected && "ring-2 ring-purple-500/60",
-              isDragOver && "ring-2 ring-purple-400/70 border-purple-300/60"
+              isDragOver && "border-purple-300/60 ring-2 ring-purple-400/70"
             )
           : cn(
               "border-dashed border-slate-300 bg-slate-100/70",
-              isDragOver && "ring-2 ring-purple-300 border-purple-200"
+              isDragOver && "border-purple-200 ring-2 ring-purple-300"
             )
       )}
       onDragOver={(event) => canMutate && onDragOver(event, slotIndex)}
@@ -605,15 +674,13 @@ function CanvasSlot({
             <InlinePreview resource={resource} isDragActive={isDragActive} />
           </div>
 
-          <div className="pointer-events-none absolute left-4 bottom-4">
+          <div className="pointer-events-none absolute bottom-4 left-4">
             <div className="inline-flex max-w-full items-center rounded-full bg-slate-900/80 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur-sm">
               <span className="truncate">{resource.title}</span>
             </div>
           </div>
 
-          <div
-            className="pointer-events-none absolute left-4 top-1/2 flex -translate-y-1/2 flex-col gap-1 text-white opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
-          >
+          <div className="pointer-events-none absolute left-4 top-1/2 flex -translate-y-1/2 flex-col gap-1 text-white opacity-0 transition-opacity duration-150 group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
             {canMutate && (
               <button
                 type="button"
@@ -676,7 +743,9 @@ function CanvasSlot({
       ) : (
         <div className="flex h-full flex-col items-center justify-center gap-2 text-slate-400">
           <PackageOpen className="h-8 w-8" />
-          <span className="text-xs font-semibold uppercase tracking-[0.24em]">{slotMeta.title}</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.24em]">
+            {slotMeta.title}
+          </span>
           <span className="text-[11px]">Arrastra un recurso aquí</span>
         </div>
       )}
@@ -695,8 +764,14 @@ interface OverflowResourceRowProps {
   onEdit: (resource: ResourceData) => void;
   onDelete: (resource: ResourceData) => void;
   onDragStart: (event: ReactDragEvent<HTMLElement>, resourceId: string) => void;
-  onDragOver: (event: ReactDragEvent<HTMLDivElement>, resourceIndex: number) => void;
-  onDrop: (event: ReactDragEvent<HTMLDivElement>, resourceIndex: number) => void;
+  onDragOver: (
+    event: ReactDragEvent<HTMLDivElement>,
+    resourceIndex: number
+  ) => void;
+  onDrop: (
+    event: ReactDragEvent<HTMLDivElement>,
+    resourceIndex: number
+  ) => void;
   onDragEnd: () => void;
 }
 
@@ -730,9 +805,13 @@ function OverflowResourceRow({
       onClick={() => onSelect(resource.id)}
     >
       <div className="flex flex-1 items-start gap-3">
-        <span className="mt-1 text-xs font-semibold text-slate-400">#{resource.orderIndex}</span>
+        <span className="mt-1 text-xs font-semibold text-slate-400">
+          #{resource.orderIndex}
+        </span>
         <div className="flex flex-col">
-          <span className="text-sm font-semibold text-slate-900">{resource.title}</span>
+          <span className="text-sm font-semibold text-slate-900">
+            {resource.title}
+          </span>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
             <span>{meta.label}</span>
             {sizeLabel && <span>{sizeLabel}</span>}
@@ -812,7 +891,13 @@ interface OverflowDropZoneProps {
   onDrop: (event: ReactDragEvent<HTMLDivElement>) => void;
 }
 
-function OverflowDropZone({ label, canMutate, isActive, onDragOver, onDrop }: OverflowDropZoneProps) {
+function OverflowDropZone({
+  label,
+  canMutate,
+  isActive,
+  onDragOver,
+  onDrop,
+}: OverflowDropZoneProps) {
   if (!canMutate) {
     return null;
   }
@@ -838,7 +923,10 @@ interface ResourceInfoDialogProps {
 
 function ResourceInfoDialog({ resource, onClose }: ResourceInfoDialogProps) {
   return (
-    <Dialog open={Boolean(resource)} onOpenChange={(open) => !open && onClose()}>
+    <Dialog
+      open={Boolean(resource)}
+      onOpenChange={(open) => !open && onClose()}
+    >
       <DialogContent className="max-w-md space-y-4">
         {resource && (
           <>
@@ -861,7 +949,9 @@ function ResourceInfoDialog({ resource, onClose }: ResourceInfoDialogProps) {
                   <span className="text-slate-500">Archivo</span>
                   <span
                     className="max-w-[14rem] break-words text-right font-medium text-slate-700"
-                    title={prettifyFileName(resource.fileName) ?? resource.fileName}
+                    title={
+                      prettifyFileName(resource.fileName) ?? resource.fileName
+                    }
                   >
                     {prettifyFileName(resource.fileName) ?? resource.fileName}
                   </span>
@@ -870,13 +960,17 @@ function ResourceInfoDialog({ resource, onClose }: ResourceInfoDialogProps) {
               {resource.fileSize && (
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500">Peso</span>
-                  <span className="font-medium text-slate-700">{formatFileSize(resource.fileSize)}</span>
+                  <span className="font-medium text-slate-700">
+                    {formatFileSize(resource.fileSize)}
+                  </span>
                 </div>
               )}
               {resource.mimeType && (
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500">MIME</span>
-                  <span className="font-medium text-slate-700">{resource.mimeType}</span>
+                  <span className="font-medium text-slate-700">
+                    {resource.mimeType}
+                  </span>
                 </div>
               )}
               <div className="flex items-center justify-between">
@@ -899,7 +993,9 @@ function ResourceInfoDialog({ resource, onClose }: ResourceInfoDialogProps) {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">Orden</span>
-                <span className="font-medium text-slate-700">{resource.orderIndex}</span>
+                <span className="font-medium text-slate-700">
+                  {resource.orderIndex}
+                </span>
               </div>
               {resource.externalUrl && (
                 <a
@@ -930,7 +1026,6 @@ function ResourceInfoDialog({ resource, onClose }: ResourceInfoDialogProps) {
   );
 }
 
-
 export function ResourceManagementClient({
   courseVersionId,
   branchName,
@@ -950,14 +1045,25 @@ export function ResourceManagementClient({
   const router = useRouter();
   const { showToast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [editingResource, setEditingResource] = useState<ResourceData | null>(null);
-  const [deletingResource, setDeletingResource] = useState<ResourceData | null>(null);
-  const [inspectingResource, setInspectingResource] = useState<ResourceData | null>(null);
-  const [draggedResourceId, setDraggedResourceId] = useState<string | null>(null);
-  const [dragOverTarget, setDragOverTarget] = useState<DragHoverTarget | null>(null);
+  const [editingResource, setEditingResource] = useState<ResourceData | null>(
+    null
+  );
+  const [deletingResource, setDeletingResource] = useState<ResourceData | null>(
+    null
+  );
+  const [inspectingResource, setInspectingResource] =
+    useState<ResourceData | null>(null);
+  const [draggedResourceId, setDraggedResourceId] = useState<string | null>(
+    null
+  );
+  const [dragOverTarget, setDragOverTarget] = useState<DragHoverTarget | null>(
+    null
+  );
   const [isReordering, setIsReordering] = useState(false);
   const [localResources, setLocalResources] = useState<ResourceData[]>([]);
-  const [selectedResourceId, setSelectedResourceId] = useState<string | null>(null);
+  const [selectedResourceId, setSelectedResourceId] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     const sorted = [...resources].sort((a, b) => a.orderIndex - b.orderIndex);
@@ -1002,7 +1108,9 @@ export function ResourceManagementClient({
     return currentMax + 1;
   }, [slotResources, sortedResources]);
 
-  const branchLabel = isDefaultBranch ? "edición principal" : `edición ${branchName}`;
+  const branchLabel = isDefaultBranch
+    ? "edición principal"
+    : `edición ${branchName}`;
   const showCourseTitle = false;
 
   const buildTopicHref = (topicId: string) => {
@@ -1027,13 +1135,18 @@ export function ResourceManagementClient({
     if (!topicLink) return;
     const target = buildTopicHref(topicLink.id);
     const queryString = new URLSearchParams(target.query).toString();
-    const url = queryString ? `${target.pathname}?${queryString}` : target.pathname;
+    const url = queryString
+      ? `${target.pathname}?${queryString}`
+      : target.pathname;
     router.push(url);
   };
 
   const stateBadge = (() => {
     if (isViewingArchivedVersion) {
-      return { label: "Versión archivada", tone: "bg-slate-800/70 text-slate-100" };
+      return {
+        label: "Versión archivada",
+        tone: "bg-slate-800/70 text-slate-100",
+      };
     }
 
     if (isViewingDraftVersion) {
@@ -1041,7 +1154,10 @@ export function ResourceManagementClient({
     }
 
     if (isViewingPublishedVersion) {
-      return { label: "Versión publicada", tone: "bg-emerald-100 text-emerald-700" };
+      return {
+        label: "Versión publicada",
+        tone: "bg-emerald-100 text-emerald-700",
+      };
     }
 
     return { label: branchLabel, tone: "bg-slate-100 text-slate-600" };
@@ -1067,7 +1183,10 @@ export function ResourceManagementClient({
     return "Los cambios se publican inmediatamente para los estudiantes.";
   })();
 
-  const handleDragStart = (event: ReactDragEvent<HTMLElement>, resourceId: string) => {
+  const handleDragStart = (
+    event: ReactDragEvent<HTMLElement>,
+    resourceId: string
+  ) => {
     if (!canMutateResources) return;
     setDraggedResourceId(resourceId);
     setDragOverTarget(null);
@@ -1091,7 +1210,9 @@ export function ResourceManagementClient({
     const nextSlots = [...slots];
     const nextOverflow = [...overflow];
 
-    const fromSlotIndex = nextSlots.findIndex((resource) => resource?.id === draggedResourceId);
+    const fromSlotIndex = nextSlots.findIndex(
+      (resource) => resource?.id === draggedResourceId
+    );
     let fromOverflowIndex = -1;
     let draggedResource: ResourceData | null = null;
 
@@ -1099,7 +1220,9 @@ export function ResourceManagementClient({
       draggedResource = nextSlots[fromSlotIndex];
       nextSlots[fromSlotIndex] = null;
     } else {
-      fromOverflowIndex = nextOverflow.findIndex((resource) => resource.id === draggedResourceId);
+      fromOverflowIndex = nextOverflow.findIndex(
+        (resource) => resource.id === draggedResourceId
+      );
       if (fromOverflowIndex !== -1) {
         draggedResource = nextOverflow.splice(fromOverflowIndex, 1)[0] ?? null;
       }
@@ -1142,7 +1265,9 @@ export function ResourceManagementClient({
     const layoutUnchanged =
       slots.every((resource, index) => resource?.id === nextSlots[index]?.id) &&
       overflow.length === nextOverflow.length &&
-      overflow.every((resource, index) => resource.id === nextOverflow[index]?.id);
+      overflow.every(
+        (resource, index) => resource.id === nextOverflow[index]?.id
+      );
 
     setDragOverTarget(null);
     setDraggedResourceId(null);
@@ -1178,13 +1303,19 @@ export function ResourceManagementClient({
     }
   };
 
-  const handleDragOverSlot = (event: ReactDragEvent<HTMLDivElement>, slotIndex: number) => {
+  const handleDragOverSlot = (
+    event: ReactDragEvent<HTMLDivElement>,
+    slotIndex: number
+  ) => {
     if (!canMutateResources) return;
     event.preventDefault();
     setDragOverTarget({ type: "slot", index: slotIndex });
   };
 
-  const handleDropOnSlot = (event: ReactDragEvent<HTMLDivElement>, slotIndex: number) => {
+  const handleDropOnSlot = (
+    event: ReactDragEvent<HTMLDivElement>,
+    slotIndex: number
+  ) => {
     if (!canMutateResources) return;
     event.preventDefault();
     void performDrop({ type: "slot", index: slotIndex });
@@ -1208,7 +1339,9 @@ export function ResourceManagementClient({
     void performDrop({ type: "overflow", index: overflowIndex });
   };
 
-  const handleDragOverOverflowTail = (event: ReactDragEvent<HTMLDivElement>) => {
+  const handleDragOverOverflowTail = (
+    event: ReactDragEvent<HTMLDivElement>
+  ) => {
     if (!canMutateResources) return;
     event.preventDefault();
     setDragOverTarget({ type: "overflowTail" });
@@ -1231,8 +1364,10 @@ export function ResourceManagementClient({
         resource={resource}
         canMutate={canMutateResources}
         isSelected={Boolean(resource && resource.id === selectedResourceId)}
-        isDragOver={dragOverTarget?.type === "slot" && dragOverTarget.index === index}
-  isDragActive={Boolean(draggedResourceId)}
+        isDragOver={
+          dragOverTarget?.type === "slot" && dragOverTarget.index === index
+        }
+        isDragActive={Boolean(draggedResourceId)}
         onSelect={setSelectedResourceId}
         onInspect={setInspectingResource}
         onEdit={setEditingResource}
@@ -1253,7 +1388,10 @@ export function ResourceManagementClient({
         resourceIndex={overflowIndex}
         canMutate={canMutateResources}
         isSelected={resource.id === selectedResourceId}
-        isDragOver={dragOverTarget?.type === "overflow" && dragOverTarget.index === overflowIndex}
+        isDragOver={
+          dragOverTarget?.type === "overflow" &&
+          dragOverTarget.index === overflowIndex
+        }
         onSelect={setSelectedResourceId}
         onInspect={setInspectingResource}
         onEdit={setEditingResource}
@@ -1266,14 +1404,17 @@ export function ResourceManagementClient({
     );
   });
 
-  const showOverflowSection = overflowResources.length > 0 || canMutateResources;
+  const showOverflowSection =
+    overflowResources.length > 0 || canMutateResources;
 
   return (
     <>
       <div className="flex flex-col gap-6">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-lg font-semibold text-slate-900">{topic.title}</span>
+            <span className="text-lg font-semibold text-slate-900">
+              {topic.title}
+            </span>
             <span
               title={stateMessage}
               className={cn(

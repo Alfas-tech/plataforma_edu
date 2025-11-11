@@ -8,7 +8,13 @@ import { CourseEntity } from "../../entities/Course.entity";
 // } from "../../types/course.types"; // DEPRECATED - branching removed
 
 // Temporary type definitions for backwards compatibility
-type CreateCourseBranchInput = { courseId: string; branchName: string; description?: string | null; baseVersionId: string; newVersionLabel: string; };
+type CreateCourseBranchInput = {
+  courseId: string;
+  branchName: string;
+  description?: string | null;
+  baseVersionId: string;
+  newVersionLabel: string;
+};
 type CreateCourseMergeRequestInput = any;
 type DeleteCourseBranchInput = any;
 type MergeCourseBranchInput = any;

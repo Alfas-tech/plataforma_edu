@@ -6,7 +6,10 @@ import { AdminHeader } from "@/components/dashboard/AdminHeader";
 import { Button } from "@/components/ui/button";
 import { getCurrentProfile } from "@/src/presentation/actions/profile.actions";
 import { getCourseWithTeachers } from "@/src/presentation/actions/course.actions";
-import { getResourcesByTopic, getTopicsByCourse } from "@/src/presentation/actions/content.actions";
+import {
+  getResourcesByTopic,
+  getTopicsByCourse,
+} from "@/src/presentation/actions/content.actions";
 import { ResourceManagementClient } from "./components/ResourceManagementClient";
 import { RESOURCE_MANAGEMENT_ENABLED } from "../../../../featureFlags";
 
@@ -61,8 +64,13 @@ export default async function TopicResourcesPage({
 
   const resolvedDisplayName =
     profile.displayName ?? profile.fullName ?? profile.email ?? "Usuario";
-  const resolvedInitials = resolvedDisplayName.trim().charAt(0).toUpperCase() || "U";
-  const roleLabel = profile.isAdmin ? "🛡️ Administrador" : profile.isEditor ? "✏️ Editor" : "👨‍🏫 Docente";
+  const resolvedInitials =
+    resolvedDisplayName.trim().charAt(0).toUpperCase() || "U";
+  const roleLabel = profile.isAdmin
+    ? "🛡️ Administrador"
+    : profile.isEditor
+      ? "✏️ Editor"
+      : "👨‍🏫 Docente";
 
   const resourcesResult = await getResourcesByTopic(topicId);
   if ("error" in resourcesResult || !resourcesResult.topic) {
@@ -70,7 +78,11 @@ export default async function TopicResourcesPage({
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
         <div className="container mx-auto px-4 py-8">
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
-            <p>{"error" in resourcesResult ? resourcesResult.error : "Tópico no encontrado"}</p>
+            <p>
+              {"error" in resourcesResult
+                ? resourcesResult.error
+                : "Tópico no encontrado"}
+            </p>
           </div>
         </div>
       </div>
@@ -95,20 +107,17 @@ export default async function TopicResourcesPage({
 
   // Determinar el tipo de versión que estamos viendo
   const isViewingDraftVersion = Boolean(
-    effectiveVersionId && 
-    course.draftVersion?.id === effectiveVersionId
+    effectiveVersionId && course.draftVersion?.id === effectiveVersionId
   );
 
   const isViewingPublishedVersion = Boolean(
-    effectiveVersionId && 
-    course.activeVersion?.id === effectiveVersionId &&
-    !isViewingDraftVersion
+    effectiveVersionId &&
+      course.activeVersion?.id === effectiveVersionId &&
+      !isViewingDraftVersion
   );
 
   const isViewingArchivedVersion = Boolean(
-    effectiveVersionId &&
-    !isViewingDraftVersion &&
-    !isViewingPublishedVersion
+    effectiveVersionId && !isViewingDraftVersion && !isViewingPublishedVersion
   );
 
   // Determinar permisos de edición

@@ -5,11 +5,21 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Edit, PlusCircle, Trash2, GripVertical, AlertCircle } from "lucide-react";
+import {
+  BookOpen,
+  Edit,
+  PlusCircle,
+  Trash2,
+  GripVertical,
+  AlertCircle,
+} from "lucide-react";
 import { TopicFormDialog } from "./TopicFormDialog";
 import { DeleteTopicDialog } from "./DeleteTopicDialog";
 import { RESOURCE_MANAGEMENT_ENABLED } from "../../../featureFlags";
-import { updateTopic, reorderTopics } from "@/src/presentation/actions/content.actions";
+import {
+  updateTopic,
+  reorderTopics,
+} from "@/src/presentation/actions/content.actions";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/toast-provider";
 
@@ -78,10 +88,11 @@ export function TopicManagementClient({
   // 1. Existe courseVersionId Y
   // 2. NO es versión archivada (las archivadas son solo lectura) Y
   // 3. (Es una versión NO publicada) O (Es admin editando versión publicada)
-  const canMutateContent = Boolean(courseVersionId) && 
+  const canMutateContent =
+    Boolean(courseVersionId) &&
     !isViewingArchivedVersion &&
     (!isViewingPublishedVersion || canEditPublishedVersion);
-  
+
   const branchLabel = isDefaultBranch
     ? "edición principal"
     : `edición ${branchName}`;
@@ -98,7 +109,7 @@ export function TopicManagementClient({
 
   const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
-    
+
     if (draggedIndex === null || draggedIndex === dropIndex) {
       setDraggedIndex(null);
       return;
@@ -126,7 +137,7 @@ export function TopicManagementClient({
       }));
 
       const result = await reorderTopics(courseVersionId, updates);
-      
+
       if (result.error) {
         showToast(result.error, "error");
         // Revertir cambios locales si falla
@@ -157,13 +168,15 @@ export function TopicManagementClient({
               Visualización de curso publicado
             </h3>
             <p className="mb-4 text-base text-blue-800">
-              Estás viendo la versión activa del curso que los estudiantes están experimentando.
+              Estás viendo la versión activa del curso que los estudiantes están
+              experimentando.
             </p>
             <div className="rounded-lg border border-blue-300 bg-white p-4">
               <p className="text-sm text-slate-700">
-                <span className="font-semibold">ℹ️ Información:</span> Los docentes solo pueden 
-                editar borradores. Para realizar cambios al contenido publicado, contacta a un administrador 
-                o crea un nuevo borrador desde el panel de administración.
+                <span className="font-semibold">ℹ️ Información:</span> Los
+                docentes solo pueden editar borradores. Para realizar cambios al
+                contenido publicado, contacta a un administrador o crea un nuevo
+                borrador desde el panel de administración.
               </p>
             </div>
           </div>
@@ -181,9 +194,9 @@ export function TopicManagementClient({
               📦 Versión archivada - Solo lectura
             </p>
             <p>
-              Estás visualizando una versión archivada del curso. Esta versión ya no está activa 
-              y su contenido no puede ser editado. Los tópicos se muestran tal como estaban cuando 
-              la versión fue archivada.
+              Estás visualizando una versión archivada del curso. Esta versión
+              ya no está activa y su contenido no puede ser editado. Los tópicos
+              se muestran tal como estaban cuando la versión fue archivada.
             </p>
           </>
         ) : (
@@ -193,54 +206,66 @@ export function TopicManagementClient({
             </p>
             {isViewingDraftVersion ? (
               <p>
-                📝 <strong>Versión borrador</strong> - Los cambios no afectarán a los estudiantes 
-                hasta que esta versión sea publicada.
+                📝 <strong>Versión borrador</strong> - Los cambios no afectarán
+                a los estudiantes hasta que esta versión sea publicada.
               </p>
             ) : isDefaultBranch ? (
               <p>
-                Los cambios impactan a los estudiantes una vez publicados. Utiliza
-                ediciones de trabajo para preparar modificaciones sin afectar la
-                experiencia vigente.
+                Los cambios impactan a los estudiantes una vez publicados.
+                Utiliza ediciones de trabajo para preparar modificaciones sin
+                afectar la experiencia vigente.
               </p>
             ) : (
               <p>
-                Todo lo que crees o edites aquí solo afectará a esta edición hasta
-                que apruebes una fusión hacia la edición principal.
+                Todo lo que crees o edites aquí solo afectará a esta edición
+                hasta que apruebes una fusión hacia la edición principal.
               </p>
             )}
             {!canMutateContent && !isViewingArchivedVersion && (
               <div className="mt-3 rounded-lg border-2 border-amber-300 bg-amber-50 p-4">
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
                   <div className="flex-1">
-                    <p className="font-semibold text-amber-900 mb-2">
+                    <p className="mb-2 font-semibold text-amber-900">
                       No puedes editar este contenido
                     </p>
                     {!courseVersionId ? (
                       <>
-                        <p className="text-sm text-amber-800 mb-3">
-                          Este curso no tiene una versión de borrador activa. Trabaja con un administrador para habilitar una versión borrador y así poder agregar o modificar contenido sin afectar la versión publicada.
+                        <p className="mb-3 text-sm text-amber-800">
+                          Este curso no tiene una versión de borrador activa.
+                          Trabaja con un administrador para habilitar una
+                          versión borrador y así poder agregar o modificar
+                          contenido sin afectar la versión publicada.
                         </p>
                         {isAdmin && (
-                          <Link href={`/dashboard/admin/courses/${courseId}/draft/new`}>
-                            <Button size="sm" variant="outline" className="bg-white border-amber-400 hover:bg-amber-100">
+                          <Link
+                            href={`/dashboard/admin/courses/${courseId}/draft/new`}
+                          >
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-amber-400 bg-white hover:bg-amber-100"
+                            >
                               <PlusCircle className="mr-2 h-4 w-4" />
                               Crear borrador
                             </Button>
                           </Link>
                         )}
                       </>
-                    ) : isViewingPublishedVersion && !canEditPublishedVersion ? (
+                    ) : isViewingPublishedVersion &&
+                      !canEditPublishedVersion ? (
                       <>
-                        <p className="text-sm text-amber-800 mb-3">
-                          Estás viendo la versión publicada del curso. Los editores y docentes 
-                          solo pueden modificar borradores. Solicita a un administrador que cree 
-                          un nuevo borrador si necesitas hacer cambios.
+                        <p className="mb-3 text-sm text-amber-800">
+                          Estás viendo la versión publicada del curso. Los
+                          editores y docentes solo pueden modificar borradores.
+                          Solicita a un administrador que cree un nuevo borrador
+                          si necesitas hacer cambios.
                         </p>
                       </>
                     ) : (
                       <p className="text-sm text-amber-800">
-                        Esta edición del curso no permite cambios en este momento.
+                        Esta edición del curso no permite cambios en este
+                        momento.
                       </p>
                     )}
                   </div>
@@ -272,10 +297,9 @@ export function TopicManagementClient({
               Tópicos del curso
             </h3>
             <p className="mt-0.5 text-xs text-slate-600">
-              {canMutateContent 
+              {canMutateContent
                 ? `Arrastra para reordenar · ${localTopics.length} tópico${localTopics.length !== 1 ? "s" : ""}`
-                : `${localTopics.length} tópico${localTopics.length !== 1 ? "s" : ""}`
-              }
+                : `${localTopics.length} tópico${localTopics.length !== 1 ? "s" : ""}`}
             </p>
           </div>
         </div>
@@ -307,14 +331,12 @@ export function TopicManagementClient({
         <div className="space-y-4">
           {localTopics.map((topic, index) => {
             const resourceCount = topic.resources?.length ?? 0;
-            
+
             return (
               <Card
                 key={topic.id}
                 className={`border-2 transition-all ${
-                  draggedIndex === index 
-                    ? "opacity-50" 
-                    : "hover:shadow-lg"
+                  draggedIndex === index ? "opacity-50" : "hover:shadow-lg"
                 }`}
               >
                 {/* Header del tópico */}
@@ -322,27 +344,35 @@ export function TopicManagementClient({
                   className={canMutateContent ? "cursor-move" : ""}
                   draggable={canMutateContent}
                   onDragStart={() => canMutateContent && handleDragStart(index)}
-                  onDragOver={(e) => canMutateContent && handleDragOver(e, index)}
+                  onDragOver={(e) =>
+                    canMutateContent && handleDragOver(e, index)
+                  }
                   onDrop={(e) => canMutateContent && handleDrop(e, index)}
                   onDragEnd={() => canMutateContent && handleDragEnd()}
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3 flex-1">
+                    <div className="flex flex-1 items-start gap-3">
                       {canMutateContent && (
-                        <div className="flex-shrink-0 cursor-grab active:cursor-grabbing pt-1">
+                        <div className="flex-shrink-0 cursor-grab pt-1 active:cursor-grabbing">
                           <GripVertical className="h-5 w-5 text-slate-400 transition-colors group-hover:text-slate-600" />
                         </div>
                       )}
-                      
+
                       <div className="flex flex-1 items-start gap-2">
                         <div className="flex-1">
                           <div className="mb-2 flex flex-wrap items-center gap-2">
                             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-sm font-bold text-purple-600">
                               {index + 1}
                             </span>
-                            <CardTitle className="text-xl">{topic.title}</CardTitle>
-                            <Badge variant="outline" className="border-slate-300 bg-blue-50 text-blue-700">
-                              {resourceCount} recurso{resourceCount !== 1 ? "s" : ""}
+                            <CardTitle className="text-xl">
+                              {topic.title}
+                            </CardTitle>
+                            <Badge
+                              variant="outline"
+                              className="border-slate-300 bg-blue-50 text-blue-700"
+                            >
+                              {resourceCount} recurso
+                              {resourceCount !== 1 ? "s" : ""}
                             </Badge>
                           </div>
                           {topic.description && (
@@ -368,7 +398,9 @@ export function TopicManagementClient({
                           <Button
                             size="sm"
                             variant="outline"
-                            className={canMutateContent ? "bg-white" : "bg-white/80"}
+                            className={
+                              canMutateContent ? "bg-white" : "bg-white/80"
+                            }
                           >
                             {canMutateContent ? (
                               <PlusCircle className="h-4 w-4 sm:mr-2" />
@@ -384,7 +416,9 @@ export function TopicManagementClient({
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => canMutateContent && setEditingTopic(topic)}
+                        onClick={() =>
+                          canMutateContent && setEditingTopic(topic)
+                        }
                         disabled={!canMutateContent}
                       >
                         <Edit className="h-4 w-4 sm:mr-2" />
@@ -393,7 +427,9 @@ export function TopicManagementClient({
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => canMutateContent && setDeletingTopic(topic)}
+                        onClick={() =>
+                          canMutateContent && setDeletingTopic(topic)
+                        }
                         className="border-red-300 text-red-600 hover:bg-red-50"
                         disabled={!canMutateContent}
                       >

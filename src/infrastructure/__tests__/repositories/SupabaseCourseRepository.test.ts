@@ -88,9 +88,7 @@ describe("SupabaseCourseRepository", () => {
     ...overrides,
   });
 
-  const createTopicRow = (
-    overrides: Partial<TopicData> = {}
-  ): TopicData => ({
+  const createTopicRow = (overrides: Partial<TopicData> = {}): TopicData => ({
     id: "topic-1",
     course_version_id: "version-1",
     title: "Topic 1",
@@ -544,9 +542,11 @@ describe("SupabaseCourseRepository", () => {
       const assignmentsBuilder = createChainableBuilder();
       assignmentsBuilder.select.mockReturnValue(assignmentsBuilder);
       assignmentsBuilder.in.mockReturnValue(assignmentsBuilder);
-      assignmentsBuilder.not = jest.fn().mockImplementation(() =>
-        assignmentsBuilder.setResult(failure("boom"))
-      );
+      assignmentsBuilder.not = jest
+        .fn()
+        .mockImplementation(() =>
+          assignmentsBuilder.setResult(failure("boom"))
+        );
 
       mockSupabase.from
         .mockImplementationOnce(() => versionsBuilder)
@@ -570,18 +570,14 @@ describe("SupabaseCourseRepository", () => {
       const groupsBuilder = createChainableBuilder();
       groupsBuilder.select.mockReturnValue(groupsBuilder);
       groupsBuilder.eq.mockImplementation(() =>
-        groupsBuilder.setResult(
-          success([{ course_version_id: versionRow.id }])
-        )
+        groupsBuilder.setResult(success([{ course_version_id: versionRow.id }]))
       );
 
       // Mock for course_versions query (step 2 - to get course_id from version_id)
       const versionsBuilder = createChainableBuilder();
       versionsBuilder.select.mockReturnValue(versionsBuilder);
       versionsBuilder.in.mockImplementation(() =>
-        versionsBuilder.setResult(
-          success([{ course_id: courseRow.id }])
-        )
+        versionsBuilder.setResult(success([{ course_id: courseRow.id }]))
       );
 
       // Mock for courses query (step 3)
@@ -593,7 +589,9 @@ describe("SupabaseCourseRepository", () => {
 
       // Mock for course_versions query (step 4 - get versions for mapping)
       const versionsForMappingBuilder = createChainableBuilder();
-      versionsForMappingBuilder.select.mockReturnValue(versionsForMappingBuilder);
+      versionsForMappingBuilder.select.mockReturnValue(
+        versionsForMappingBuilder
+      );
       versionsForMappingBuilder.in.mockReturnValue(versionsForMappingBuilder);
       versionsForMappingBuilder.order.mockImplementation(() =>
         versionsForMappingBuilder.setResult(success([versionRow]))
@@ -655,14 +653,13 @@ describe("SupabaseCourseRepository", () => {
         expect(value).toBe("version-123");
         return topicsBuilder;
       });
-      topicsBuilder.order.mockImplementation((
-        column: string,
-        options: { ascending: boolean }
-      ) => {
-        expect(column).toBe("order_index");
-        expect(options).toEqual({ ascending: true });
-        return topicsBuilder.setResult(success(topicRows));
-      });
+      topicsBuilder.order.mockImplementation(
+        (column: string, options: { ascending: boolean }) => {
+          expect(column).toBe("order_index");
+          expect(options).toEqual({ ascending: true });
+          return topicsBuilder.setResult(success(topicRows));
+        }
+      );
 
       mockSupabase.from.mockImplementationOnce((table: string) => {
         expect(table).toBe("topics");
@@ -809,17 +806,19 @@ describe("SupabaseCourseRepository", () => {
         });
 
         let eqCalls = 0;
-        builder.eq = jest.fn().mockImplementation((column: string, value: string) => {
-          eqCalls += 1;
-          if (eqCalls === 1) {
-            expect(column).toBe("id");
-            expect(value).toBe(current.topicId);
-            return builder;
-          }
-          expect(column).toBe("course_version_id");
-          expect(value).toBe("version-123");
-          return builder.setResult(success(null));
-        });
+        builder.eq = jest
+          .fn()
+          .mockImplementation((column: string, value: string) => {
+            eqCalls += 1;
+            if (eqCalls === 1) {
+              expect(column).toBe("id");
+              expect(value).toBe(current.topicId);
+              return builder;
+            }
+            expect(column).toBe("course_version_id");
+            expect(value).toBe("version-123");
+            return builder.setResult(success(null));
+          });
 
         return builder;
       });
@@ -842,19 +841,20 @@ describe("SupabaseCourseRepository", () => {
 
       const resourcesBuilder = createChainableBuilder();
       resourcesBuilder.select.mockReturnValue(resourcesBuilder);
-      resourcesBuilder.eq.mockImplementation((column: string, value: string) => {
-        expect(column).toBe("topic_id");
-        expect(value).toBe("topic-123");
-        return resourcesBuilder;
-      });
-      resourcesBuilder.order.mockImplementation((
-        column: string,
-        options: { ascending: boolean }
-      ) => {
-        expect(column).toBe("order_index");
-        expect(options).toEqual({ ascending: true });
-        return resourcesBuilder.setResult(success(resourceRows));
-      });
+      resourcesBuilder.eq.mockImplementation(
+        (column: string, value: string) => {
+          expect(column).toBe("topic_id");
+          expect(value).toBe("topic-123");
+          return resourcesBuilder;
+        }
+      );
+      resourcesBuilder.order.mockImplementation(
+        (column: string, options: { ascending: boolean }) => {
+          expect(column).toBe("order_index");
+          expect(options).toEqual({ ascending: true });
+          return resourcesBuilder.setResult(success(resourceRows));
+        }
+      );
 
       mockSupabase.from.mockImplementationOnce((table: string) => {
         expect(table).toBe("resources");
@@ -886,7 +886,10 @@ describe("SupabaseCourseRepository", () => {
 
   describe("addResource", () => {
     it("creates a resource using next order index when not provided", async () => {
-      const resourceRow = createResourceRow({ id: "resource-new", order_index: 4 });
+      const resourceRow = createResourceRow({
+        id: "resource-new",
+        order_index: 4,
+      });
       const getNextOrderSpy = jest
         .spyOn(repository as any, "getNextOrder")
         .mockResolvedValue(4);
@@ -1007,17 +1010,19 @@ describe("SupabaseCourseRepository", () => {
         });
 
         let eqCalls = 0;
-        builder.eq = jest.fn().mockImplementation((column: string, value: string | number) => {
-          eqCalls += 1;
-          if (eqCalls === 1) {
-            expect(column).toBe("id");
-            expect(value).toBe(current.resourceId);
-            return builder;
-          }
-          expect(column).toBe("topic_id");
-          expect(value).toBe("topic-123");
-          return builder.setResult(success(null));
-        });
+        builder.eq = jest
+          .fn()
+          .mockImplementation((column: string, value: string | number) => {
+            eqCalls += 1;
+            if (eqCalls === 1) {
+              expect(column).toBe("id");
+              expect(value).toBe(current.resourceId);
+              return builder;
+            }
+            expect(column).toBe("topic_id");
+            expect(value).toBe("topic-123");
+            return builder.setResult(success(null));
+          });
 
         return builder;
       });

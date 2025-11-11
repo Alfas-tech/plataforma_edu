@@ -93,8 +93,12 @@ describe("UpdateTopicUseCase", () => {
 
     mockCourseRepository.getTopicById.mockResolvedValue(topic);
     mockCourseRepository.getCourseVersionById.mockResolvedValue(version);
-    mockAuthRepository.getCurrentUser.mockResolvedValue({ id: "user-1" } as any);
-    mockProfileRepository.getProfileByUserId.mockResolvedValue(makeProfile("editor") as any);
+    mockAuthRepository.getCurrentUser.mockResolvedValue({
+      id: "user-1",
+    } as any);
+    mockProfileRepository.getProfileByUserId.mockResolvedValue(
+      makeProfile("editor") as any
+    );
     mockCourseRepository.updateTopic.mockResolvedValue(updated);
 
     const result = await useCase.execute("topic-1", { title: "Updated" });
@@ -123,8 +127,12 @@ describe("UpdateTopicUseCase", () => {
 
     mockCourseRepository.getTopicById.mockResolvedValue(topic);
     mockCourseRepository.getCourseVersionById.mockResolvedValue(version);
-    mockAuthRepository.getCurrentUser.mockResolvedValue({ id: "teacher-1" } as any);
-    mockProfileRepository.getProfileByUserId.mockResolvedValue(makeProfile("teacher") as any);
+    mockAuthRepository.getCurrentUser.mockResolvedValue({
+      id: "teacher-1",
+    } as any);
+    mockProfileRepository.getProfileByUserId.mockResolvedValue(
+      makeProfile("teacher") as any
+    );
     mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(false);
 
     const result = await useCase.execute("topic-1", { title: "Updated" });
@@ -132,9 +140,8 @@ describe("UpdateTopicUseCase", () => {
     expect(result.success).toBe(false);
     expect(result.error).toBe("No estás asignado a esta versión del curso");
     expect(mockCourseRepository.updateTopic).not.toHaveBeenCalled();
-    expect(mockCourseRepository.isTeacherAssignedToVersion).toHaveBeenCalledWith(
-      topic.courseVersionId,
-      "teacher-1"
-    );
+    expect(
+      mockCourseRepository.isTeacherAssignedToVersion
+    ).toHaveBeenCalledWith(topic.courseVersionId, "teacher-1");
   });
 });

@@ -87,11 +87,18 @@ describe("GetResourcesByTopicUseCase", () => {
 
   it("returns the topic resources when the user has access", async () => {
     const topic = makeTopic();
-    const resources = [makeResource(), makeResource({ id: "resource-2", order_index: 2 })];
+    const resources = [
+      makeResource(),
+      makeResource({ id: "resource-2", order_index: 2 }),
+    ];
 
     mockCourseRepository.getTopicById.mockResolvedValue(topic);
-    mockAuthRepository.getCurrentUser.mockResolvedValue({ id: "user-1" } as any);
-    mockProfileRepository.getProfileByUserId.mockResolvedValue(makeProfile("admin") as any);
+    mockAuthRepository.getCurrentUser.mockResolvedValue({
+      id: "user-1",
+    } as any);
+    mockProfileRepository.getProfileByUserId.mockResolvedValue(
+      makeProfile("admin") as any
+    );
     mockCourseRepository.listResources.mockResolvedValue(resources);
 
     const result = await useCase.execute(topic.id);
@@ -116,8 +123,12 @@ describe("GetResourcesByTopicUseCase", () => {
     const topic = makeTopic();
 
     mockCourseRepository.getTopicById.mockResolvedValue(topic);
-    mockAuthRepository.getCurrentUser.mockResolvedValue({ id: "teacher-1" } as any);
-    mockProfileRepository.getProfileByUserId.mockResolvedValue(makeProfile("teacher") as any);
+    mockAuthRepository.getCurrentUser.mockResolvedValue({
+      id: "teacher-1",
+    } as any);
+    mockProfileRepository.getProfileByUserId.mockResolvedValue(
+      makeProfile("teacher") as any
+    );
     mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(false);
 
     const result = await useCase.execute(topic.id);
@@ -125,9 +136,8 @@ describe("GetResourcesByTopicUseCase", () => {
     expect(result.success).toBe(false);
     expect(result.error).toBe("No estás asignado a esta versión del curso");
     expect(mockCourseRepository.listResources).not.toHaveBeenCalled();
-    expect(mockCourseRepository.isTeacherAssignedToVersion).toHaveBeenCalledWith(
-      topic.courseVersionId,
-      "teacher-1"
-    );
+    expect(
+      mockCourseRepository.isTeacherAssignedToVersion
+    ).toHaveBeenCalledWith(topic.courseVersionId, "teacher-1");
   });
 });

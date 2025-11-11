@@ -66,7 +66,8 @@ export default async function EditorTopicResourcesPage({
 
   const resolvedDisplayName =
     profile.displayName ?? profile.fullName ?? profile.email ?? "Usuario";
-  const resolvedInitials = resolvedDisplayName.trim().charAt(0).toUpperCase() || "U";
+  const resolvedInitials =
+    resolvedDisplayName.trim().charAt(0).toUpperCase() || "U";
   const roleLabel = profile.isAdmin ? "🛡️ Administrador" : "✏️ Editor";
 
   const resourcesResult = await getResourcesByTopic(topicId);
@@ -75,7 +76,11 @@ export default async function EditorTopicResourcesPage({
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
         <div className="container mx-auto px-4 py-8">
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
-            <p>{"error" in resourcesResult ? resourcesResult.error : "Tópico no encontrado"}</p>
+            <p>
+              {"error" in resourcesResult
+                ? resourcesResult.error
+                : "Tópico no encontrado"}
+            </p>
           </div>
         </div>
       </div>
@@ -103,14 +108,12 @@ export default async function EditorTopicResourcesPage({
 
   const isViewingPublishedVersion = Boolean(
     effectiveVersionId &&
-    course.activeVersion?.id === effectiveVersionId &&
-    !isViewingDraftVersion
+      course.activeVersion?.id === effectiveVersionId &&
+      !isViewingDraftVersion
   );
 
   const isViewingArchivedVersion = Boolean(
-    effectiveVersionId &&
-    !isViewingDraftVersion &&
-    !isViewingPublishedVersion
+    effectiveVersionId && !isViewingDraftVersion && !isViewingPublishedVersion
   );
 
   const canEditPublishedVersion = profile.isAdmin || profile.isEditor;
@@ -166,9 +169,10 @@ export default async function EditorTopicResourcesPage({
     from: comingFrom,
   };
 
-  const contentReturnPath = comingFrom === "editor"
-    ? `/dashboard/editor/courses/${courseId}/content`
-    : `/dashboard/admin/courses/${courseId}/content`;
+  const contentReturnPath =
+    comingFrom === "editor"
+      ? `/dashboard/editor/courses/${courseId}/content`
+      : `/dashboard/admin/courses/${courseId}/content`;
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-100">

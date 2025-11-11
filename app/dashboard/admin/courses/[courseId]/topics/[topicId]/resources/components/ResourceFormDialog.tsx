@@ -25,16 +25,18 @@ import {
 } from "@/components/ui/select";
 import { FileUpload } from "@/components/ui/file-upload";
 import { Loader2 } from "lucide-react";
-import {
-  resourceSchema,
-  type ResourceInput,
-} from "@/lib/validations";
+import { resourceSchema, type ResourceInput } from "@/lib/validations";
 import {
   createResource,
   updateResource,
 } from "@/src/presentation/actions/content.actions";
 import { useFileUpload } from "@/lib/hooks/useFileUpload";
-import { MAX_FILE_SIZES, formatFileSize, getResourceTypeFromMime, prettifyFileName } from "@/lib/storage.utils";
+import {
+  MAX_FILE_SIZES,
+  formatFileSize,
+  getResourceTypeFromMime,
+  prettifyFileName,
+} from "@/lib/storage.utils";
 
 interface ResourceData {
   id: string;
@@ -66,11 +68,27 @@ const RESOURCE_TYPE_OPTIONS: Array<{
   helper: string;
 }> = [
   { value: "pdf", label: "PDF (.pdf)", helper: "Documentos PDF descargables" },
-  { value: "document", label: "Documento (.doc, .docx)", helper: "Archivos Word" },
-  { value: "text", label: "Texto (.txt)", helper: "Notas o guías en texto plano" },
-  { value: "image", label: "Imagen (.jpg, .png)", helper: "Diagramas o gráficos" },
+  {
+    value: "document",
+    label: "Documento (.doc, .docx)",
+    helper: "Archivos Word",
+  },
+  {
+    value: "text",
+    label: "Texto (.txt)",
+    helper: "Notas o guías en texto plano",
+  },
+  {
+    value: "image",
+    label: "Imagen (.jpg, .png)",
+    helper: "Diagramas o gráficos",
+  },
   { value: "audio", label: "Audio (.mp3)", helper: "Clases o podcasts en MP3" },
-  { value: "video", label: "Video (.mp4)", helper: "Videos MP4 de hasta 5 minutos (50 MB máx.)" },
+  {
+    value: "video",
+    label: "Video (.mp4)",
+    helper: "Videos MP4 de hasta 5 minutos (50 MB máx.)",
+  },
   { value: "other", label: "Otro", helper: "Material complementario" },
 ];
 
@@ -88,9 +106,16 @@ export function ResourceFormDialog({
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  
+
   // File upload management hook
-  const { isUploading, progress, error: uploadError, uploadedFile, uploadFile, reset: resetUpload } = useFileUpload();
+  const {
+    isUploading,
+    progress,
+    error: uploadError,
+    uploadedFile,
+    uploadFile,
+    reset: resetUpload,
+  } = useFileUpload();
 
   const {
     register,
@@ -141,12 +166,13 @@ export function ResourceFormDialog({
   // Keep metadata in sync when a new file is selected
   useEffect(() => {
     if (selectedFile) {
-      const normalizedFileName = prettifyFileName(selectedFile.name) ?? selectedFile.name;
+      const normalizedFileName =
+        prettifyFileName(selectedFile.name) ?? selectedFile.name;
       setValue("fileName", normalizedFileName);
       setValue("fileSize", selectedFile.size);
       setValue("mimeType", selectedFile.type);
       setValue("fileUrl", "");
-      
+
       // Autodetect the resource type based on the selected file
       const detectedType = getResourceTypeFromMime(selectedFile.type);
       setValue("resourceType", detectedType as ResourceInput["resourceType"]);
@@ -169,7 +195,9 @@ export function ResourceFormDialog({
         fileUrl: resource.fileUrl ?? "",
         externalUrl: resource.externalUrl ?? "",
         orderIndex: resource.orderIndex,
-        fileName: resource.fileName ? (prettifyFileName(resource.fileName) ?? resource.fileName) : "",
+        fileName: resource.fileName
+          ? (prettifyFileName(resource.fileName) ?? resource.fileName)
+          : "",
         fileSize: resource.fileSize ?? undefined,
         mimeType: resource.mimeType ?? "",
       });
@@ -327,7 +355,10 @@ export function ResourceFormDialog({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
           <input type="hidden" {...register("fileName")} />
-          <input type="hidden" {...register("fileSize", { valueAsNumber: true })} />
+          <input
+            type="hidden"
+            {...register("fileSize", { valueAsNumber: true })}
+          />
           <input type="hidden" {...register("mimeType")} />
           <input type="hidden" {...register("fileUrl")} />
           <div className="space-y-2">
@@ -350,12 +381,15 @@ export function ResourceFormDialog({
 
           <div className="space-y-2">
             <Label>
-              Archivo {mode === "create" && <span className="text-red-500">*</span>}
+              Archivo{" "}
+              {mode === "create" && <span className="text-red-500">*</span>}
             </Label>
             {mode === "edit" && resource?.fileUrl && !selectedFile && (
               <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <span className="font-semibold text-slate-800">Archivo actual:</span>
+                  <span className="font-semibold text-slate-800">
+                    Archivo actual:
+                  </span>
                   <span
                     className="max-w-full break-words font-medium text-purple-700"
                     title={displayStoredFileName}
@@ -379,7 +413,8 @@ export function ResourceFormDialog({
                   )}
                 </div>
                 <p className="text-xs text-slate-500">
-                  Carga un nuevo archivo para reemplazarlo o déjalo vacío para conservar el actual.
+                  Carga un nuevo archivo para reemplazarlo o déjalo vacío para
+                  conservar el actual.
                 </p>
               </div>
             )}
@@ -389,7 +424,10 @@ export function ResourceFormDialog({
                 const detectedType = getResourceTypeFromMime(file.type);
 
                 // Update the form with the inferred metadata
-                setValue("resourceType", detectedType as ResourceInput["resourceType"]);
+                setValue(
+                  "resourceType",
+                  detectedType as ResourceInput["resourceType"]
+                );
                 const normalizedName = prettifyFileName(file.name) ?? file.name;
                 setValue("fileName", normalizedName);
                 setValue("fileSize", file.size);
@@ -403,14 +441,18 @@ export function ResourceFormDialog({
                 setSelectedFile(null);
                 resetUpload();
                 if (mode === "edit" && resource) {
-                  const restoredName = resource.fileName ? (prettifyFileName(resource.fileName) ?? resource.fileName) : "";
+                  const restoredName = resource.fileName
+                    ? (prettifyFileName(resource.fileName) ?? resource.fileName)
+                    : "";
                   setValue("fileName", restoredName);
                   setValue("fileSize", resource.fileSize ?? undefined);
                   setValue("mimeType", resource.mimeType ?? "");
                   setValue("fileUrl", resource.fileUrl ?? "");
                   setValue(
                     "resourceType",
-                    (resource.resourceType === "link" ? "other" : resource.resourceType) as ResourceInput["resourceType"]
+                    (resource.resourceType === "link"
+                      ? "other"
+                      : resource.resourceType) as ResourceInput["resourceType"]
                   );
                 } else {
                   setValue("fileName", "");
@@ -428,7 +470,8 @@ export function ResourceFormDialog({
               disabled={isSubmitting || isUploading}
             />
             <p className="text-xs text-purple-600">
-              💡 <strong>Sugerencia:</strong> El tipo de recurso se detectará automáticamente al seleccionar el archivo.
+              💡 <strong>Sugerencia:</strong> El tipo de recurso se detectará
+              automáticamente al seleccionar el archivo.
             </p>
           </div>
 
@@ -458,7 +501,14 @@ export function ResourceFormDialog({
             />
             {selectedFile ? (
               <p className="text-xs text-green-600">
-                ✓ Tipo detectado automáticamente: <strong>{RESOURCE_TYPE_OPTIONS.find(opt => opt.value === selectedType)?.label}</strong>
+                ✓ Tipo detectado automáticamente:{" "}
+                <strong>
+                  {
+                    RESOURCE_TYPE_OPTIONS.find(
+                      (opt) => opt.value === selectedType
+                    )?.label
+                  }
+                </strong>
               </p>
             ) : (
               <p className="text-xs text-slate-500">{resourceTypeHelper}</p>
@@ -487,15 +537,27 @@ export function ResourceFormDialog({
               <Label htmlFor="fileName">Nombre de archivo</Label>
               <Input
                 id="fileName"
-                placeholder={selectedFile ? "Capturado automáticamente" : "ej: guia-algoritmos.pdf"}
+                placeholder={
+                  selectedFile
+                    ? "Capturado automáticamente"
+                    : "ej: guia-algoritmos.pdf"
+                }
                 disabled
                 readOnly
-                value={selectedFile ? (prettifyFileName(selectedFile.name) ?? selectedFile.name) : (prettifyFileName(watchedFileName) ?? "")}
-                title={selectedFile ? (prettifyFileName(selectedFile.name) ?? selectedFile.name) : (prettifyFileName(watchedFileName) ?? "")}
-                className="bg-slate-50 text-ellipsis"
+                value={
+                  selectedFile
+                    ? (prettifyFileName(selectedFile.name) ?? selectedFile.name)
+                    : (prettifyFileName(watchedFileName) ?? "")
+                }
+                title={
+                  selectedFile
+                    ? (prettifyFileName(selectedFile.name) ?? selectedFile.name)
+                    : (prettifyFileName(watchedFileName) ?? "")
+                }
+                className="text-ellipsis bg-slate-50"
               />
-              <p className="text-xs text-slate-500 break-words">
-                {selectedFile 
+              <p className="break-words text-xs text-slate-500">
+                {selectedFile
                   ? `✓ Capturado: ${selectedFile.name}`
                   : watchedFileName
                     ? `Nombre registrado: ${prettifyFileName(watchedFileName) ?? watchedFileName}`
@@ -513,11 +575,19 @@ export function ResourceFormDialog({
                 disabled
                 readOnly
                 className="bg-slate-50"
-                value={selectedFile ? formatFileSize(selectedFile.size) : formattedStoredSize ?? ""}
-                placeholder={selectedFile ? "Capturado automáticamente" : "Se capturará automáticamente"}
+                value={
+                  selectedFile
+                    ? formatFileSize(selectedFile.size)
+                    : (formattedStoredSize ?? "")
+                }
+                placeholder={
+                  selectedFile
+                    ? "Capturado automáticamente"
+                    : "Se capturará automáticamente"
+                }
               />
               <p className="text-xs text-slate-500">
-                {selectedFile 
+                {selectedFile
                   ? `✓ ${formatFileSize(selectedFile.size)} (${selectedFile.size.toLocaleString()} bytes)`
                   : formattedStoredSize
                     ? `Tamaño registrado: ${formattedStoredSize}`
@@ -528,15 +598,19 @@ export function ResourceFormDialog({
               <Label htmlFor="mimeType">Tipo MIME</Label>
               <Input
                 id="mimeType"
-                placeholder={selectedFile ? "Capturado automáticamente" : "application/pdf"}
+                placeholder={
+                  selectedFile ? "Capturado automáticamente" : "application/pdf"
+                }
                 disabled
                 readOnly
                 className="bg-slate-50"
-                value={selectedFile ? selectedFile.type : watchedMimeType ?? ""}
+                value={
+                  selectedFile ? selectedFile.type : (watchedMimeType ?? "")
+                }
               />
               <p className="text-xs text-slate-500">
-                {selectedFile 
-                  ? `✓ Capturado: ${selectedFile.type || 'application/octet-stream'}`
+                {selectedFile
+                  ? `✓ Capturado: ${selectedFile.type || "application/octet-stream"}`
                   : watchedMimeType
                     ? `Tipo registrado: ${watchedMimeType}`
                     : "Se capturará automáticamente al seleccionar el archivo"}
@@ -545,7 +619,10 @@ export function ResourceFormDialog({
           </div>
 
           <div className="rounded-lg border border-purple-200 bg-purple-50 p-3 text-xs text-purple-700">
-            <strong>💡 Sugerencia:</strong> Los metadatos del archivo (nombre, tamaño, tipo) se capturan automáticamente al seleccionar un archivo. Asegúrate de seleccionar primero el tipo de recurso correcto antes de cargar el archivo.
+            <strong>💡 Sugerencia:</strong> Los metadatos del archivo (nombre,
+            tamaño, tipo) se capturan automáticamente al seleccionar un archivo.
+            Asegúrate de seleccionar primero el tipo de recurso correcto antes
+            de cargar el archivo.
           </div>
 
           {formError && (

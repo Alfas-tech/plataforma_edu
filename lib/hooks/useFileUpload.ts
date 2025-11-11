@@ -60,7 +60,9 @@ export function useFileUpload() {
         formData.append("topicId", topicId);
         formData.append("resourceType", resourceType);
 
-        console.log("📤 [useFileUpload] FormData creado, llamando a uploadResourceFile...");
+        console.log(
+          "📤 [useFileUpload] FormData creado, llamando a uploadResourceFile..."
+        );
 
         // Simular progreso (Supabase JS no soporta nativamente progress tracking)
         // Para un progress tracking real, necesitarías usar XMLHttpRequest o fetch con ReadableStream
@@ -82,10 +84,14 @@ export function useFileUpload() {
 
         clearInterval(progressInterval);
 
-        console.log("📤 [useFileUpload] Resultado de uploadResourceFile:", result);
+        console.log(
+          "📤 [useFileUpload] Resultado de uploadResourceFile:",
+          result
+        );
 
         if (!result.success) {
-          const error = "error" in result ? result.error : "Error al subir el archivo";
+          const error =
+            "error" in result ? result.error : "Error al subir el archivo";
           console.error("❌ [useFileUpload] Error en la subida:", error);
           setUploadState({
             isUploading: false,
@@ -97,7 +103,10 @@ export function useFileUpload() {
         }
 
         const uploadData = "data" in result ? result.data : null;
-        console.log("✅ [useFileUpload] Archivo subido exitosamente:", uploadData);
+        console.log(
+          "✅ [useFileUpload] Archivo subido exitosamente:",
+          uploadData
+        );
 
         setUploadState({
           isUploading: false,

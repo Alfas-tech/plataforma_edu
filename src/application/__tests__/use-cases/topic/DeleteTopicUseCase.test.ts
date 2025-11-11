@@ -68,8 +68,12 @@ describe("DeleteTopicUseCase", () => {
     const topic = makeTopic();
 
     mockCourseRepository.getTopicById.mockResolvedValue(topic);
-    mockAuthRepository.getCurrentUser.mockResolvedValue({ id: "user-1" } as any);
-    mockProfileRepository.getProfileByUserId.mockResolvedValue(makeProfile("admin") as any);
+    mockAuthRepository.getCurrentUser.mockResolvedValue({
+      id: "user-1",
+    } as any);
+    mockProfileRepository.getProfileByUserId.mockResolvedValue(
+      makeProfile("admin") as any
+    );
 
     const result = await useCase.execute(topic.id);
 
@@ -81,8 +85,12 @@ describe("DeleteTopicUseCase", () => {
     const topic = makeTopic();
 
     mockCourseRepository.getTopicById.mockResolvedValue(topic);
-    mockAuthRepository.getCurrentUser.mockResolvedValue({ id: "user-1" } as any);
-    mockProfileRepository.getProfileByUserId.mockResolvedValue(makeProfile("student") as any);
+    mockAuthRepository.getCurrentUser.mockResolvedValue({
+      id: "user-1",
+    } as any);
+    mockProfileRepository.getProfileByUserId.mockResolvedValue(
+      makeProfile("student") as any
+    );
 
     const result = await useCase.execute(topic.id);
 
@@ -95,8 +103,12 @@ describe("DeleteTopicUseCase", () => {
     const topic = makeTopic();
 
     mockCourseRepository.getTopicById.mockResolvedValue(topic);
-    mockAuthRepository.getCurrentUser.mockResolvedValue({ id: "teacher-1" } as any);
-    mockProfileRepository.getProfileByUserId.mockResolvedValue(makeProfile("teacher") as any);
+    mockAuthRepository.getCurrentUser.mockResolvedValue({
+      id: "teacher-1",
+    } as any);
+    mockProfileRepository.getProfileByUserId.mockResolvedValue(
+      makeProfile("teacher") as any
+    );
     mockCourseRepository.isTeacherAssignedToVersion.mockResolvedValue(false);
 
     const result = await useCase.execute(topic.id);
@@ -104,9 +116,8 @@ describe("DeleteTopicUseCase", () => {
     expect(result.success).toBe(false);
     expect(result.error).toBe("No estás asignado a esta versión del curso");
     expect(mockCourseRepository.deleteTopic).not.toHaveBeenCalled();
-    expect(mockCourseRepository.isTeacherAssignedToVersion).toHaveBeenCalledWith(
-      topic.courseVersionId,
-      "teacher-1"
-    );
+    expect(
+      mockCourseRepository.isTeacherAssignedToVersion
+    ).toHaveBeenCalledWith(topic.courseVersionId, "teacher-1");
   });
 });

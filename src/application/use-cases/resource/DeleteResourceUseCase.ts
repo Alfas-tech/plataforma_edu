@@ -78,7 +78,7 @@ export class DeleteResourceUseCase {
         const courseVersion = await this.courseRepository.getCourseVersionById(
           topic.courseVersionId
         );
-        
+
         if (courseVersion) {
           const deleteFileResult = await deleteResourceFile(
             resource.fileUrl,
@@ -104,9 +104,7 @@ export class DeleteResourceUseCase {
       return {
         success: false,
         error:
-          error instanceof Error
-            ? error.message
-            : "Error al eliminar recurso",
+          error instanceof Error ? error.message : "Error al eliminar recurso",
       };
     }
   }

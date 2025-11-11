@@ -113,8 +113,9 @@ export async function reorderTopics(
 
     return { success: true };
   } catch (error) {
-    return { 
-      error: error instanceof Error ? error.message : "Error al reordenar tópicos" 
+    return {
+      error:
+        error instanceof Error ? error.message : "Error al reordenar tópicos",
     };
   }
 }
@@ -243,8 +244,9 @@ export async function reorderResources(
 
     return { success: true };
   } catch (error) {
-    return { 
-      error: error instanceof Error ? error.message : "Error al reordenar recursos" 
+    return {
+      error:
+        error instanceof Error ? error.message : "Error al reordenar recursos",
     };
   }
 }
@@ -287,7 +289,7 @@ export async function getTopicsWithResourcesByCourse(
 ) {
   // Get topics first
   const topicsResult = await getTopicsByCourse(courseId, options);
-  
+
   if ("error" in topicsResult) {
     return topicsResult;
   }
@@ -298,8 +300,9 @@ export async function getTopicsWithResourcesByCourse(
   const topicsWithResources = await Promise.all(
     topics.map(async (topic) => {
       const resourcesResult = await getResourcesByTopic(topic.id);
-      const resources = "error" in resourcesResult ? [] : resourcesResult.resources ?? [];
-      
+      const resources =
+        "error" in resourcesResult ? [] : (resourcesResult.resources ?? []);
+
       return {
         ...topic,
         resources,
