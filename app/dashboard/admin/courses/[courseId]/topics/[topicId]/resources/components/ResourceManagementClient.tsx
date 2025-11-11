@@ -46,7 +46,7 @@ interface ResourceData {
   topicId: string;
   title: string;
   description: string | null;
-  resourceType: "pdf" | "document" | "image" | "audio" | "video" | "link";
+  resourceType: "pdf" | "document" | "text" | "image" | "audio" | "video" | "link" | "other";
   fileUrl: string | null;
   fileName: string | null;
   fileSize: number | null;
@@ -126,10 +126,12 @@ const CANVAS_LAYOUT: SlotMeta[] = [
 const RESOURCE_TYPE_META: Record<ResourceData["resourceType"], { label: string; icon: typeof FileText }> = {
   pdf: { label: "PDF", icon: FileText },
   document: { label: "Documento", icon: FileText },
+  text: { label: "Texto", icon: FileText },
   image: { label: "Imagen", icon: ImageIcon },
   audio: { label: "Audio", icon: FileAudio2 },
   video: { label: "Video", icon: Film },
   link: { label: "Enlace", icon: Link2 },
+  other: { label: "Archivo", icon: FileCode2 },
 };
 
 function formatFileSize(bytes: number | null): string | null {
@@ -197,7 +199,110 @@ function rebuildResourcesFromLayout(
   return nextResources;
 }
 
-function InlinePreview({ resource }: { resource: ResourceData }) {
+function InlinePreview({ resource, isDragActive = false }: { resource: ResourceData; isDragActive?: boolean }) {
+  const [textPreview, setTextPreview] = useState<string | null>(null);
+  const [isLoadingText, setIsLoadingText] = useState(false);
+  const [textError, setTextError] = useState<string | null>(null);
+
+  const isWordDocument = useMemo(() => {
+    if (!resource.fileUrl) {
+      return false;
+    }
+
+    const mime = resource.mimeType?.toLowerCase() ?? "";
+    const name = resource.fileName?.toLowerCase() ?? "";
+    let urlPath = resource.fileUrl.toLowerCase();
+    try {
+      const url = new URL(resource.fileUrl);
+      urlPath = url.pathname.toLowerCase();
+    } catch (error) {
+      // fall back to raw string
+    }
+
+    return (
+      mime === "application/msword" ||
+      mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      name.endsWith(".doc") ||
+      name.endsWith(".docx") ||
+      urlPath.endsWith(".doc") ||
+      urlPath.endsWith(".docx")
+    );
+  }, [resource.fileName, resource.fileUrl, resource.mimeType]);
+
+  const officeViewerUrl = useMemo(() => {
+    if (!resource.fileUrl || !isWordDocument) {
+      return null;
+    }
+
+    return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(resource.fileUrl)}`;
+  }, [isWordDocument, resource.fileUrl]);
+
+  useEffect(() => {
+    const fileName = resource.fileName?.toLowerCase() ?? "";
+    const mime = resource.mimeType?.toLowerCase() ?? "";
+    const fileUrl = resource.fileUrl?.toLowerCase() ?? "";
+
+    const isTextMime = mime.startsWith("text/");
+    const isTxtName = fileName.endsWith(".txt");
+    const isTxtUrl = fileUrl.includes(".txt");
+    const isResourceText = resource.resourceType === "text";
+    const isDocumentTxt = resource.resourceType === "document" && (isTxtName || isTxtUrl);
+    const shouldProbe = !mime && (resource.resourceType === "document" || resource.resourceType === "other");
+
+    const supportsTextPreview =
+      Boolean(resource.fileUrl) &&
+      (isResourceText || isTextMime || isTxtName || isTxtUrl || isDocumentTxt || shouldProbe);
+
+    if (!supportsTextPreview || isWordDocument) {
+      setTextPreview(null);
+      setTextError(null);
+      setIsLoadingText(false);
+      return;
+    }
+
+    let isCancelled = false;
+    const controller = new AbortController();
+
+    const fetchText = async () => {
+      try {
+        setIsLoadingText(true);
+        setTextError(null);
+        const response = await fetch(resource.fileUrl!, {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        if (!response.ok) {
+          throw new Error("fetch-error");
+        }
+        const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+        if (!contentType.startsWith("text/") && !contentType.includes("json")) {
+          throw new Error("unsupported-content-type");
+        }
+
+        const raw = await response.text();
+        if (!isCancelled) {
+          const normalized = raw.replace(/\uFEFF/g, "");
+          setTextPreview(normalized.trimStart() || null);
+        }
+      } catch (error) {
+        if (!isCancelled && !(error instanceof DOMException && error.name === "AbortError")) {
+          setTextError("No se pudo cargar el contenido");
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingText(false);
+        }
+      }
+    };
+
+    void fetchText();
+
+    return () => {
+      isCancelled = true;
+      controller.abort();
+    };
+  }, [isWordDocument, resource.fileUrl, resource.fileName, resource.mimeType, resource.resourceType]);
+
   const suppressParent = (
     event:
       | ReactPointerEvent<HTMLElement>
@@ -208,7 +313,7 @@ function InlinePreview({ resource }: { resource: ResourceData }) {
     event.stopPropagation();
   };
 
-  const wrapperClass = "pointer-events-auto flex h-full w-full items-center justify-center bg-slate-900/70 p-4";
+  const wrapperClass = "pointer-events-auto flex h-full min-h-full w-full flex-1 bg-slate-900/70";
 
   const mimeType = resource.mimeType ?? "";
 
@@ -229,7 +334,7 @@ function InlinePreview({ resource }: { resource: ResourceData }) {
     if (mimeType.startsWith("video/") || resource.resourceType === "video") {
       return (
         <div
-          className={wrapperClass}
+          className={`${wrapperClass} items-center justify-center p-4`}
           onPointerDown={suppressParent}
           onPointerUp={suppressParent}
           onClick={suppressParent}
@@ -243,7 +348,7 @@ function InlinePreview({ resource }: { resource: ResourceData }) {
     if (mimeType.startsWith("audio/") || resource.resourceType === "audio") {
       return (
         <div
-          className={`${wrapperClass} flex-col gap-3 text-slate-200`}
+          className={`${wrapperClass} flex-col items-center justify-center gap-3 p-4 text-slate-200`}
           onPointerDown={suppressParent}
           onPointerUp={suppressParent}
           onClick={suppressParent}
@@ -251,6 +356,18 @@ function InlinePreview({ resource }: { resource: ResourceData }) {
         >
           <FileAudio2 className="h-12 w-12 text-purple-200" />
           <span className="text-xs font-medium uppercase tracking-[0.24em] text-slate-200/80">Audio</span>
+          <audio
+            controls
+            className="w-full max-w-xs"
+            src={resource.fileUrl}
+            preload="none"
+            onPointerDown={suppressParent}
+            onPointerUp={suppressParent}
+            onClick={suppressParent}
+            onWheel={suppressParent}
+          >
+            Tu navegador no soporta el elemento de audio.
+          </audio>
         </div>
       );
     }
@@ -258,7 +375,7 @@ function InlinePreview({ resource }: { resource: ResourceData }) {
     if (mimeType.startsWith("image/") || resource.resourceType === "image") {
       return (
         <div
-          className={cn(wrapperClass, "relative overflow-hidden")}
+          className={cn(wrapperClass, "relative items-center justify-center overflow-hidden p-4")}
           onPointerDown={suppressParent}
           onPointerUp={suppressParent}
           onClick={suppressParent}
@@ -274,6 +391,114 @@ function InlinePreview({ resource }: { resource: ResourceData }) {
           />
         </div>
       );
+    }
+
+    if (isWordDocument) {
+      if (!officeViewerUrl) {
+        return (
+          <div
+            className={`${wrapperClass} flex-col items-center justify-center gap-3 p-4 text-slate-200`}
+            onPointerDown={suppressParent}
+            onPointerUp={suppressParent}
+            onClick={suppressParent}
+            onWheel={suppressParent}
+          >
+            <FileText className="h-10 w-10" />
+            <span className="text-xs font-medium uppercase tracking-[0.24em] text-slate-200/80">
+              No se pudo cargar el documento
+            </span>
+          </div>
+        );
+      }
+
+      return (
+        <div
+          className={cn(
+            wrapperClass,
+            "relative overflow-hidden rounded-3xl bg-white"
+          )}
+          onPointerDown={suppressParent}
+          onPointerUp={suppressParent}
+          onClick={suppressParent}
+          onWheel={suppressParent}
+        >
+          <iframe
+            src={officeViewerUrl}
+            title={resource.title}
+            className={cn(
+              "absolute inset-0 h-full w-full border-0",
+              isDragActive ? "pointer-events-none select-none" : "pointer-events-auto"
+            )}
+            allowFullScreen
+          />
+        </div>
+      );
+    }
+
+    const fileName = resource.fileName?.toLowerCase() ?? "";
+    const mime = resource.mimeType?.toLowerCase() ?? "";
+    const url = resource.fileUrl?.toLowerCase() ?? "";
+    const isTextResource =
+      Boolean(resource.fileUrl) &&
+      (
+        resource.resourceType === "text" ||
+        mime.startsWith("text/") ||
+        fileName.endsWith(".txt") ||
+        url.includes(".txt") ||
+        (resource.resourceType === "document" && (fileName.endsWith(".txt") || url.includes(".txt")))
+      );
+
+    if (isTextResource) {
+      if (textPreview) {
+        return (
+          <div
+            className={cn(
+              wrapperClass,
+              "relative flex-col overflow-hidden rounded-3xl bg-slate-950/80 text-left"
+            )}
+            onPointerDown={suppressParent}
+            onPointerUp={suppressParent}
+            onClick={suppressParent}
+            onWheel={suppressParent}
+          >
+            <div className="absolute inset-0 overflow-auto p-4">
+              <pre className="min-w-0 whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-slate-100">
+                {textPreview}
+              </pre>
+            </div>
+          </div>
+        );
+      }
+
+      if (isLoadingText) {
+        return (
+          <div
+            className={`${wrapperClass} flex-col items-center justify-center gap-3 p-4 text-slate-200`}
+            onPointerDown={suppressParent}
+            onPointerUp={suppressParent}
+            onClick={suppressParent}
+            onWheel={suppressParent}
+          >
+            <FileText className="h-10 w-10 animate-pulse" />
+            <span className="text-xs uppercase tracking-[0.24em] text-slate-200/80">Cargando</span>
+          </div>
+        );
+      }
+
+      if (textError) {
+        return (
+          <div
+            className={`${wrapperClass} flex-col items-center justify-center gap-3 p-4 text-slate-200`}
+            onPointerDown={suppressParent}
+            onPointerUp={suppressParent}
+            onClick={suppressParent}
+            onWheel={suppressParent}
+          >
+            <FileCode2 className="h-10 w-10" />
+            <span className="text-xs font-medium uppercase tracking-[0.24em] text-slate-200/80">{textError}</span>
+          </div>
+        );
+      }
     }
 
     return (
@@ -326,6 +551,7 @@ interface CanvasSlotProps {
   canMutate: boolean;
   isSelected: boolean;
   isDragOver: boolean;
+  isDragActive: boolean;
   onSelect: (resourceId: string) => void;
   onInspect: (resource: ResourceData) => void;
   onEdit: (resource: ResourceData) => void;
@@ -343,6 +569,7 @@ function CanvasSlot({
   canMutate,
   isSelected,
   isDragOver,
+  isDragActive,
   onSelect,
   onInspect,
   onEdit,
@@ -375,7 +602,7 @@ function CanvasSlot({
       {resource ? (
         <>
           <div className="absolute inset-0 overflow-hidden rounded-3xl">
-            <InlinePreview resource={resource} />
+            <InlinePreview resource={resource} isDragActive={isDragActive} />
           </div>
 
           <div className="pointer-events-none absolute left-4 bottom-4">
@@ -1005,6 +1232,7 @@ export function ResourceManagementClient({
         canMutate={canMutateResources}
         isSelected={Boolean(resource && resource.id === selectedResourceId)}
         isDragOver={dragOverTarget?.type === "slot" && dragOverTarget.index === index}
+  isDragActive={Boolean(draggedResourceId)}
         onSelect={setSelectedResourceId}
         onInspect={setInspectingResource}
         onEdit={setEditingResource}

@@ -6,10 +6,12 @@ export type CourseVersionStatus = CourseStatus;
 export type ResourceType =
   | "pdf"
   | "document"
+  | "text"
   | "image"
   | "audio"
   | "video"
-  | "link";
+  | "link"
+  | "other";
 
 export interface CourseData {
   id: string;

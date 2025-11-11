@@ -1,15 +1,16 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Upload, X, File, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   formatFileSize,
-  getFileIcon,
   validateFile,
   MAX_FILE_SIZES,
   RESOURCE_TYPE_MIME_MAP,
+  VIDEO_CONSTRAINTS,
 } from "@/lib/storage.utils";
+import { getMediaDuration } from "@/lib/media.utils";
 import { Button } from "./button";
 
 export interface FileUploadProps {
@@ -41,13 +42,23 @@ export function FileUpload({
 }: FileUploadProps) {
   const [dragActive, setDragActive] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isCheckingMedia, setIsCheckingMedia] = useState(false);
+  const [checkingMediaType, setCheckingMediaType] = useState<"video" | "audio" | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const validationRunRef = useRef(0);
+
+  const formatDuration = useCallback((seconds: number) => {
+    const rounded = Math.round(seconds);
+    const minutes = Math.floor(rounded / 60);
+    const remainingSeconds = Math.max(0, rounded - minutes * 60);
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")} min`;
+  }, []);
 
   const handleDrag = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      if (!disabled) {
+      if (!disabled && !isCheckingMedia) {
         if (e.type === "dragenter" || e.type === "dragover") {
           setDragActive(true);
         } else if (e.type === "dragleave") {
@@ -55,45 +66,17 @@ export function FileUpload({
         }
       }
     },
-    [disabled]
-  );
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setDragActive(false);
-
-      if (disabled) return;
-
-      const files = e.dataTransfer.files;
-      if (files && files.length > 0) {
-        handleFile(files[0]);
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [disabled]
-  );
-
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      e.preventDefault();
-      if (disabled) return;
-
-      const files = e.target.files;
-      if (files && files.length > 0) {
-        handleFile(files[0]);
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [disabled]
+    [disabled, isCheckingMedia]
   );
 
   const handleFile = useCallback(
-    (file: File) => {
+    async (file: File) => {
       setValidationError(null);
+  setIsCheckingMedia(false);
+  setCheckingMediaType(null);
+      const currentValidationId = validationRunRef.current + 1;
+      validationRunRef.current = currentValidationId;
 
-      // Validar archivo
       const validation = validateFile(file, {
         maxSize,
         resourceType,
@@ -107,9 +90,87 @@ export function FileUpload({
         return;
       }
 
+      const shouldCheckDuration =
+        file.type && (file.type.startsWith("video/") || file.type.startsWith("audio/"));
+
+      if (shouldCheckDuration) {
+        const mediaType = file.type.startsWith("video/") ? "video" : "audio";
+        setIsCheckingMedia(true);
+        setCheckingMediaType(mediaType);
+        try {
+          const duration = await getMediaDuration(file);
+          if (currentValidationId !== validationRunRef.current) {
+            return;
+          }
+
+          if (!Number.isFinite(duration)) {
+            setValidationError(
+              `No se pudo determinar la duración del ${mediaType}. Intenta con otro archivo.`
+            );
+            return;
+          }
+
+          if (duration > VIDEO_CONSTRAINTS.MAX_DURATION_SECONDS) {
+            setValidationError(
+              `El ${mediaType} dura ${formatDuration(
+                duration
+              )}. El máximo permitido es ${formatDuration(
+                VIDEO_CONSTRAINTS.MAX_DURATION_SECONDS
+              )}.`
+            );
+            return;
+          }
+        } catch (error) {
+          if (currentValidationId === validationRunRef.current) {
+            setValidationError(
+              `No se pudo validar la duración del ${mediaType}. Intenta nuevamente.`
+            );
+          }
+          return;
+        } finally {
+          if (currentValidationId === validationRunRef.current) {
+            setIsCheckingMedia(false);
+            setCheckingMediaType(null);
+          }
+        }
+      }
+
+      if (currentValidationId !== validationRunRef.current) {
+        return;
+      }
+
       onFileSelect(file);
     },
-    [maxSize, resourceType, onFileSelect]
+    [formatDuration, maxSize, onFileSelect, resourceType]
+  );
+
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
+
+  if (disabled || isCheckingMedia) return;
+
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) {
+        await handleFile(files[0]);
+      }
+    },
+    [disabled, isCheckingMedia, handleFile]
+  );
+
+  const handleChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      e.preventDefault();
+  if (disabled || isCheckingMedia) return;
+
+      const files = e.target.files;
+      if (files && files.length > 0) {
+        await handleFile(files[0]);
+      }
+    },
+    [disabled, isCheckingMedia, handleFile]
   );
 
   const handleButtonClick = () => {
@@ -118,6 +179,9 @@ export function FileUpload({
 
   const handleRemove = () => {
     setValidationError(null);
+    setIsCheckingMedia(false);
+    setCheckingMediaType(null);
+    validationRunRef.current += 1;
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -125,6 +189,7 @@ export function FileUpload({
   };
 
   const errorMessage = validationError || uploadError;
+  const isDisabled = disabled || isCheckingMedia;
 
   return (
     <div className={cn("w-full", className)}>
@@ -135,7 +200,7 @@ export function FileUpload({
             dragActive
               ? "border-purple-500 bg-purple-50"
               : "border-slate-300 bg-slate-50 hover:border-purple-400 hover:bg-purple-50/50",
-            disabled && "cursor-not-allowed opacity-50",
+            isDisabled && "cursor-not-allowed opacity-50",
             errorMessage && "border-red-300 bg-red-50"
           )}
           onDragEnter={handleDrag}
@@ -149,7 +214,7 @@ export function FileUpload({
             className="hidden"
             onChange={handleChange}
             accept={accept}
-            disabled={disabled}
+            disabled={isDisabled}
           />
 
           <Upload
@@ -170,22 +235,33 @@ export function FileUpload({
             variant="outline"
             size="sm"
             onClick={handleButtonClick}
-            disabled={disabled}
+            disabled={isDisabled}
             className="mb-3"
           >
             Seleccionar archivo
           </Button>
 
-          <p className="text-center text-xs text-slate-500">
+          <div className="text-center text-xs text-slate-500">
+            <span className="block">Tamaño máximo: {formatFileSize(maxSize)}</span>
             {resourceType && (
-              <span className="block">
-                Tipo: <span className="font-medium">{resourceType}</span>
+              <span className="mt-1 block">
+                Tipo seleccionado: {resourceType.toUpperCase()}
               </span>
             )}
-            <span className="block">
-              Tamaño máximo: {formatFileSize(maxSize)}
+            <span className="mt-1 block">
+              Tipos permitidos: PDF, DOC, DOCX, TXT, JPG, PNG, MP3, MP4
             </span>
-          </p>
+            <span className="mt-1 block font-semibold text-purple-600">
+              Videos y audios: máximo 5 minutos y 50 MB
+            </span>
+            {isCheckingMedia && checkingMediaType && (
+              <span className="mt-2 block text-purple-500">
+                {checkingMediaType === "audio"
+                  ? "Validando duración del audio…"
+                  : "Validando duración del video…"}
+              </span>
+            )}
+          </div>
 
           {errorMessage && (
             <div className="mt-3 flex items-center gap-2 rounded-md bg-red-100 px-3 py-2 text-sm text-red-700">
@@ -228,9 +304,16 @@ export function FileUpload({
                   <p className="text-xs text-slate-500">
                     {formatFileSize(selectedFile.size)}
                   </p>
+                    {isCheckingMedia && checkingMediaType && (
+                    <p className="mt-1 text-xs text-purple-600">
+                        {checkingMediaType === "audio"
+                          ? "Validando duración del audio…"
+                          : "Validando duración del video…"}
+                    </p>
+                  )}
                 </div>
 
-                {!disabled && !uploadSuccess && (
+                {!isDisabled && !uploadSuccess && (
                   <Button
                     type="button"
                     variant="ghost"
@@ -265,6 +348,9 @@ export function FileUpload({
 
               {uploadError && (
                 <p className="mt-2 text-xs text-red-600">{uploadError}</p>
+              )}
+              {errorMessage && !uploadError && (
+                <p className="mt-2 text-xs text-red-600">{errorMessage}</p>
               )}
             </div>
           </div>

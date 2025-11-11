@@ -13,6 +13,11 @@ export const MAX_FILE_SIZES = {
   IMAGE: 5 * 1024 * 1024, // 5 MB
   AVATAR: 2 * 1024 * 1024, // 2 MB
 } as const;
+
+export const VIDEO_CONSTRAINTS = {
+  MAX_DURATION_SECONDS: 5 * 60, // 5 minutes
+  MAX_SIZE_BYTES: 50 * 1024 * 1024, // 50 MB
+} as const;
 // Restricted list of supported mime-types
 export const ALLOWED_MIME_TYPES = {
   PDF: ["application/pdf"],
@@ -23,6 +28,7 @@ export const ALLOWED_MIME_TYPES = {
   VIDEOS: ["video/mp4"], // Only MP4
   AUDIO: ["audio/mpeg", "audio/mp3"], // Only MP3
   IMAGES: ["image/jpeg", "image/png"], // Only JPG and PNG
+  TEXT: ["text/plain"], // Plain text files
 } as const;
 
 // Map allowed mime-types per resource type
@@ -32,7 +38,9 @@ export const RESOURCE_TYPE_MIME_MAP: Record<string, readonly string[]> = {
   video: ALLOWED_MIME_TYPES.VIDEOS,
   audio: ALLOWED_MIME_TYPES.AUDIO,
   image: ALLOWED_MIME_TYPES.IMAGES,
+  text: ALLOWED_MIME_TYPES.TEXT,
   link: [], // No file required
+  other: [],
 };
 
 // Flattened list of every supported mime-type (useful for validation)
@@ -42,6 +50,7 @@ export const ALL_ALLOWED_MIME_TYPES = [
   ...ALLOWED_MIME_TYPES.VIDEOS,
   ...ALLOWED_MIME_TYPES.AUDIO,
   ...ALLOWED_MIME_TYPES.IMAGES,
+  ...ALLOWED_MIME_TYPES.TEXT,
 ] as const;
 
 /**
@@ -163,7 +172,7 @@ export function validateFile(
     if (!validateFileType(file, ALL_ALLOWED_MIME_TYPES)) {
       return {
         valid: false,
-        error: `Tipo de archivo "${file.type}" no permitido. Solo se permiten: PDF (.pdf), Word (.doc, .docx), Imágenes (.jpg, .png), Audio (.mp3), Video (.mp4)`,
+        error: `Tipo de archivo "${file.type}" no permitido. Solo se permiten: PDF (.pdf), Word (.doc, .docx), Texto (.txt), Imágenes (.jpg, .png), Audio (.mp3), Video (.mp4)`,
       };
     }
   }
@@ -190,6 +199,9 @@ export function validateFile(
         case "document":
           typeDescription = "documentos Word (.doc, .docx)";
           break;
+        case "text":
+          typeDescription = "archivos de texto plano (.txt)";
+          break;
         default:
           typeDescription = allowedForType.join(", ");
       }
@@ -211,6 +223,18 @@ export function validateFile(
 
   // Validate the maximum size constraint
   if (maxSize && !validateFileSize(file, maxSize)) {
+    if (
+      (resourceType === "video" || (file.type && file.type.startsWith("video/"))) &&
+      file.size > VIDEO_CONSTRAINTS.MAX_SIZE_BYTES
+    ) {
+      return {
+        valid: false,
+        error: `El video "${file.name}" supera el límite permitido de ${formatFileSize(
+          VIDEO_CONSTRAINTS.MAX_SIZE_BYTES
+        )}`,
+      };
+    }
+
     return {
       valid: false,
       error: `El archivo "${file.name}" (${formatFileSize(file.size)}) excede el tamaño máximo permitido de ${formatFileSize(maxSize)}`,
@@ -246,6 +270,9 @@ export function getResourceTypeFromMime(mimeType: string): string {
   
   // Images (JPG/PNG)
   if (normalized === "image/jpeg" || normalized === "image/png") return "image";
+
+  // Plain text files
+  if (normalized === "text/plain") return "text";
   
   // Default to PDF so the caller can display a validation error
   return "pdf";
@@ -261,6 +288,7 @@ export function getFileIcon(resourceType: string): string {
     audio: "🎵",
     image: "🖼️",
     document: "📝",
+    text: "📄",
     link: "🔗",
     other: "📎",
   };
@@ -279,6 +307,13 @@ export function isImageFile(mimeType: string): boolean {
  */
 export function isVideoFile(mimeType: string): boolean {
   return (ALLOWED_MIME_TYPES.VIDEOS as readonly string[]).includes(mimeType);
+}
+
+/**
+ * Verifica si un archivo es de texto plano
+ */
+export function isTextFile(mimeType: string): boolean {
+  return (ALLOWED_MIME_TYPES.TEXT as readonly string[]).includes(mimeType);
 }
 
 /**

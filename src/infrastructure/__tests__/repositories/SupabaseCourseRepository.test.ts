@@ -1,9 +1,13 @@
 import { SupabaseCourseRepository } from "@/src/infrastructure/repositories/SupabaseCourseRepository";
 import { createClient } from "@/src/infrastructure/supabase/server";
 import { CourseEntity } from "@/src/core/entities/Course.entity";
+import { CourseTopicEntity } from "@/src/core/entities/CourseTopic.entity";
+import { CourseResourceEntity } from "@/src/core/entities/CourseResource.entity";
 import type {
   CourseData,
   CourseVersionData,
+  TopicData,
+  ResourceData,
 } from "@/src/core/types/course.types";
 
 jest.mock("@/src/infrastructure/supabase/server", () => ({
@@ -84,11 +88,44 @@ describe("SupabaseCourseRepository", () => {
     ...overrides,
   });
 
+  const createTopicRow = (
+    overrides: Partial<TopicData> = {}
+  ): TopicData => ({
+    id: "topic-1",
+    course_version_id: "version-1",
+    title: "Topic 1",
+    description: "Topic description",
+    order_index: 1,
+    created_at: "2024-01-01T00:00:00.000Z",
+    updated_at: "2024-01-01T00:00:00.000Z",
+    ...overrides,
+  });
+
+  const createResourceRow = (
+    overrides: Partial<ResourceData> = {}
+  ): ResourceData => ({
+    id: "resource-1",
+    topic_id: "topic-1",
+    title: "Resource 1",
+    description: "Resource description",
+    resource_type: "pdf",
+    file_url: "https://example.com/file.pdf",
+    file_name: "file.pdf",
+    file_size: 1024,
+    mime_type: "application/pdf",
+    external_url: null,
+    order_index: 1,
+    created_at: "2024-01-01T00:00:00.000Z",
+    updated_at: "2024-01-01T00:00:00.000Z",
+    ...overrides,
+  });
+
   beforeEach(() => {
     mockSupabase = {
       from: jest.fn().mockImplementation(() => {
         throw new Error("Unexpected table call");
       }),
+      rpc: jest.fn(),
       auth: {
         getUser: jest
           .fn()
@@ -601,6 +638,397 @@ describe("SupabaseCourseRepository", () => {
       await expect(repository.getTeacherCourses("teacher-1")).rejects.toThrow(
         "boom"
       );
+    });
+  });
+
+  describe("listTopics", () => {
+    it("returns mapped topics ordered by index", async () => {
+      const topicRows = [
+        createTopicRow({ id: "topic-1", order_index: 1 }),
+        createTopicRow({ id: "topic-2", order_index: 2 }),
+      ];
+
+      const topicsBuilder = createChainableBuilder();
+      topicsBuilder.select.mockReturnValue(topicsBuilder);
+      topicsBuilder.eq.mockImplementation((column: string, value: string) => {
+        expect(column).toBe("course_version_id");
+        expect(value).toBe("version-123");
+        return topicsBuilder;
+      });
+      topicsBuilder.order.mockImplementation((
+        column: string,
+        options: { ascending: boolean }
+      ) => {
+        expect(column).toBe("order_index");
+        expect(options).toEqual({ ascending: true });
+        return topicsBuilder.setResult(success(topicRows));
+      });
+
+      mockSupabase.from.mockImplementationOnce((table: string) => {
+        expect(table).toBe("topics");
+        return topicsBuilder;
+      });
+
+      const result = await repository.listTopics("version-123");
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toBeInstanceOf(CourseTopicEntity);
+      expect(result.map((topic) => topic.orderIndex)).toEqual([1, 2]);
+    });
+
+    it("throws when supabase returns an error", async () => {
+      const topicsBuilder = createChainableBuilder();
+      topicsBuilder.select.mockReturnValue(topicsBuilder);
+      topicsBuilder.eq.mockReturnValue(topicsBuilder);
+      topicsBuilder.order.mockImplementation(() =>
+        topicsBuilder.setResult(failure("topic error"))
+      );
+
+      mockSupabase.from.mockImplementationOnce(() => topicsBuilder);
+
+      await expect(repository.listTopics("version-123")).rejects.toThrow(
+        "topic error"
+      );
+    });
+  });
+
+  describe("createTopic", () => {
+    it("creates a topic using next order index when not provided", async () => {
+      const topicRow = createTopicRow({ id: "topic-new", order_index: 3 });
+      const getNextOrderSpy = jest
+        .spyOn(repository as any, "getNextOrder")
+        .mockResolvedValue(3);
+
+      const topicsBuilder = createChainableBuilder();
+      topicsBuilder.insert = jest.fn().mockImplementation((payload) => {
+        expect(payload).toMatchObject({
+          course_version_id: "version-123",
+          title: "New Topic",
+          description: null,
+          order_index: 3,
+        });
+        return topicsBuilder;
+      });
+      topicsBuilder.select.mockReturnValue(topicsBuilder);
+      topicsBuilder.single.mockImplementation(() =>
+        Promise.resolve(success(topicRow))
+      );
+
+      mockSupabase.from.mockImplementationOnce((table: string) => {
+        expect(table).toBe("topics");
+        return topicsBuilder;
+      });
+
+      const topic = await repository.createTopic({
+        courseVersionId: "version-123",
+        title: "New Topic",
+        createdBy: "user-1",
+      });
+
+      expect(getNextOrderSpy).toHaveBeenCalledWith(
+        mockSupabase,
+        "topics",
+        "order_index",
+        "course_version_id",
+        "version-123",
+        undefined
+      );
+      expect(topic).toBeInstanceOf(CourseTopicEntity);
+      expect(topic.orderIndex).toBe(3);
+
+      getNextOrderSpy.mockRestore();
+    });
+
+    it("throws when insertion fails", async () => {
+      const getNextOrderSpy = jest
+        .spyOn(repository as any, "getNextOrder")
+        .mockResolvedValue(1);
+
+      const topicsBuilder = createChainableBuilder();
+      topicsBuilder.insert = jest.fn().mockReturnValue(topicsBuilder);
+      topicsBuilder.select.mockReturnValue(topicsBuilder);
+      topicsBuilder.single.mockImplementation(() =>
+        Promise.resolve(failure("create topic error"))
+      );
+
+      mockSupabase.from.mockImplementationOnce(() => topicsBuilder);
+
+      await expect(
+        repository.createTopic({
+          courseVersionId: "version-123",
+          title: "Bad Topic",
+          createdBy: "user-1",
+        })
+      ).rejects.toThrow("create topic error");
+
+      getNextOrderSpy.mockRestore();
+    });
+  });
+
+  describe("reorderTopics", () => {
+    it("invokes batch RPC when available", async () => {
+      mockSupabase.rpc.mockResolvedValue({ data: null, error: null });
+
+      await repository.reorderTopics("version-123", [
+        { topicId: "topic-1", orderIndex: 2 },
+        { topicId: "topic-2", orderIndex: 5 },
+      ]);
+
+      expect(mockSupabase.rpc).toHaveBeenCalledWith(
+        "reorder_topics_batch",
+        expect.objectContaining({
+          p_course_version_id: "version-123",
+          p_topic_ids: ["topic-1", "topic-2"],
+          p_order_indices: [2, 5],
+        })
+      );
+    });
+
+    it("falls back to sequential updates when RPC fails", async () => {
+      mockSupabase.rpc.mockResolvedValue({
+        data: null,
+        error: { message: "missing function" },
+      });
+
+      const warnSpy = jest.spyOn(console, "warn").mockImplementation();
+
+      const orders = [
+        { topicId: "topic-1", orderIndex: 3 },
+        { topicId: "topic-2", orderIndex: 4 },
+      ];
+      let callIndex = 0;
+
+      mockSupabase.from.mockImplementation((table: string) => {
+        expect(table).toBe("topics");
+        const builder = createChainableBuilder();
+        const current = orders[callIndex++];
+
+        builder.update = jest.fn().mockImplementation((payload) => {
+          expect(payload).toEqual({ order_index: current.orderIndex });
+          return builder;
+        });
+
+        let eqCalls = 0;
+        builder.eq = jest.fn().mockImplementation((column: string, value: string) => {
+          eqCalls += 1;
+          if (eqCalls === 1) {
+            expect(column).toBe("id");
+            expect(value).toBe(current.topicId);
+            return builder;
+          }
+          expect(column).toBe("course_version_id");
+          expect(value).toBe("version-123");
+          return builder.setResult(success(null));
+        });
+
+        return builder;
+      });
+
+      await repository.reorderTopics("version-123", orders);
+
+      expect(mockSupabase.rpc).toHaveBeenCalled();
+      expect(mockSupabase.from).toHaveBeenCalledTimes(orders.length);
+
+      warnSpy.mockRestore();
+    });
+  });
+
+  describe("listResources", () => {
+    it("returns mapped resources ordered by index", async () => {
+      const resourceRows = [
+        createResourceRow({ id: "res-1", order_index: 1 }),
+        createResourceRow({ id: "res-2", order_index: 2 }),
+      ];
+
+      const resourcesBuilder = createChainableBuilder();
+      resourcesBuilder.select.mockReturnValue(resourcesBuilder);
+      resourcesBuilder.eq.mockImplementation((column: string, value: string) => {
+        expect(column).toBe("topic_id");
+        expect(value).toBe("topic-123");
+        return resourcesBuilder;
+      });
+      resourcesBuilder.order.mockImplementation((
+        column: string,
+        options: { ascending: boolean }
+      ) => {
+        expect(column).toBe("order_index");
+        expect(options).toEqual({ ascending: true });
+        return resourcesBuilder.setResult(success(resourceRows));
+      });
+
+      mockSupabase.from.mockImplementationOnce((table: string) => {
+        expect(table).toBe("resources");
+        return resourcesBuilder;
+      });
+
+      const result = await repository.listResources("topic-123");
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toBeInstanceOf(CourseResourceEntity);
+      expect(result.map((resource) => resource.orderIndex)).toEqual([1, 2]);
+    });
+
+    it("throws when supabase returns an error", async () => {
+      const resourcesBuilder = createChainableBuilder();
+      resourcesBuilder.select.mockReturnValue(resourcesBuilder);
+      resourcesBuilder.eq.mockReturnValue(resourcesBuilder);
+      resourcesBuilder.order.mockImplementation(() =>
+        resourcesBuilder.setResult(failure("resource error"))
+      );
+
+      mockSupabase.from.mockImplementationOnce(() => resourcesBuilder);
+
+      await expect(repository.listResources("topic-123")).rejects.toThrow(
+        "resource error"
+      );
+    });
+  });
+
+  describe("addResource", () => {
+    it("creates a resource using next order index when not provided", async () => {
+      const resourceRow = createResourceRow({ id: "resource-new", order_index: 4 });
+      const getNextOrderSpy = jest
+        .spyOn(repository as any, "getNextOrder")
+        .mockResolvedValue(4);
+
+      const resourcesBuilder = createChainableBuilder();
+      resourcesBuilder.insert = jest.fn().mockImplementation((payload) => {
+        expect(payload).toMatchObject({
+          topic_id: "topic-123",
+          title: "Video",
+          resource_type: "video",
+          order_index: 4,
+        });
+        return resourcesBuilder;
+      });
+      resourcesBuilder.select.mockReturnValue(resourcesBuilder);
+      resourcesBuilder.single.mockImplementation(() =>
+        Promise.resolve(success(resourceRow))
+      );
+
+      mockSupabase.from.mockImplementationOnce((table: string) => {
+        expect(table).toBe("resources");
+        return resourcesBuilder;
+      });
+
+      const resource = await repository.addResource({
+        topicId: "topic-123",
+        title: "Video",
+        resourceType: "video",
+        createdBy: "user-1",
+      });
+
+      expect(getNextOrderSpy).toHaveBeenCalledWith(
+        mockSupabase,
+        "resources",
+        "order_index",
+        "topic_id",
+        "topic-123",
+        undefined
+      );
+      expect(resource).toBeInstanceOf(CourseResourceEntity);
+      expect(resource.orderIndex).toBe(4);
+
+      getNextOrderSpy.mockRestore();
+    });
+
+    it("throws when insertion fails", async () => {
+      const getNextOrderSpy = jest
+        .spyOn(repository as any, "getNextOrder")
+        .mockResolvedValue(2);
+
+      const resourcesBuilder = createChainableBuilder();
+      resourcesBuilder.insert = jest.fn().mockReturnValue(resourcesBuilder);
+      resourcesBuilder.select.mockReturnValue(resourcesBuilder);
+      resourcesBuilder.single.mockImplementation(() =>
+        Promise.resolve(failure("resource create error"))
+      );
+
+      mockSupabase.from.mockImplementationOnce(() => resourcesBuilder);
+
+      await expect(
+        repository.addResource({
+          topicId: "topic-123",
+          title: "Document",
+          resourceType: "document",
+          createdBy: "user-1",
+        })
+      ).rejects.toThrow("resource create error");
+
+      getNextOrderSpy.mockRestore();
+    });
+  });
+
+  describe("reorderResources", () => {
+    it("invokes batch RPC when available", async () => {
+      mockSupabase.rpc.mockResolvedValue({ data: null, error: null });
+      const logSpy = jest.spyOn(console, "log").mockImplementation();
+
+      await repository.reorderResources("topic-123", [
+        { resourceId: "res-1", orderIndex: 9 },
+        { resourceId: "res-2", orderIndex: 10 },
+      ]);
+
+      expect(mockSupabase.rpc).toHaveBeenCalledWith(
+        "reorder_resources_batch",
+        expect.objectContaining({
+          p_topic_id: "topic-123",
+          p_resource_ids: ["res-1", "res-2"],
+          p_order_indices: [9, 10],
+        })
+      );
+
+      logSpy.mockRestore();
+    });
+
+    it("falls back to sequential updates when RPC fails", async () => {
+      mockSupabase.rpc.mockResolvedValue({
+        data: null,
+        error: { message: "missing function" },
+      });
+
+      const logSpy = jest.spyOn(console, "log").mockImplementation();
+      const warnSpy = jest.spyOn(console, "warn").mockImplementation();
+
+      const orders = [
+        { resourceId: "res-1", orderIndex: 3 },
+        { resourceId: "res-2", orderIndex: 7 },
+      ];
+      let callIndex = 0;
+
+      mockSupabase.from.mockImplementation((table: string) => {
+        expect(table).toBe("resources");
+        const builder = createChainableBuilder();
+        const current = orders[callIndex++];
+
+        builder.update = jest.fn().mockImplementation((payload) => {
+          expect(payload).toEqual({ order_index: current.orderIndex });
+          return builder;
+        });
+
+        let eqCalls = 0;
+        builder.eq = jest.fn().mockImplementation((column: string, value: string | number) => {
+          eqCalls += 1;
+          if (eqCalls === 1) {
+            expect(column).toBe("id");
+            expect(value).toBe(current.resourceId);
+            return builder;
+          }
+          expect(column).toBe("topic_id");
+          expect(value).toBe("topic-123");
+          return builder.setResult(success(null));
+        });
+
+        return builder;
+      });
+
+      await repository.reorderResources("topic-123", orders);
+
+      expect(mockSupabase.rpc).toHaveBeenCalled();
+      expect(mockSupabase.from).toHaveBeenCalledTimes(orders.length);
+
+      logSpy.mockRestore();
+      warnSpy.mockRestore();
     });
   });
 });

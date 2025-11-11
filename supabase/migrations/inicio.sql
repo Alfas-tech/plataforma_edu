@@ -11,7 +11,7 @@ BEGIN;
 
 CREATE TYPE user_role AS ENUM ('admin', 'teacher', 'editor', 'student');
 CREATE TYPE course_status AS ENUM ('draft', 'active', 'archived');
-CREATE TYPE resource_type AS ENUM ('pdf', 'video', 'audio', 'document', 'link', 'image', 'other');
+CREATE TYPE resource_type AS ENUM ('pdf', 'video', 'audio', 'document', 'text', 'link', 'image', 'other');
 
 -- =============================================
 -- TABLA: profiles

@@ -30,8 +30,6 @@ export function AddResourceWithFileDialog({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [resourceType, setResourceType] = useState<ResourceType>("pdf");
-  const [externalUrl, setExternalUrl] = useState("");
-  const [useExternalUrl, setUseExternalUrl] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const { isUploading, progress, error, uploadedFile, uploadFile, reset } =
@@ -45,34 +43,6 @@ export function AddResourceWithFileDialog({
       return;
     }
 
-    // Caso 1: URL externa (enlaces)
-    if (useExternalUrl && resourceType === "link") {
-      if (!externalUrl.trim()) {
-        alert("La URL externa es requerida");
-        return;
-      }
-
-      // Aquí llamarías a tu action para crear recurso con URL externa
-      // await addResource({
-      //   topicId,
-      //   title,
-      //   description,
-      //   resourceType: "link",
-      //   externalUrl,
-      // });
-
-      console.log("Crear recurso con URL externa:", {
-        title,
-        description,
-        externalUrl,
-      });
-
-      handleClose();
-      onSuccess();
-      return;
-    }
-
-    // Caso 2: Archivo subido
     if (!selectedFile) {
       alert("Selecciona un archivo");
       return;
@@ -117,8 +87,6 @@ export function AddResourceWithFileDialog({
     setTitle("");
     setDescription("");
     setResourceType("pdf");
-    setExternalUrl("");
-    setUseExternalUrl(false);
     setSelectedFile(null);
     reset();
     onClose();
@@ -174,7 +142,6 @@ export function AddResourceWithFileDialog({
               onChange={(e) => {
                 const newType = e.target.value as ResourceType;
                 setResourceType(newType);
-                setUseExternalUrl(newType === "link");
                 setSelectedFile(null);
                 reset();
               }}
@@ -186,54 +153,33 @@ export function AddResourceWithFileDialog({
               <option value="audio">🎵 Audio</option>
               <option value="image">🖼️ Imagen</option>
               <option value="document">📝 Documento</option>
-              <option value="link">🔗 Enlace externo</option>
+              <option value="text">📃 Texto</option>
               <option value="other">📎 Otro</option>
             </select>
           </div>
 
-          {/* URL Externa (solo para tipo "link") */}
-          {useExternalUrl ? (
-            <div>
-              <Label htmlFor="externalUrl" className="text-sm font-medium">
-                URL externa <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="externalUrl"
-                type="url"
-                value={externalUrl}
-                onChange={(e) => setExternalUrl(e.target.value)}
-                placeholder="https://ejemplo.com/recurso"
-                required
-                className="mt-1"
+          {/* Upload de archivo */}
+          <div>
+            <Label className="text-sm font-medium">
+              Archivo <span className="text-red-500">*</span>
+            </Label>
+            <div className="mt-1">
+              <FileUpload
+                onFileSelect={setSelectedFile}
+                onFileRemove={() => {
+                  setSelectedFile(null);
+                  reset();
+                }}
+                resourceType={resourceType}
+                maxSize={MAX_FILE_SIZES.RESOURCE}
+                selectedFile={selectedFile}
+                uploadProgress={progress?.percentage}
+                uploadError={error}
+                uploadSuccess={!!uploadedFile}
+                disabled={isUploading}
               />
-              <p className="mt-1 text-xs text-slate-500">
-                Ingresa la URL completa del recurso externo
-              </p>
             </div>
-          ) : (
-            /* Upload de archivo */
-            <div>
-              <Label className="text-sm font-medium">
-                Archivo <span className="text-red-500">*</span>
-              </Label>
-              <div className="mt-1">
-                <FileUpload
-                  onFileSelect={setSelectedFile}
-                  onFileRemove={() => {
-                    setSelectedFile(null);
-                    reset();
-                  }}
-                  resourceType={resourceType}
-                  maxSize={MAX_FILE_SIZES.RESOURCE}
-                  selectedFile={selectedFile}
-                  uploadProgress={progress?.percentage}
-                  uploadError={error}
-                  uploadSuccess={!!uploadedFile}
-                  disabled={isUploading}
-                />
-              </div>
-            </div>
-          )}
+          </div>
 
           {/* Botones de acción */}
           <div className="flex justify-end gap-3 pt-4 border-t">
@@ -249,8 +195,7 @@ export function AddResourceWithFileDialog({
               type="submit"
               disabled={
                 isUploading ||
-                (!useExternalUrl && !selectedFile) ||
-                (useExternalUrl && !externalUrl.trim())
+                !selectedFile
               }
             >
               {isUploading ? (
