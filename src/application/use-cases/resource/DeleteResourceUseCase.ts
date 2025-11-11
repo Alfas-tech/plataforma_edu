@@ -1,6 +1,7 @@
 import { ICourseRepository } from "@/src/core/interfaces/repositories/ICourseRepository";
 import { IAuthRepository } from "@/src/core/interfaces/repositories/IAuthRepository";
 import { IProfileRepository } from "@/src/core/interfaces/repositories/IProfileRepository";
+import { deleteResourceFile } from "@/src/presentation/actions/storage.actions";
 
 export interface DeleteResourceResult {
   success: boolean;
@@ -69,6 +70,28 @@ export class DeleteResourceUseCase {
             success: false,
             error: "No estás asignado a esta versión del curso",
           };
+        }
+      }
+
+      // Si el recurso tiene un archivo asociado, eliminarlo del storage primero
+      if (resource.fileUrl) {
+        const courseVersion = await this.courseRepository.getCourseVersionById(
+          topic.courseVersionId
+        );
+
+        if (courseVersion) {
+          const deleteFileResult = await deleteResourceFile(
+            resource.fileUrl,
+            courseVersion.courseId
+          );
+
+          if (!deleteFileResult.success) {
+            console.warn(
+              `No se pudo eliminar el archivo del storage: ${deleteFileResult.error}. Se continuará con la eliminación del recurso.`
+            );
+            // No retornamos error aquí, continuamos eliminando el recurso de la BD
+            // porque es mejor tener huérfanos en storage que registros sin archivos
+          }
         }
       }
 

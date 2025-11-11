@@ -14,6 +14,8 @@ export interface ResourceSummary {
   description: string | null;
   resourceType: string;
   fileUrl: string | null;
+  fileName: string | null;
+  mimeType: string | null;
   externalUrl: string | null;
   orderIndex: number;
 }

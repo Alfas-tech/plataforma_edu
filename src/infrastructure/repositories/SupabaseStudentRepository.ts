@@ -89,6 +89,8 @@ export class SupabaseStudentRepository implements IStudentRepository {
         description: (resource.description as string | null) ?? null,
         resourceType: resource.resource_type as string,
         fileUrl: (resource.file_url as string | null) ?? null,
+        fileName: (resource.file_name as string | null) ?? null,
+        mimeType: (resource.mime_type as string | null) ?? null,
         externalUrl: (resource.external_url as string | null) ?? null,
         orderIndex: resource.order_index as number,
       }));

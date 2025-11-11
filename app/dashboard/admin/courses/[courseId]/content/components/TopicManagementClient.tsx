@@ -5,7 +5,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Edit, PlusCircle, Trash2, GripVertical } from "lucide-react";
+import {
+  BookOpen,
+  Edit,
+  PlusCircle,
+  Trash2,
+  GripVertical,
+  AlertCircle,
+} from "lucide-react";
 import { TopicFormDialog } from "./TopicFormDialog";
 import { DeleteTopicDialog } from "./DeleteTopicDialog";
 import { RESOURCE_MANAGEMENT_ENABLED } from "../../../featureFlags";
@@ -23,6 +30,12 @@ interface TopicData {
   orderIndex: number;
   createdAt: string;
   updatedAt: string;
+  resources?: Array<{
+    id: string;
+    title: string;
+    description: string | null;
+    resourceType: string;
+  }>;
 }
 
 interface TopicManagementClientProps {
@@ -36,6 +49,8 @@ interface TopicManagementClientProps {
   isViewingArchivedVersion: boolean;
   canEditPublishedVersion: boolean;
   isAdmin: boolean;
+  resourceManagementBasePath: string;
+  resourceManagementQuery?: Record<string, string | undefined>;
   topics: TopicData[];
 }
 
@@ -50,6 +65,8 @@ export function TopicManagementClient({
   isViewingArchivedVersion,
   canEditPublishedVersion,
   isAdmin,
+  resourceManagementBasePath,
+  resourceManagementQuery = {},
   topics,
 }: TopicManagementClientProps) {
   const router = useRouter();
@@ -58,7 +75,6 @@ export function TopicManagementClient({
   const [editingTopic, setEditingTopic] = useState<TopicData | null>(null);
   const [deletingTopic, setDeletingTopic] = useState<TopicData | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-
   // Estado local para el orden de tópicos (permite reordenamiento visual inmediato)
   const [localTopics, setLocalTopics] = useState<TopicData[]>([]);
 
@@ -206,10 +222,55 @@ export function TopicManagementClient({
               </p>
             )}
             {!canMutateContent && !isViewingArchivedVersion && (
-              <p className="mt-2 rounded-md border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-700">
-                Esta edición del curso no tiene una versión activa. Crea una
-                versión desde el panel del curso antes de agregar tópicos.
-              </p>
+              <div className="mt-3 rounded-lg border-2 border-amber-300 bg-amber-50 p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
+                  <div className="flex-1">
+                    <p className="mb-2 font-semibold text-amber-900">
+                      No puedes editar este contenido
+                    </p>
+                    {!courseVersionId ? (
+                      <>
+                        <p className="mb-3 text-sm text-amber-800">
+                          Este curso no tiene una versión de borrador activa.
+                          Trabaja con un administrador para habilitar una
+                          versión borrador y así poder agregar o modificar
+                          contenido sin afectar la versión publicada.
+                        </p>
+                        {isAdmin && (
+                          <Link
+                            href={`/dashboard/admin/courses/${courseId}/draft/new`}
+                          >
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-amber-400 bg-white hover:bg-amber-100"
+                            >
+                              <PlusCircle className="mr-2 h-4 w-4" />
+                              Crear borrador
+                            </Button>
+                          </Link>
+                        )}
+                      </>
+                    ) : isViewingPublishedVersion &&
+                      !canEditPublishedVersion ? (
+                      <>
+                        <p className="mb-3 text-sm text-amber-800">
+                          Estás viendo la versión publicada del curso. Los
+                          editores y docentes solo pueden modificar borradores.
+                          Solicita a un administrador que cree un nuevo borrador
+                          si necesitas hacer cambios.
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-amber-800">
+                        Esta edición del curso no permite cambios en este
+                        momento.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
           </>
         )}
@@ -268,88 +329,119 @@ export function TopicManagementClient({
         </Card>
       ) : (
         <div className="space-y-4">
-          {localTopics.map((topic, index) => (
-            <Card
-              key={topic.id}
-              className={`border-2 transition-all ${
-                draggedIndex === index ? "opacity-50" : "hover:shadow-lg"
-              } ${canMutateContent ? "cursor-move" : ""}`}
-              draggable={canMutateContent}
-              onDragStart={() => canMutateContent && handleDragStart(index)}
-              onDragOver={(e) => canMutateContent && handleDragOver(e, index)}
-              onDrop={(e) => canMutateContent && handleDrop(e, index)}
-              onDragEnd={() => canMutateContent && handleDragEnd()}
-            >
-              <CardHeader>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex flex-1 items-start gap-3">
-                    {canMutateContent && (
-                      <div className="flex-shrink-0 cursor-grab pt-1 active:cursor-grabbing">
-                        <GripVertical className="h-5 w-5 text-slate-400 transition-colors group-hover:text-slate-600" />
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <div className="mb-2 flex flex-wrap items-center gap-2">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-sm font-bold text-purple-600">
-                          {index + 1}
-                        </span>
-                        <CardTitle className="text-xl">{topic.title}</CardTitle>
-                        <Badge variant="outline" className="border-slate-300">
-                          Última actualización:{" "}
-                          {new Date(topic.updatedAt).toLocaleDateString()}
-                        </Badge>
-                      </div>
-                      {topic.description && (
-                        <p className="text-sm text-slate-600">
-                          {topic.description}
-                        </p>
+          {localTopics.map((topic, index) => {
+            const resourceCount = topic.resources?.length ?? 0;
+
+            return (
+              <Card
+                key={topic.id}
+                className={`border-2 transition-all ${
+                  draggedIndex === index ? "opacity-50" : "hover:shadow-lg"
+                }`}
+              >
+                {/* Header del tópico */}
+                <CardHeader
+                  className={canMutateContent ? "cursor-move" : ""}
+                  draggable={canMutateContent}
+                  onDragStart={() => canMutateContent && handleDragStart(index)}
+                  onDragOver={(e) =>
+                    canMutateContent && handleDragOver(e, index)
+                  }
+                  onDrop={(e) => canMutateContent && handleDrop(e, index)}
+                  onDragEnd={() => canMutateContent && handleDragEnd()}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-1 items-start gap-3">
+                      {canMutateContent && (
+                        <div className="flex-shrink-0 cursor-grab pt-1 active:cursor-grabbing">
+                          <GripVertical className="h-5 w-5 text-slate-400 transition-colors group-hover:text-slate-600" />
+                        </div>
                       )}
+
+                      <div className="flex flex-1 items-start gap-2">
+                        <div className="flex-1">
+                          <div className="mb-2 flex flex-wrap items-center gap-2">
+                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-sm font-bold text-purple-600">
+                              {index + 1}
+                            </span>
+                            <CardTitle className="text-xl">
+                              {topic.title}
+                            </CardTitle>
+                            <Badge
+                              variant="outline"
+                              className="border-slate-300 bg-blue-50 text-blue-700"
+                            >
+                              {resourceCount} recurso
+                              {resourceCount !== 1 ? "s" : ""}
+                            </Badge>
+                          </div>
+                          {topic.description && (
+                            <p className="text-sm text-slate-600">
+                              {topic.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex flex-shrink-0 gap-2">
-                    {RESOURCE_MANAGEMENT_ENABLED &&
-                      !isViewingArchivedVersion && (
+                    <div className="flex flex-shrink-0 gap-2">
+                      {RESOURCE_MANAGEMENT_ENABLED && (
                         <Link
                           href={{
-                            pathname: `/dashboard/admin/courses/${courseId}/topics/${topic.id}/resources`,
+                            pathname: `${resourceManagementBasePath}/${courseId}/topics/${topic.id}/resources`,
                             query: {
                               branchId: branchId ?? undefined,
                               versionId: courseVersionId ?? undefined,
+                              ...resourceManagementQuery,
                             },
                           }}
                         >
-                          <Button size="sm" variant="outline">
-                            <BookOpen className="h-4 w-4 sm:mr-2" />
-                            <span className="hidden sm:inline">Recursos</span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className={
+                              canMutateContent ? "bg-white" : "bg-white/80"
+                            }
+                          >
+                            {canMutateContent ? (
+                              <PlusCircle className="h-4 w-4 sm:mr-2" />
+                            ) : (
+                              <BookOpen className="h-4 w-4 sm:mr-2" />
+                            )}
+                            <span className="hidden sm:inline">
+                              {canMutateContent ? "Gestionar" : "Ver recursos"}
+                            </span>
                           </Button>
                         </Link>
                       )}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => canMutateContent && setEditingTopic(topic)}
-                      disabled={!canMutateContent}
-                    >
-                      <Edit className="h-4 w-4 sm:mr-2" />
-                      <span className="hidden sm:inline">Editar</span>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        canMutateContent && setDeletingTopic(topic)
-                      }
-                      className="border-red-300 text-red-600 hover:bg-red-50"
-                      disabled={!canMutateContent}
-                    >
-                      <Trash2 className="h-4 w-4 sm:mr-2" />
-                      <span className="hidden sm:inline">Eliminar</span>
-                    </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          canMutateContent && setEditingTopic(topic)
+                        }
+                        disabled={!canMutateContent}
+                      >
+                        <Edit className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Editar</span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          canMutateContent && setDeletingTopic(topic)
+                        }
+                        className="border-red-300 text-red-600 hover:bg-red-50"
+                        disabled={!canMutateContent}
+                      >
+                        <Trash2 className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Eliminar</span>
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-            </Card>
-          ))}
+                </CardHeader>
+              </Card>
+            );
+          })}
         </div>
       )}
 

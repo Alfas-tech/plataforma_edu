@@ -2,13 +2,15 @@ export type CourseStatus = "draft" | "active" | "archived";
 
 export type CourseVersionStatus = CourseStatus;
 
+// SIMPLIFICADO: Solo tipos específicos permitidos
 export type ResourceType =
   | "pdf"
-  | "video"
-  | "audio"
   | "document"
-  | "link"
+  | "text"
   | "image"
+  | "audio"
+  | "video"
+  | "link"
   | "other";
 
 export interface CourseData {

@@ -822,6 +822,52 @@ export class SupabaseCourseRepository implements ICourseRepository {
     }
   }
 
+  async reorderResources(
+    topicId: string,
+    order: Array<{ resourceId: string; orderIndex: number }>
+  ): Promise<void> {
+    const supabase = createClient();
+
+    // Log para debug
+    console.log("🔄 Reordenando recursos:", {
+      topicId,
+      count: order.length,
+      newOrder: order
+        .map((o) => `${o.resourceId.slice(0, 8)}... → ${o.orderIndex}`)
+        .join(", "),
+    });
+
+    const resourceIds = order.map(({ resourceId }) => resourceId);
+
+    // Execute atomic update with RPC function
+    const { error } = await supabase.rpc("reorder_resources_batch", {
+      p_topic_id: topicId,
+      p_resource_ids: resourceIds,
+      p_order_indices: order.map((o) => o.orderIndex),
+    });
+
+    if (error) {
+      // If the RPC function doesn't exist, try individual updates as fallback
+      console.warn(
+        "RPC reorder_resources_batch no disponible, usando fallback"
+      );
+
+      for (const { resourceId, orderIndex } of order) {
+        const { error: updateError } = await supabase
+          .from(TABLES.courseResources)
+          .update({ order_index: orderIndex })
+          .eq("id", resourceId)
+          .eq("topic_id", topicId);
+
+        if (updateError) {
+          throw new Error(
+            updateError.message || `Error al reordenar recurso ${resourceId}`
+          );
+        }
+      }
+    }
+  }
+
   async listResources(topicId: string): Promise<CourseResourceEntity[]> {
     const supabase = createClient();
 

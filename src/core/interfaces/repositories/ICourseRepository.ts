@@ -89,6 +89,10 @@ export interface ICourseRepository {
     resourceId: string,
     input: UpdateResourceInput
   ): Promise<CourseResourceEntity>;
+  reorderResources(
+    topicId: string,
+    order: Array<{ resourceId: string; orderIndex: number }>
+  ): Promise<void>;
   deleteResource(resourceId: string): Promise<void>;
 
   listGroups(courseVersionId: string): Promise<CourseGroupEntity[]>;

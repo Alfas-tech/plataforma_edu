@@ -231,6 +231,26 @@ export async function updateResource(
   return { success: true };
 }
 
+export async function reorderResources(
+  topicId: string,
+  updates: Array<{ resourceId: string; orderIndex: number }>
+) {
+  try {
+    await courseRepository.reorderResources(topicId, updates);
+
+    revalidatePath("/dashboard/admin");
+    revalidatePath("/dashboard/teacher");
+    revalidatePath("/dashboard/student");
+
+    return { success: true };
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error ? error.message : "Error al reordenar recursos",
+    };
+  }
+}
+
 export async function deleteResource(resourceId: string) {
   const useCase = new DeleteResourceUseCase(
     courseRepository,
@@ -260,5 +280,37 @@ export const deleteModule = deleteTopic;
 
 export const getLessonsByModule = getResourcesByTopic;
 export const createLesson = createResource;
+
+// GET TOPICS WITH RESOURCES --------------------------------------------------
+
+export async function getTopicsWithResourcesByCourse(
+  courseId: string,
+  options?: { courseVersionId?: string }
+) {
+  // Get topics first
+  const topicsResult = await getTopicsByCourse(courseId, options);
+
+  if ("error" in topicsResult) {
+    return topicsResult;
+  }
+
+  const { topics, courseVersionId } = topicsResult;
+
+  // Get resources for each topic
+  const topicsWithResources = await Promise.all(
+    topics.map(async (topic) => {
+      const resourcesResult = await getResourcesByTopic(topic.id);
+      const resources =
+        "error" in resourcesResult ? [] : (resourcesResult.resources ?? []);
+
+      return {
+        ...topic,
+        resources,
+      };
+    })
+  );
+
+  return { topics: topicsWithResources, courseVersionId };
+}
 export const updateLesson = updateResource;
 export const deleteLesson = deleteResource;
