@@ -57,3 +57,7 @@ coverage
 
 # Workflow files
 .github/workflows
+
+# Supabase migraciones
+supabase/migrations
+*.sql
