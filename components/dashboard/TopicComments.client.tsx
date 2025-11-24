@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 interface IProfileTiny {
   id: string;
@@ -35,7 +35,7 @@ export function TopicCommentsClient({
   const [responseContent, setResponseContent] = useState<string>("");
 
   // Fetch comment and responses for a topic
-  const fetchData = async (): Promise<void> => {
+  const fetchData = useCallback(async (): Promise<void> => {
     setLoading(true);
     setError(null);
     try {
@@ -52,14 +52,14 @@ export function TopicCommentsClient({
     } finally {
       setLoading(false);
     }
-  };
+  }, [topicId]);
 
   useEffect(() => {
     fetchData();
     // short polling to keep comments in sync (10s)
     const id = setInterval(fetchData, 10000);
     return () => clearInterval(id);
-  }, [topicId]);
+  }, [fetchData]);
 
   // Create or update the single topic comment (editors only allowed by backend)
   const handleCreateOrUpdate = async (e: React.FormEvent): Promise<void> => {
