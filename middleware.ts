@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/src/infrastructure/supabase/middleware";
+import { buildRedirectUrl } from "@/src/lib/url-helpers";
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
@@ -38,16 +39,15 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
   // If user is authenticated and tries to access auth routes, redirect to dashboard
   if (user && (pathname === "/login" || pathname === "/signup")) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    const url = buildRedirectUrl("/dashboard");
     return NextResponse.redirect(url);
   }
 
   // If user is NOT authenticated and tries to access a protected route
   if (!user && isProtectedRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("redirect", pathname);
+    const params = new URLSearchParams();
+    params.set("redirect", pathname);
+    const url = buildRedirectUrl("/login", params);
     return NextResponse.redirect(url);
   }
 
