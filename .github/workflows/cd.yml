@@ -9,8 +9,9 @@ on:
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   SERVICE_NAME: plataforma-edu
-  REGION: us-central1
-  IMAGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/plataforma-edu
+  REGION: southamerica-east1
+  REPOSITORY: cd
+  IMAGE_NAME: southamerica-east1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/app
   PNPM_VERSION: "9.6.0"
   NODE_VERSION: "20.19.4"
 
@@ -18,12 +19,10 @@ jobs:
   # ============================================
   # CONTINUOUS INTEGRATION
   # ============================================
-  
-  # STAGE 1: BUILD
+
   build:
     name: 🔨 Build Application
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -58,12 +57,10 @@ jobs:
           path: .next
           retention-days: 1
 
-  # STAGE 2: TEST (Unit & Integration Tests)
   test:
     name: 🧪 Run Tests
     runs-on: ubuntu-latest
     needs: build
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -93,12 +90,10 @@ jobs:
           path: coverage
           retention-days: 7
 
-  # STAGE 3: ACCEPTANCE TEST (Lint & Format Check)
   acceptance-test:
     name: ✅ Acceptance Tests
     runs-on: ubuntu-latest
     needs: test
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -127,13 +122,11 @@ jobs:
   # CONTINUOUS DEPLOYMENT
   # ============================================
 
-  # STAGE 4: BUILD & PUSH DOCKER IMAGE
   build-image:
     name: 🐳 Build Docker Image
     runs-on: ubuntu-latest
     needs: acceptance-test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -146,8 +139,8 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker for GCR
-        run: gcloud auth configure-docker
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker southamerica-east1-docker.pkg.dev
 
       - name: Build Docker image
         run: |
@@ -161,21 +154,18 @@ jobs:
             -t ${{ env.IMAGE_NAME }}:latest \
             .
 
-      - name: Push Docker images to GCR
+      - name: Push Docker images to Artifact Registry
         run: |
           docker push ${{ env.IMAGE_NAME }}:${{ github.sha }}
           docker push ${{ env.IMAGE_NAME }}:staging
           docker push ${{ env.IMAGE_NAME }}:latest
 
-  # STAGE 5: DEPLOY TO STAGING
   deploy-staging:
     name: 🚀 Deploy to Staging
     runs-on: ubuntu-latest
     needs: build-image
     environment:
       name: staging
-      url: ${{ steps.deploy.outputs.url }}
-    
     steps:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -214,24 +204,21 @@ jobs:
         id: get-url
         run: |
           STAGING_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }}-staging \
-            --platform managed \
-            --region ${{ env.REGION }} \
-            --format 'value(status.url)')
+              --platform managed \
+              --region ${{ env.REGION }} \
+              --format 'value(status.url)')
           echo "url=$STAGING_URL" >> $GITHUB_OUTPUT
           echo "🔗 Staging URL: $STAGING_URL"
 
       - name: Wait for service to be ready
         run: sleep 30
 
-  # STAGE 6: DEPLOY TO PRODUCTION (Manual Approval)
   deploy-production:
     name: 🎯 Deploy to Production
     runs-on: ubuntu-latest
     needs: deploy-staging
     environment:
       name: production
-      url: ${{ steps.deploy.outputs.url }}
-    
     steps:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -279,12 +266,10 @@ jobs:
       - name: Wait for service to be ready
         run: sleep 30
 
-  # STAGE 7: SMOKE TESTS (Post-deployment validation)
   smoke-tests:
     name: 💨 Smoke Tests
     runs-on: ubuntu-latest
     needs: deploy-production
-    
     steps:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
