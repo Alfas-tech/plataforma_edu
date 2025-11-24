@@ -1,5 +1,5 @@
 name: CI/CD Pipeline - Google Cloud Run
-
+#test
 on:
   push:
     branches: ["main"]
@@ -11,7 +11,7 @@ env:
   SERVICE_NAME: plataforma-edu
   REGION: southamerica-east1
   REPOSITORY: cd
-  IMAGE_NAME: southamerica-east1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/app
+  IMAGE_NAME: southamerica-east1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cd/app
   PNPM_VERSION: "9.6.0"
   NODE_VERSION: "20.19.4"
 
