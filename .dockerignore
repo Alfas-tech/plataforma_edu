@@ -1,0 +1,54 @@
+# Dependencias
+node_modules
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Testing
+coverage/
+.nyc_output
+
+# Misc
+.DS_Store
+*.pem
+.idea
+.vscode
+
+# Debug
+*.log
+
+# Local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Git
+.git
+.gitignore
+.github
+
+# README
+README.md
+INFORME_DRAG_DROP_FIX.md
+
+# Tests
+__tests__
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+jest.config.js
+jest.setup.js
+
+# Prettier
+.prettierrc
+.prettierignore

@@ -91,8 +91,7 @@ export class DeleteUserUseCase {
     } catch (error) {
       return {
         success: false,
-        error:
-          error instanceof Error ? error.message : "Error deleting user",
+        error: error instanceof Error ? error.message : "Error deleting user",
       };
     }
   }
