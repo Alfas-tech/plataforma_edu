@@ -2,7 +2,6 @@ import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/src/infrastructure/supabase/middleware";
 import { buildRedirectUrl } from "@/src/lib/url-helpers";
 
-
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 

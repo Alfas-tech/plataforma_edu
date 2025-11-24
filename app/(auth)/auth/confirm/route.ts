@@ -5,7 +5,6 @@ import { HandleOAuthCallbackUseCase } from "@/src/application/use-cases/auth/Han
 import { SupabaseAuthRepository } from "@/src/infrastructure/repositories/SupabaseAuthRepository";
 import { buildRedirectUrl } from "@/src/lib/url-helpers";
 
-
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
   const tokenHash = searchParams.get("token_hash");
@@ -29,7 +28,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       });
 
       if (result.success) {
-        const dashboardUrl = buildRedirectUrl(result.redirectTo || "/dashboard");
+        const dashboardUrl = buildRedirectUrl(
+          result.redirectTo || "/dashboard"
+        );
         return NextResponse.redirect(dashboardUrl);
       } else {
         const params = new URLSearchParams();
@@ -85,4 +86,3 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(errorUrl);
   }
 }
-
